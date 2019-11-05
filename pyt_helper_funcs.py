@@ -369,7 +369,7 @@ def create_hist_and_metrics_ds__(metrics, include_val_metrics=True):
     return history, batch_metrics, cum_metrics
 
 def train_model(model, train_dataset, loss_fn=None, optimizer=None, val_dataset=None,
-                lr_scheduler=None, epochs=25, batch_size=64, metrics=None, shuffle=True):
+                lr_scheduler=None, epochs=25, batch_size=64, metrics=None, shuffle=True, num_workers=0):
     """
     Trains model (derived from nn.Module) across epochs using specified loss function,
     optimizer, validation dataset (if any), learning rate scheduler, epochs and batch size etc.
@@ -456,7 +456,8 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, val_dataset=
 
         for epoch in range(epochs):
             model.train()  # model is training, so batch normalization & dropouts can be applied
-            train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=shuffle)
+            train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size,
+                                                       shuffle=shuffle, num_workers=num_workers)
             num_batches = 0
             samples = 0
 
@@ -521,7 +522,8 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, val_dataset=
                     model.eval()  # mark model as evaluating - don't apply any dropouts
                     with torch.no_grad():
                         # run through the validation dataset
-                        val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
+                        val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size,
+                                                                 shuffle=False, num_workers=num_workers)
                         num_val_batches = 0
 
                         for val_data, val_labels in val_loader:
@@ -752,7 +754,7 @@ def train_model_xy(model, X_train, y_train, loss_fn=None, optimizer=None, val_se
     finally:
         model = model.cpu()
 
-def evaluate_model(model, dataset, loss_fn=None, batch_size=64, metrics=None):
+def evaluate_model(model, dataset, loss_fn=None, batch_size=64, metrics=None, num_workers=0):
     """ evaluate's model performance against dataset provided
     @params:
         - model: instance of model derived from nn.Model (or instance of pyt.PytModel or pyt.PytSequential)
@@ -782,7 +784,7 @@ def evaluate_model(model, dataset, loss_fn=None, batch_size=64, metrics=None):
         model = model.cuda() if gpu_available else model.cpu()
 
         samples, num_batches = 0, 0
-        loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=False)
+        loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
         tot_samples = len(dataset)
         len_tot_samples = len(str(tot_samples))
 
@@ -841,7 +843,7 @@ def evaluate_model(model, dataset, loss_fn=None, batch_size=64, metrics=None):
     finally:
         model = model.cpu()
 
-def predict_dataset(model, dataset, batch_size=64):
+def predict_dataset(model, dataset, batch_size=64, num_workers=0):
     """ runs prediction on dataset (use for classification ONLY)
     @params:
         - model: instance of model derived from nn.Model (or instance of pyt.PytModel or pyt.PytSequential)
@@ -860,7 +862,7 @@ def predict_dataset(model, dataset, batch_size=64):
         gpu_available = torch.cuda.is_available()
         model = model.cuda() if gpu_available else model.cpu()
 
-        loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=False)
+        loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
 
         preds, actuals = [], []
 
@@ -1175,7 +1177,7 @@ class PytModule(nn.Module):
             "You must re-implement this menthod in your derived class!")
 
     def fit_dataset(self, train_dataset, loss_fn=None, optimizer=None, val_dataset=None,
-            lr_scheduler=None, epochs=25, batch_size=64, metrics=None, shuffle=True):
+            lr_scheduler=None, epochs=25, batch_size=64, metrics=None, shuffle=True, num_workers=0):
         """ 
         train model on instance of torch.utils.data.Dataset
         @params:
@@ -1216,10 +1218,10 @@ class PytModule(nn.Module):
         p_metrics_list = self.metrics_list if metrics is None else metrics
         return train_model(self, train_dataset, loss_fn=p_loss_fn,
             optimizer=p_optimizer, val_dataset=val_dataset, lr_scheduler=lr_scheduler,
-            epochs=epochs, batch_size=batch_size, metrics=p_metrics_list, shuffle=shuffle)
+            epochs=epochs, batch_size=batch_size, metrics=p_metrics_list, shuffle=shuffle, num_workers=num_workers)
 
     def fit(self, X_train, y_train, loss_fn=None, optimizer=None, val_set=None,
-            lr_scheduler=None, epochs=25, batch_size=64, metrics=None, shuffle=True):
+            lr_scheduler=None, epochs=25, batch_size=64, metrics=None, shuffle=True, num_workers=0):
 
         assert ((X_train is not None) and (isinstance(X_train, np.ndarray))), "Parameter error: X_train is None or is NOT an instance of np.ndarray"
         assert ((y_train is not None) and (isinstance(y_train, np.ndarray))), "Parameter error: y_train is None or is NOT an instance of np.ndarray"
@@ -1245,14 +1247,15 @@ class PytModule(nn.Module):
         p_metrics_list = self.metrics_list if metrics is None else metrics
         return self.fit_dataset(train_dataset, loss_fn=p_loss_fn, optimizer=p_optimizer, val_dataset=val_dataset,
                                 lr_scheduler=lr_scheduler, epochs=epochs, batch_size=batch_size,
-                                metrics=p_metrics_list, shuffle=shuffle)
+                                metrics=p_metrics_list, shuffle=shuffle, num_workers=num_workers)
 
-    def evaluate_dataset(self, dataset, loss_fn=None, batch_size=64, metrics=None):
+    def evaluate_dataset(self, dataset, loss_fn=None, batch_size=64, metrics=None, num_workers=0):
         p_loss_fn = self.loss_fn if loss_fn is None else loss_fn
         p_metrics_list = self.metrics_list if metrics is None else metrics
-        return evaluate_model(self, dataset, loss_fn=p_loss_fn, batch_size=batch_size, metrics=p_metrics_list)
+        return evaluate_model(self, dataset, loss_fn=p_loss_fn, batch_size=batch_size, metrics=p_metrics_list,
+                              num_workers=num_workers)
 
-    def evaluate(self, X, y, loss_fn=None, batch_size=64, metrics=None):
+    def evaluate(self, X, y, loss_fn=None, batch_size=64, metrics=None, num_workers=0):
         assert ((X is not None) and (isinstance(X, np.ndarray))), "Parameter error: X is None or is NOT an instance of np.ndarray"
         assert ((y is not None) and (isinstance(y, np.ndarray))), "Parameter error: y is None or is NOT an instance of np.ndarray"
 
@@ -1262,12 +1265,12 @@ class PytModule(nn.Module):
             y_dtype = np.float32
 
         p_dataset = XyDataset(X, y, y_dtype)
-        return self.evaluate_dataset(p_dataset, loss_fn=loss_fn, batch_size=batch_size, metrics=metrics)
+        return self.evaluate_dataset(p_dataset, loss_fn=loss_fn, batch_size=batch_size, metrics=metrics, num_workers=num_workers)
 
-    def predict_dataset(self, dataset, batch_size=32):
+    def predict_dataset(self, dataset, batch_size=32, num_workers=0):
         assert dataset is not None
         assert isinstance(dataset, torch.utils.data.Dataset)
-        return predict_dataset(self, dataset, batch_size)
+        return predict_dataset(self, dataset, batch_size, num_workers=num_workers)
 
     def predict(self, data):
         assert data is not None
@@ -1310,16 +1313,16 @@ class PytSequential():
         return self.model.parameters(recurse)
 
     def fit_dataset(self, train_dataset, loss_fn=None, optimizer=None, val_dataset=None,
-            lr_scheduler=None, epochs=25, batch_size=64, metrics=None):
+            lr_scheduler=None, epochs=25, batch_size=64, metrics=None, num_workers=0):
         p_loss_fn = self.loss_fn if loss_fn is None else loss_fn
         p_optimizer = self.optimizer if optimizer is None else optimizer
         p_metrics_list = self.metrics_list if metrics is None else metrics
         return train_model(self.model, train_dataset, loss_fn=p_loss_fn,
             optimizer=p_optimizer, val_dataset=val_dataset, lr_scheduler=lr_scheduler,
-            epochs=epochs, batch_size=batch_size, metrics=p_metrics_list)
+            epochs=epochs, batch_size=batch_size, metrics=p_metrics_list, num_workers=num_workers)
 
     def fit(self, X_train, y_train, loss_fn=None, optimizer=None, val_set=None,
-            lr_scheduler=None, epochs=25, batch_size=64, metrics=None):
+            lr_scheduler=None, epochs=25, batch_size=64, metrics=None, num_workers=0):
 
         assert ((X_train is not None) and (isinstance(X_train, np.ndarray))), "Parameter error: X_train is None or is NOT an instance of np.ndarray"
         assert ((y_train is not None) and (isinstance(y_train, np.ndarray))), "Parameter error: y_train is None or is NOT an instance of np.ndarray"
@@ -1334,24 +1337,27 @@ class PytSequential():
         p_metrics_list = self.metrics_list if metrics is None else metrics
         
         return train_model_xy(self.model, X_train, y_train, loss_fn=p_loss_fn, optimizer=p_optimizer, val_set=val_set,
-                             lr_scheduler=lr_scheduler, epochs=epochs, batch_size=batch_size, metrics=p_metrics_list)
+                             lr_scheduler=lr_scheduler, epochs=epochs, batch_size=batch_size,
+                             metrics=p_metrics_list, num_workers=num_workers)
 
-    def evaluate_dataset(self, dataset, loss_fn=None, batch_size=64, metrics=None):
+    def evaluate_dataset(self, dataset, loss_fn=None, batch_size=64, metrics=None, num_workers=0):
         p_loss_fn = self.loss_fn if loss_fn is None else loss_fn
         p_metrics_list = self.metrics_list if metrics is None else metrics
-        return evaluate_model(self.model, dataset, loss_fn=p_loss_fn, batch_size=batch_size, metrics=p_metrics_list)
+        return evaluate_model(self.model, dataset, loss_fn=p_loss_fn, batch_size=batch_size,
+                              metrics=p_metrics_list, num_workers=num_workers)
 
-    def evaluate(self, X, y, loss_fn=None, batch_size=64, metrics=None):
+    def evaluate(self, X, y, loss_fn=None, batch_size=64, metrics=None, num_workers=0):
         assert ((X is not None) and (isinstance(X, np.ndarray))), "Parameter error: X is None or is NOT an instance of np.ndarray"
         assert ((y is not None) and (isinstance(y, np.ndarray))), "Parameter error: y is None or is NOT an instance of np.ndarray"
 
         p_dataset = XyDataset(X, y)
-        return self.evaluate_dataset(p_dataset, loss_fn=loss_fn, batch_size=batch_size, metrics=metrics)
+        return self.evaluate_dataset(p_dataset, loss_fn=loss_fn, batch_size=batch_size,
+                                     metrics=metrics, num_workers=num_workers)
 
-    def predict_dataset(self, dataset, batch_size=32):
+    def predict_dataset(self, dataset, batch_size=32, num_workers=0):
         assert dataset is not None
         assert isinstance(dataset, torch.utils.data.Dataset)
-        return predict_dataset(self.model, dataset, batch_size)
+        return predict_dataset(self.model, dataset, batch_size, num_workers=num_workers)
 
     def predict(self, data):
         assert data is not None

@@ -168,7 +168,8 @@ def main():
 
         # train model
         print('Training model...')
-        hist = model.fit_dataset(train_dataset, val_dataset=val_dataset, lr_scheduler=scheduler, epochs=25)
+        hist = model.fit_dataset(train_dataset, val_dataset=val_dataset, lr_scheduler=scheduler,
+                                 epochs=25, num_workers=3)
         pyt.show_plots(hist)
 
         # evaluate model performance on train/eval & test datasets
