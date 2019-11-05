@@ -86,18 +86,6 @@ def load_data(val_split=0.20, test_split=0.10):
     X_val, X_test, y_val, y_test = \
         train_test_split(X_test, y_test, test_size=test_split, random_state=seed)
     
-    # train_df = pd.DataFrame(X_train, columns=f_names)
-    # train_df['diagnosis'] = y_train
-
-    # eval_df = pd.DataFrame(X_val, columns=f_names)
-    # eval_df['diagnosis'] = y_val
-
-    # test_df = pd.DataFrame(X_test, columns=f_names)
-    # test_df['diagnosis'] = y_test
-
-    # return (pyt.PandasDataset(train_df, target_col_name='diagnosis'),
-    #         pyt.PandasDataset(eval_df, target_col_name='diagnosis'),
-    #         pyt.PandasDataset(test_df, target_col_name='diagnosis'))
     return (X_train, y_train), (X_val, y_val), (X_test, y_test)
 
 # our ANN
@@ -140,12 +128,8 @@ LEARNING_RATE = 0.001
 
 def main():
 
-    # train_dataset, eval_dataset, test_dataset = load_data()
-    # print('Loaded -> len(train_dataset): %d - len(eval_dataset): %d - len(test_dataset): %d' %
-    #             (len(train_dataset), len(eval_dataset), len(test_dataset)))
     (X_train, y_train), (X_val, y_val), (X_test, y_test) = load_data()
     print(X_train.shape, y_train.shape, X_val.shape, y_val.shape, X_test.shape, y_test.shape)
-    # NOTE: BCELoss() expects y to be of type float
     y_train, y_val, y_test = y_train.astype(np.float), y_val.astype(np.float), y_test.astype(np.float)
 
     if DO_TRAINING:
@@ -153,11 +137,9 @@ def main():
         model = WBCNet(NUM_FEATURES, 30, 30, NUM_CLASSES)
         # define the loss function & optimizer that model should
         loss_fn = nn.BCELoss() #nn.CrossEntropyLoss()
-        #optimizer = optim.Adam(params=model.parameters(), lr=0.0001, weight_decay=0.001)
         optimizer = torch.optim.SGD(model.parameters(), lr=LEARNING_RATE,
                 nesterov=True, momentum=0.9, dampening=0) #, weight_decay=0.1)
         lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.1)
-        # model = model.to(torch.device("cuda:0" if torch.cuda.is_available() else "cpu"))
         model.compile(loss=loss_fn, optimizer=optimizer, metrics=['acc','f1'])
         print(model)
 
@@ -165,31 +147,16 @@ def main():
         print('Training model...')
         #metrics_list = ['acc','f1'] 
         hist = model.fit(X_train, y_train, val_set=(X_val, y_val), epochs=NUM_EPOCHS, batch_size=BATCH_SIZE)
-        #hist = model.fit_dataset(train_dataset, val_dataset=eval_dataset, epochs=NUM_EPOCHS, batch_size=BATCH_SIZE)
-        # hist = pyt.train_model(model,train_dataset, loss_fn=loss_fn, optimizer=optimizer, #lr_scheduler=lr_scheduler,
-        #             #val_dataset=eval_dataset,
-        #             epochs=NUM_EPOCHS, batch_size=BATCH_SIZE, metrics=metrics_list) #,'roc_auc'])
         pyt.show_plots(hist)
 
         # evaluate model performance on train/eval & test datasets
         print('\nEvaluating model performance...')
         loss, acc, f1 = model.evaluate(X_train, y_train)
-        #loss, acc, f1 = model.evaluate_dataset(train_dataset)
-        #loss, acc, f1 = pyt.evaluate_model(model, train_dataset, loss_fn, metrics=metrics_list)
         print('  Training dataset  -> loss: %.4f - acc: %.4f - f1: %.4f' % (loss, acc, f1))
         loss, acc, f1 = model.evaluate(X_val, y_val)
-        #loss, acc, f1 = model.evaluate_dataset(eval_dataset)
-        #loss, acc, f1 = pyt.evaluate_model(model, eval_dataset, loss_fn, metrics=metrics_list)
         print('  Cross-val dataset  -> loss: %.4f - acc: %.4f - f1: %.4f' % (loss, acc, f1))
         loss, acc, f1 = model.evaluate(X_test, y_test)
-        #loss, acc, f1 = model.evaluate_dataset(test_dataset)
-        #loss, acc, f1 = pyt.evaluate_model(model, test_dataset, loss_fn, metrics=metrics_list)
         print('  Test dataset  -> loss: %.4f - acc: %.4f - f1: %.4f' % (loss, acc, f1))
-
-        # loss, acc = model.evaluate(eval_dataset, loss_fn)
-        # print('  Cross-val dataset -> loss: %.4f - acc: %.4f' % (loss, acc)) 
-        # loss, acc = model.evaluate(test_dataset, loss_fn)
-        # print('  Test dataset      -> loss: %.4f - acc: %.4f' % (loss, acc))
 
         # save model state
         model.save(MODEL_SAVE_NAME)
@@ -198,10 +165,7 @@ def main():
     if DO_PREDICTION:
         print('\nRunning predictions...')
         model = pyt.load_model(MODEL_SAVE_NAME)
-        #model.compile(loss=loss_fn, optimizer=optimizer, metrics=['acc','f1'])
-
-        # _, all_preds, all_labels = pyt.predict_dataset(model, test_dataset)
-        #y_pred, y_true = model.predict_dataset(test_dataset)
+        
         y_pred = model.predict(X_test)
         # we have just 30 elements in dataset, showing ALL
         print('Sample labels: ', y_test)
