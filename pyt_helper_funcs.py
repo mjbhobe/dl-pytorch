@@ -451,8 +451,11 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, val_dataset=
 
         len_num_epochs = len(str(epochs))
 
+        curr_lr = None
+
         if lr_scheduler is not None:
-            print('Using learning rate {}'.format(lr_scheduler.get_lr()))
+            curr_lr = lr_scheduler.get_lr()
+            print('Using learning rate {}'.format(curr_lr))
 
         for epoch in range(epochs):
             model.train()  # model is training, so batch normalization & dropouts can be applied
@@ -562,7 +565,10 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, val_dataset=
             # step the learning rate scheduler at end of epoch
             if lr_scheduler is not None:
                 lr_scheduler.step()
-                print('Stepping learning rate to {}'.format(lr_scheduler.get_lr()))
+                step_lr = lr_scheduler.get_lr()
+                if step_lr != curr_lr:
+                    print('Stepping learning rate to {}'.format(step_lr))
+                    curr_lr = step_lr
         return history
     finally:
         model = model.cpu()
@@ -875,8 +881,9 @@ def predict_dataset(model, dataset, batch_size=64, num_workers=0):
                 model.eval()
                 logits = model(images)
                 # take max for each row along columns
-                _, batch_preds = torch.max(logits.data, 1)
-                batch_preds = list(batch_preds.to("cpu").numpy())
+                #_, batch_preds = torch.max(logits.data, 1)
+                #batch_preds = list(batch_preds.to("cpu").numpy())
+                batch_preds = list(logits.to("cpu").numpy())
                 batch_actuals = list(labels.to("cpu").numpy())
                 preds.extend(batch_preds)
                 actuals.extend(batch_actuals)
@@ -911,8 +918,9 @@ def predict(model, data):
             # forward pass
             logits = model(data)
             # take max for each row along columns to get class predictions
-            vals, preds = torch.max(logits.data, 1) #torch.max(logits, 1)
-            preds = np.array(preds.cpu().numpy())
+            #vals, preds = torch.max(logits.data, 1) #torch.max(logits, 1)
+            #preds = np.array(preds.cpu().numpy())
+            preds = np.array(logits.cpu().numpy())
         return preds
     finally:
         model = model.cpu()

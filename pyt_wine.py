@@ -126,7 +126,7 @@ def main():
         # model = pyt.load_model(MODEL_SAVE_NAME)
         model = pyt.load_model(MODEL_SAVE_NAME)
 
-        y_preds = model.predict(X_test)
+        y_preds = np.argmax(model.predict(X_test), axis=1)
         # display all predictions
         print('Sample labels: ', y_test)
         print('Sample predictions: ', y_preds)

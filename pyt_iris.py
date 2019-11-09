@@ -62,20 +62,6 @@ def load_data(val_split=0.20, test_split=0.20):
     X_val, X_test, y_val, y_test = \
         train_test_split(X_val, y_val, test_size=test_split, random_state=seed)
 
-    # train_dataset = pyt.XyDataset(X_train, y_train)
-    # eval_dataset = pyt.XyDataset(X_val, y_val)
-    # test_dataset = pyt.XyDataset(X_test, y_test)
-    
-    # train_df = pd.DataFrame(X_train, columns=f_names)
-    # train_df['target'] = y_train
-
-    # eval_df = pd.DataFrame(X_val, columns=f_names)
-    # eval_df['target'] = y_val
-
-    # test_df = pd.DataFrame(X_test, columns=f_names)
-    # test_df['target'] = y_test
-
-    # return IrisDataset(train_df), IrisDataset(eval_df), IrisDataset(test_df)
     return (X_train, y_train), (X_val, y_val), (X_test, y_test)
 
 # our ANN
@@ -115,7 +101,6 @@ def main():
         model = IrisNet(4, 10, 10, 3)
         # define the loss function & optimizer that model should
         loss_fn = nn.CrossEntropyLoss()
-        #optimizer = optim.Adam(params=model.parameters(), lr=0.001, weight_decay=0.001)
         optimizer = torch.optim.SGD(model.parameters(), lr=0.001, nesterov=True, momentum=0.9, dampening=0)
         lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.1)
         model.compile(loss=loss_fn, optimizer=optimizer, metrics=['acc'])
@@ -124,9 +109,6 @@ def main():
         # train model
         print('Training model...')
         hist = model.fit(X_train, y_train, val_set=(X_val, y_val), epochs=NUM_EPOCHS, batch_size=BATCH_SIZE) #, lr_scheduler=lr_scheduler)
-        #hist = model.fit(train_dataset, val_dataset=eval_dataset, epochs=NUM_EPOCHS, batch_size=BATCH_SIZE) #, lr_scheduler=lr_scheduler)
-        # hist = pyt.train_model(model, train_dataset, loss_fn=loss_fn, optimizer=optimizer, #lr_scheduler=lr_scheduler,
-        #                    val_dataset=eval_dataset, epochs=325, batch_size=16, metrics=['acc','f1'])
         pyt.show_plots(hist)
 
         # evaluate model performance on train/eval & test datasets
@@ -145,11 +127,9 @@ def main():
     if DO_PREDICTION:
         print('\nRunning predictions...')
         # load model state from .pt file
-        # model = pyt.load_model(MODEL_SAVE_NAME)
         model = pyt.load_model(MODEL_SAVE_NAME)
 
-        # _, all_preds, all_labels = pyt.predict_dataset(model, test_dataset)
-        y_pred = model.predict(X_test)
+        y_pred = np.argmax(model.predict(X_test), axis=1)
         # we have just 30 elements in dataset, showing ALL
         print('Sample labels: ', y_test)
         print('Sample predictions: ', y_pred)

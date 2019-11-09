@@ -167,6 +167,7 @@ def main():
         model = pyt.load_model(MODEL_SAVE_NAME)
         
         y_pred = model.predict(X_test)
+        y_pred = np.argmax(y_pred, axis=1)
         # we have just 30 elements in dataset, showing ALL
         print('Sample labels: ', y_test)
         print('Sample predictions: ', y_pred)

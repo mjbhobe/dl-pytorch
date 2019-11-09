@@ -193,6 +193,7 @@ def main():
 
         # _, all_preds, all_labels = pyt.predict_dataset(model, test_dataset)
         y_pred, y_true = model.predict_dataset(test_dataset)
+        y_pred = np.argmax(y_pred, axis=1)
         print('Sample labels (50): ', y_true[:50])
         print('Sample predictions: ', y_true[:50])
         print('We got %d/%d incorrect!' % ((y_pred != y_true).sum(), len(y_true)))
@@ -203,7 +204,7 @@ def main():
         data_iter = iter(trainloader)
         images, labels = data_iter.next()  # fetch a batch of 64 random images
         #_, preds = pyt.predict(model, images)
-        preds = model.predict(images)
+        preds = np.argmax(model.predict(images), axis=1)
         display_sample(images, labels, sample_predictions=preds,
                        grid_shape=(8, 8), plot_title='Sample Predictions')
 

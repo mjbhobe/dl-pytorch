@@ -84,8 +84,9 @@ def main():
     W, b = net.fc1.weight, net.fc1.bias
     print('   Weight: %.3f bias: %.3f' % (W, b))
     # get predictions (need to pass Tensors!)
-    X_t = torch.FloatTensor(X)
-    y_pred = net(X_t).reshape(-1).detach().cpu().numpy()
+    # X_t = torch.FloatTensor(X)
+    # y_pred = net(X_t).reshape(-1).detach().cpu().numpy()
+    y_pred = net.predict(X)
 
     # what is my r2_score?
     print('R2 score: %.3f' % r2_score(y, y_pred)) # got 0.974
