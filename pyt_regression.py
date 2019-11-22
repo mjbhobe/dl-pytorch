@@ -41,10 +41,10 @@ torch.manual_seed(seed);
 # ---------------------------------------------------------------------------
 # Example:1 - with synthesized data
 # ---------------------------------------------------------------------------
-def get_synthesized_data(m, c, numelems=100):
+def get_synthesized_data(m, c, numelems=100, std=10):
     torch.manual_seed(71)
     X = torch.linspace(1.0, 50.0, numelems).reshape(-1, 1)
-    noise = torch.randint(-8,9,(numelems,1), dtype=torch.float32)
+    noise = torch.randint(-(std-1),std,(numelems,1), dtype=torch.float32)
     y = m * X + c + noise
     return (X.cpu().numpy(), y.cpu().numpy())
 
@@ -61,13 +61,15 @@ class Net(pyt.PytModule):
 def main():
     # generate data with noise
     M, C = 2, 1
-    X, y = get_synthesized_data(M, C, 50)
-    # display plot
+    X, y = get_synthesized_data(M, C, 75)
+
+    # display plot of generated data
     plt.figure(figsize=(8, 6))
     plt.scatter(X, y, s=40, c='steelblue')
     plt.title('Original Data -> $y = %d * X + %d$' % (M, C))
     plt.show()
 
+    # build our network
     net = Net(1, 1)
     print('Before training: ')
     print('   Weight: %.3f bias: %.3f' % (net.fc1.weight, net.fc1.bias))
@@ -76,7 +78,8 @@ def main():
     net.compile(loss=criterion, optimizer=optimizer)
     print(net)
 
-    hist = net.fit(X, y, epochs=1000, batch_size=50, shuffle=False)
+    # train on the data
+    hist = net.fit(X, y, epochs=1000, batch_size=50) 
     pyt.show_plots(hist)
 
     # print the results
@@ -84,8 +87,6 @@ def main():
     W, b = net.fc1.weight, net.fc1.bias
     print('   Weight: %.3f bias: %.3f' % (W, b))
     # get predictions (need to pass Tensors!)
-    # X_t = torch.FloatTensor(X)
-    # y_pred = net(X_t).reshape(-1).detach().cpu().numpy()
     y_pred = net.predict(X)
 
     # what is my r2_score?

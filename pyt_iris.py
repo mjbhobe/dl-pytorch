@@ -1,5 +1,5 @@
 """
-pyt_iris.py: Iris flower classification with Pytorch
+pyt_iris.py: Iris flower dataset multi-class classification with Pytorch
 
 @author: Manish Bhobe
 My experiments with Python, Machine Learning & Deep Learning.
@@ -26,7 +26,6 @@ import torch
 print('Using Pytorch version: ', torch.__version__)
 import torch.nn as nn
 import torch.nn.functional as F
-#from torchvision import datasets, transforms
 from torch.utils.data.dataset import Dataset
 from torch import optim
 from torchsummary import summary
@@ -50,7 +49,7 @@ def load_data(val_split=0.20, test_split=0.20):
     X_train, X_test, y_train, y_test = \
         train_test_split(X, y, test_size=test_split, random_state=seed)
     
-    # scale data
+    # standard scale data
     ss = StandardScaler()
     X_train = ss.fit_transform(X_train)
     X_test = ss.transform(X_test)
@@ -102,13 +101,12 @@ def main():
         # define the loss function & optimizer that model should
         loss_fn = nn.CrossEntropyLoss()
         optimizer = torch.optim.SGD(model.parameters(), lr=0.001, nesterov=True, momentum=0.9, dampening=0)
-        lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.1)
         model.compile(loss=loss_fn, optimizer=optimizer, metrics=['acc'])
         print(model)
 
         # train model
         print('Training model...')
-        hist = model.fit(X_train, y_train, val_set=(X_val, y_val), epochs=NUM_EPOCHS, batch_size=BATCH_SIZE) #, lr_scheduler=lr_scheduler)
+        hist = model.fit(X_train, y_train, validation_data=(X_val, y_val), epochs=NUM_EPOCHS, batch_size=BATCH_SIZE) 
         pyt.show_plots(hist)
 
         # evaluate model performance on train/eval & test datasets
@@ -130,7 +128,7 @@ def main():
         model = pyt.load_model(MODEL_SAVE_NAME)
 
         y_pred = np.argmax(model.predict(X_test), axis=1)
-        # we have just 30 elements in dataset, showing ALL
+        # we have just 5 elements in dataset, showing ALL
         print('Sample labels: ', y_test)
         print('Sample predictions: ', y_pred)
         print('We got %d/%d incorrect predictions!' % ((y_test != y_pred).sum(), len(y_test)))

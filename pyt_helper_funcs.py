@@ -262,9 +262,89 @@ METRICS_MAP = {
 }
 
 # -------------------------------------------------------------------------------------
+# helper class to implement early stopping
+# based on Bjarten's implementation (@see: https://github.com/Bjarten/early-stopping-pytorch/blob/master/pytorchtools.py)
+# -------------------------------------------------------------------------------------
+class EarlyStopping:
+    """Early stops the training if validation loss doesn't improve after a given patience."""
+    def __init__(self, monitor='val_loss', min_delta=0, patience=5, mode='min', verbose=False,
+                 save_best_weights=False):
+        """
+        Args:
+            monitor (str): which metric should be monitored (default: 'val_loss')
+            min_delta (float): Minimum change in the monitored quantity to qualify as an improvement. (default: 0)
+            patience (int): How many epochs to wait until after last validation loss improvement. (default: 5)
+            mode (str): one of {'min','max'} (default='min') In 'min' mode, training will stop when the quantity 
+                monitored has stopped decreasing; in 'max' mode it will stop when the quantity monitored has 
+                stopped increasing;
+            verbose (bool): If True, prints a message for each validation loss improvement. (default: False)
+            save_best_weights (bool): Save state with best weights so far (default: False)
+        """
+        self.monitor = monitor
+        self.min_delta = min_delta
+        self.patience = patience
+        self.mode = mode
+        if mode not in ['min', 'max']:
+            warnings.warn('EarlyStopping mode %s is unknown. Using \'min\' instead!' % mode)
+            self.mode = 'min'
+        self.verbose = verbose
+        self.save_best_weights = save_best_weights
+
+        self.monitor_op = np.less if self.mode == 'min' else np.greater
+        self.min_delta *= -1 if self.monitor_op == np.less else 1
+        self.best_score = np.Inf if self.monitor_op == np.less else -np.Inf
+        self.counter = 0
+        self.best_epoch = 0
+        self.checkpoint_file_path = os.path.join('.', 'model_states', 'checkpoint.pt')
+        self.metrics_log = []
+
+        self.early_stop = False
+
+    def __call__(self, model, curr_metric_val, epoch):
+        # if not (isinstance(model, PytModule) or isinstance(model, PytModuleWrapper)):
+        #     raise TypeError("model should be derived from PytModule or PytModuleWrapper")
+
+        #self.is_wrapped = isinstance(model, PytModuleWrapper)
+        
+        if self.monitor_op(curr_metric_val - self.min_delta, self.best_score):
+            if self.save_best_weights:
+                # save model state for restore later
+                self.save_checkpoint(model, self.monitor, curr_metric_val)
+            self.best_score = curr_metric_val
+            self.counter = 0
+            self.metrics_log = []
+            self.best_epoch = epoch + 1
+            if self.verbose:
+                print('   EarlyStopping (log): patience counter reset to 0 at epoch %d where best score of \'%s\' is %.3f' % (
+                        epoch, self.monitor, self.best_score))
+        else:
+            self.counter += 1
+            if self.verbose:
+                print('   EarlyStopping (log): patience counter increased to %d - best_score of \'%s\' is %.3f at epoch %d' % (
+                    self.counter, self.monitor, self.best_score, self.best_epoch))
+            if self.counter >= self.patience:
+                self.early_stop = True
+                print('   EarlyStopping: Early stopping training at epoch %d. \'%s\' has not improved for past %d epochs.' % (
+                    epoch, self.monitor, self.patience))
+                print('     - Best score: %.4f at epoch %d. Last %d scores -> %s' % (
+                    self.best_score, self.best_epoch, len(self.metrics_log), self.metrics_log))
+            else:
+                self.metrics_log.append(curr_metric_val)
+
+    def save_checkpoint(self, model, metric_name, curr_metric_val):
+        '''Saves model when validation loss decrease.'''
+        if self.verbose: 
+            print('   EarlyStopping (log): \'%s\' metric has \'improved\' - from %.4f to %.4f. Saving checkpoint...' % (
+                    metric_name, self.best_score, curr_metric_val))
+        mod = model
+        if isinstance(model, PytModuleWrapper):
+            mod = model.model
+        torch.save(mod.state_dict(), self.checkpoint_file_path)
+
+
+# -------------------------------------------------------------------------------------
 # helper functions for training model, evaluating performance & making predictions
 # -------------------------------------------------------------------------------------
-
 def check_attribs__(model, loss_fn, optimizer=None, check_only_loss=False):
     """ internal helper function - checks various attributes of "model" """
     if loss_fn is None:
@@ -296,33 +376,33 @@ def check_attribs__(model, loss_fn, optimizer=None, check_only_loss=False):
                   "This model's instance does not have a self.optimizer attribute defined.")
                 raise e
 
-def compute_metrics__(logits, labels, metrics, batch_metrics, val_set=False):
+def compute_metrics__(logits, labels, metrics, batch_metrics, validation_dataset=False):
     """ internal helper functions - computes metrics in an epoch loop """
     for metric_name in metrics:
         metric_value = METRICS_MAP[metric_name](logits, labels)
-        if val_set:
+        if validation_dataset:
             batch_metrics['val_%s' % metric_name] = metric_value #.append(metric_value)
         else:
             batch_metrics[metric_name] = metric_value
 
-def accumulate_metrics__(metrics, cum_metrics, batch_metrics, val_set=False):
+def accumulate_metrics__(metrics, cum_metrics, batch_metrics, validation_dataset=False):
     """ internal helper function - "sums" metrics across batches """
     if metrics is not None:
         for metric in metrics:
-            if val_set:
+            if validation_dataset:
                 cum_metrics['val_%s' % metric] += batch_metrics['val_%s' % metric]
             else:
                 cum_metrics[metric] += batch_metrics[metric]
 
     # check for loss separately
     if 'loss' not in metrics:
-        if val_set:
+        if validation_dataset:
             cum_metrics['val_loss'] += batch_metrics['val_loss']
         else:
             cum_metrics['loss'] += batch_metrics['loss']
     return cum_metrics
 
-def get_metrics_str__(metrics_list, batch_or_cum_metrics, val_set=False):
+def get_metrics_str__(metrics_list, batch_or_cum_metrics, validation_dataset=False):
     """ internal helper functions: formats metrics for printing to console """
     metrics_str = ''
 
@@ -333,7 +413,7 @@ def get_metrics_str__(metrics_list, batch_or_cum_metrics, val_set=False):
             metrics_str += '%s: %.4f' % (metrics_list[i], batch_or_cum_metrics[metric])
             
     # append validation metrics too
-    if val_set:
+    if validation_dataset:
         for i, metric in enumerate(metrics_list):
             metrics_str += ' - val_%s: %.4f' % (metrics_list[i], batch_or_cum_metrics['val_%s' % metric])
 
@@ -368,8 +448,9 @@ def create_hist_and_metrics_ds__(metrics, include_val_metrics=True):
 
     return history, batch_metrics, cum_metrics
 
-def train_model(model, train_dataset, loss_fn=None, optimizer=None, val_dataset=None,
-                lr_scheduler=None, epochs=25, batch_size=64, metrics=None, shuffle=True, num_workers=0):
+def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_dataset=None,
+                lr_scheduler=None, epochs=25, batch_size=64, metrics=None, shuffle=True,
+                num_workers=0, early_stopping=None):
     """
     Trains model (derived from nn.Module) across epochs using specified loss function,
     optimizer, validation dataset (if any), learning rate scheduler, epochs and batch size etc.
@@ -383,8 +464,8 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, val_dataset=
           from the torch.optim package)
             if optimizer == None, then model must define an attribute self.optimizer, which is 
             an instance of any optimizer defined in the torch.optim package
-        - val_dataset: cross-validation dataset to use during training (optional, default=None)
-            if val_dataset is not None, then model is cross trained on test dataset & 
+        - validation_dataset: cross-validation dataset to use during training (optional, default=None)
+            if validation_dataset is not None, then model is cross trained on test dataset & 
             cross-validation dataset (good practice to always use a cross-validation dataset!)
         - lr_scheduler: learning rate scheduler to use during training (optional, default=None)
             if specified, should be one of the learning rate schedulers (e.g. StepLR) defined
@@ -400,6 +481,10 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, val_dataset=
         - shuffle (boolean, default = True): determines if the training dataset shuould be shuffled between
             epochs or not. Emperically it has been observed that shuffling improves performance for classification
             but presents problems for regression (I set it to False for regression problems)
+        - num_workers (int, default=0): number of worker threads to use when loading datasets internally using 
+            DataLoader objects.
+        - early_stopping(EarlyStopping, default=None): instance of EarlyStopping class to be passed in if training
+            has to be early-stopped based on parameters used to construct instance of EarlyStopping
     @returns:
         - history: dictionary of the loss & accuracy metrics across epochs
             Metrics are saved by key name (see METRICS_MAP) 
@@ -412,9 +497,9 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, val_dataset=
         assert isinstance(model, nn.Module), "train_model() works with instances of nn.Module only!"
         assert isinstance(train_dataset, torch.utils.data.Dataset), \
             "train_dataset must be a subclass of torch.utils.data.Dataset"
-        if val_dataset is not None:
-            assert isinstance(val_dataset, torch.utils.data.Dataset), \
-                "val_dataset must be a subclass of torch.utils.data.Dataset"
+        if validation_dataset is not None:
+            assert isinstance(validation_dataset, torch.utils.data.Dataset), \
+                "validation_dataset must be a subclass of torch.utils.data.Dataset"
         check_attribs__(model, loss_fn, optimizer)
         if loss_fn is None: loss_fn = model.loss_fn
         if loss_fn is None:
@@ -425,6 +510,11 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, val_dataset=
         if lr_scheduler is not None:
             assert isinstance(lr_scheduler, torch.optim.lr_scheduler._LRScheduler), \
                 "lr_scheduler: incorrect type. Expecting class derived from torch.optim._LRScheduler"
+        early_stopping_metric = None
+        if early_stopping is not None:
+            assert isinstance(early_stopping, EarlyStopping), \
+                "early_stopping: incorrect type. Expecting instance of EarlyStopping class"
+            early_stopping_metric = early_stopping.monitor
 
         # train on GPU if available
         gpu_available = torch.cuda.is_available()
@@ -432,9 +522,9 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, val_dataset=
         print('Training on %s...' % ('GPU' if gpu_available else 'CPU'))
         model = model.cuda() if gpu_available else model.cpu()
 
-        if val_dataset is not None:
+        if validation_dataset is not None:
             print('Training on %d samples, cross-validating on %d samples' %
-                    (len(train_dataset), len(val_dataset)))
+                    (len(train_dataset), len(validation_dataset)))
         else:
             print('Training on %d samples' % len(train_dataset))
 
@@ -443,11 +533,18 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, val_dataset=
 
         # create data structurs to hold batch metrics, epoch metrics etc.
         history, batch_metrics, cum_metrics = \
-            create_hist_and_metrics_ds__(metrics, val_dataset is not None)
+            create_hist_and_metrics_ds__(metrics, validation_dataset is not None)
 
         metrics_list = ['loss']
         if metrics is not None:
             metrics_list = metrics_list + metrics
+            if early_stopping_metric is not None:
+                metrics_list_check = []
+                for metric in metrics_list:
+                    metrics_list_check.append(metric)
+                    metrics_list_check.append('val_%s' % metric)
+                assert early_stopping_metric in metrics_list_check, \
+                    "early stopping metric (%s) is not logged during training!" % early_stopping_metric
 
         len_num_epochs = len(str(epochs))
 
@@ -468,7 +565,7 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, val_dataset=
             for metric_name in metrics_list:
                 batch_metrics[metric_name] = 0.0
                 cum_metrics[metric_name] = 0.0
-                if val_dataset is not None:
+                if validation_dataset is not None:
                     batch_metrics['val_%s' % metric_name] = 0.0
                     cum_metrics['val_%s' % metric_name] = 0.0
 
@@ -493,15 +590,15 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, val_dataset=
                 # compute metrics for batch + accumulate metrics across batches
                 batch_metrics['loss'] = batch_loss
                 if metrics is not None:
-                    compute_metrics__(logits, labels, metrics, batch_metrics, val_set=False)
+                    compute_metrics__(logits, labels, metrics, batch_metrics, validation_dataset=False)
                 # same as cum_netrics[metric_name] += batch_metric[metric_name] across all metrics
-                cum_metrics = accumulate_metrics__(metrics_list, cum_metrics, batch_metrics, val_set=False)
+                cum_metrics = accumulate_metrics__(metrics_list, cum_metrics, batch_metrics, validation_dataset=False)
 
                 samples += len(labels)
                 num_batches += 1
 
                 # display progress
-                metrics_str = get_metrics_str__(metrics_list, batch_metrics, val_set=False)
+                metrics_str = get_metrics_str__(metrics_list, batch_metrics, validation_dataset=False)
                 print('\rEpoch (%*d/%*d): (%*d/%*d) -> %s' %
                             (len_num_epochs, epoch+1, len_num_epochs, epochs,
                              len_tot_samples, samples, len_tot_samples, tot_samples,
@@ -514,18 +611,18 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, val_dataset=
                     history[metric_name].append(cum_metrics[metric_name])
 
                 # display average training metrics for this epoch
-                metrics_str = get_metrics_str__(metrics_list, cum_metrics, val_set=False)
+                metrics_str = get_metrics_str__(metrics_list, cum_metrics, validation_dataset=False)
                 print('\rEpoch (%*d/%*d): (%*d/%*d) -> %s' %
                         (len_num_epochs, epoch+1, len_num_epochs, epochs,
                             len_tot_samples, samples, len_tot_samples, tot_samples,
                             metrics_str),
-                    end='' if val_dataset is not None else '\n', flush=True)
+                    end='' if validation_dataset is not None else '\n', flush=True)
 
-                if val_dataset is not None:
+                if validation_dataset is not None:
                     model.eval()  # mark model as evaluating - don't apply any dropouts
                     with torch.no_grad():
                         # run through the validation dataset
-                        val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size,
+                        val_loader = torch.utils.data.DataLoader(validation_dataset, batch_size=batch_size,
                                                                  shuffle=False, num_workers=num_workers)
                         num_val_batches = 0
 
@@ -543,9 +640,9 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, val_dataset=
                             # calculate all metrics for validation dataset batch
                             batch_metrics['val_loss'] = batch_loss
                             if metrics is not None:
-                                compute_metrics__(val_logits, val_labels, metrics, batch_metrics, val_set=True)
+                                compute_metrics__(val_logits, val_labels, metrics, batch_metrics, validation_dataset=True)
                             # same as cum_metrics[val_metric_name] += batch_metrics[val_metric_name] for all metrics
-                            cum_metrics = accumulate_metrics__(metrics_list, cum_metrics, batch_metrics, val_set=True)
+                            cum_metrics = accumulate_metrics__(metrics_list, cum_metrics, batch_metrics, validation_dataset=True)
 
                             num_val_batches += 1
                         else:
@@ -555,25 +652,40 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, val_dataset=
                                 history['val_%s' % metric_name].append(cum_metrics['val_%s' % metric_name])
 
                             # display train + val set metrics    
-                            metrics_str = get_metrics_str__(metrics_list, cum_metrics, val_set=True)
+                            metrics_str = get_metrics_str__(metrics_list, cum_metrics, validation_dataset=True)
                             print('\rEpoch (%*d/%*d): (%*d/%*d) -> %s' %
                                         (len_num_epochs, epoch+1, len_num_epochs, epochs,
                                          len_tot_samples, samples, len_tot_samples, tot_samples,
                                          metrics_str),
                                     flush=True)
             
+            # check for early stopping
+            if early_stopping is not None:
+                curr_metric_val = history[early_stopping_metric][-1]
+                early_stopping(model, curr_metric_val, epoch)
+                if early_stopping.early_stop:
+                    print("Early stopping training at epoch %d" % epoch)
+                    if early_stopping.save_best_weights:
+                        mod = model
+                        if isinstance(model, PytModuleWrapper):
+                            mod = model.model
+                        mod.load_state_dict(torch.load(early_stopping.checkpoint_file_path))
+                    return history
+                
             # step the learning rate scheduler at end of epoch
-            if lr_scheduler is not None:
+            if (lr_scheduler is not None) and (epoch <= epochs-1):
                 lr_scheduler.step()
                 step_lr = lr_scheduler.get_lr()
-                if step_lr != curr_lr:
+                print('   StepLR (log): curr_lr = {}, new_lr = {}'.format(curr_lr, step_lr))
+                if np.round(np.array(step_lr),10) != np.round(np.array(curr_lr),10):
                     print('Stepping learning rate to {}'.format(step_lr))
                     curr_lr = step_lr
+
         return history
     finally:
         model = model.cpu()
 
-def train_model_xy(model, X_train, y_train, loss_fn=None, optimizer=None, val_set=None,
+def train_model_xy(model, X_train, y_train, loss_fn=None, optimizer=None, validation_dataset=None,
                    lr_scheduler=None, epochs=25, batch_size=64, metrics=None, shuffle=True):
     try:
         # checks for parameters
@@ -582,10 +694,10 @@ def train_model_xy(model, X_train, y_train, loss_fn=None, optimizer=None, val_se
             "X_train must be an instance of Numpy array"
         assert isinstance(y_train, np.ndarray), \
             "y_train must be an instance of Numpy array or torch.Tensor"
-        if val_set is not None:
-            assert isinstance(val_set, tuple) and (len(val_set) == 2), "val_set must be a 2 element tuple"
-            assert (isinstance(val_set[0], np.ndarray) and isinstance(val_set[1], np.ndarray)), \
-                "val_set must hold only Numpy arrays"
+        if validation_dataset is not None:
+            assert isinstance(validation_dataset, tuple) and (len(validation_dataset) == 2), "validation_dataset must be a 2 element tuple"
+            assert (isinstance(validation_dataset[0], np.ndarray) and isinstance(validation_dataset[1], np.ndarray)), \
+                "validation_dataset must hold only Numpy arrays"
         check_attribs__(model, loss_fn, optimizer)
         if loss_fn is None: loss_fn = model.loss_fn
         if loss_fn is None:
@@ -605,8 +717,8 @@ def train_model_xy(model, X_train, y_train, loss_fn=None, optimizer=None, val_se
         model = model.cuda() if gpu_available else model.cpu()
         X_val, y_val = None, None
 
-        if val_set is not None:
-            X_val, y_val = val_set[0], val_set[1]
+        if validation_dataset is not None:
+            X_val, y_val = validation_dataset[0], validation_dataset[1]
             print('Training on %d samples, cross-validating on %d samples' %
                     (X_train.shape[0], X_val.shape[0]))
         else:
@@ -617,7 +729,7 @@ def train_model_xy(model, X_train, y_train, loss_fn=None, optimizer=None, val_se
 
         # create data structurs to hold batch metrics, epoch metrics etc.
         history, batch_metrics, cum_metrics = \
-            create_hist_and_metrics_ds__(metrics, val_set is not None)
+            create_hist_and_metrics_ds__(metrics, validation_dataset is not None)
 
         metrics_list = ['loss']
         if metrics is not None:
@@ -642,7 +754,7 @@ def train_model_xy(model, X_train, y_train, loss_fn=None, optimizer=None, val_se
             for metric_name in metrics_list:
                 batch_metrics[metric_name] = 0.0
                 cum_metrics[metric_name] = 0.0
-                if val_set is not None:
+                if validation_dataset is not None:
                     batch_metrics['val_%s' % metric_name] = 0.0
                     cum_metrics['val_%s' % metric_name] = 0.0
 
@@ -678,14 +790,14 @@ def train_model_xy(model, X_train, y_train, loss_fn=None, optimizer=None, val_se
                 # compute metrics for batch + accumulate metrics across batches
                 batch_metrics['loss'] = batch_loss
                 if metrics is not None:
-                    compute_metrics__(logits, labels, metrics, batch_metrics, val_set=False)
+                    compute_metrics__(logits, labels, metrics, batch_metrics, validation_dataset=False)
                 # same as cum_netrics[metric_name] += batch_metric[metric_name] across all metrics
-                cum_metrics = accumulate_metrics__(metrics_list, cum_metrics, batch_metrics, val_set=False)
+                cum_metrics = accumulate_metrics__(metrics_list, cum_metrics, batch_metrics, validation_dataset=False)
 
                 samples += len(labels)
 
                 # display progress
-                metrics_str = get_metrics_str__(metrics_list, batch_metrics, val_set=False)
+                metrics_str = get_metrics_str__(metrics_list, batch_metrics, validation_dataset=False)
                 print('\rEpoch (%*d/%*d): (%*d/%*d) -> %s' %
                             (len_num_epochs, epoch+1, len_num_epochs, epochs,
                              len_tot_samples, samples, len_tot_samples, tot_samples,
@@ -698,14 +810,14 @@ def train_model_xy(model, X_train, y_train, loss_fn=None, optimizer=None, val_se
                     history[metric_name].append(cum_metrics[metric_name])
 
                 # display average training metrics for this epoch
-                metrics_str = get_metrics_str__(metrics_list, cum_metrics, val_set=False)
+                metrics_str = get_metrics_str__(metrics_list, cum_metrics, validation_dataset=False)
                 print('\rEpoch (%*d/%*d): (%*d/%*d) -> %s' %
                         (len_num_epochs, epoch+1, len_num_epochs, epochs,
                             len_tot_samples, samples, len_tot_samples, tot_samples,
                             metrics_str),
-                    end='' if val_set is not None else '\n', flush=True)
+                    end='' if validation_dataset is not None else '\n', flush=True)
 
-                if val_set is not None:
+                if validation_dataset is not None:
                     model.eval()  # mark model as evaluating - don't apply any dropouts
                     with torch.no_grad():
                         # run through the validation dataset
@@ -733,9 +845,9 @@ def train_model_xy(model, X_train, y_train, loss_fn=None, optimizer=None, val_se
                             # calculate all metrics for validation dataset batch
                             batch_metrics['val_loss'] = batch_loss
                             if metrics is not None:
-                                compute_metrics__(val_logits, val_labels, metrics, batch_metrics, val_set=True)
+                                compute_metrics__(val_logits, val_labels, metrics, batch_metrics, validation_dataset=True)
                             # same as cum_metrics[val_metric_name] += batch_metrics[val_metric_name] for all metrics
-                            cum_metrics = accumulate_metrics__(metrics_list, cum_metrics, batch_metrics, val_set=True)
+                            cum_metrics = accumulate_metrics__(metrics_list, cum_metrics, batch_metrics, validation_dataset=True)
 
                             num_val_batches += 1
                         else:
@@ -745,7 +857,7 @@ def train_model_xy(model, X_train, y_train, loss_fn=None, optimizer=None, val_se
                                 history['val_%s' % metric_name].append(cum_metrics['val_%s' % metric_name])
 
                             # display train + val set metrics    
-                            metrics_str = get_metrics_str__(metrics_list, cum_metrics, val_set=True)
+                            metrics_str = get_metrics_str__(metrics_list, cum_metrics, validation_dataset=True)
                             print('\rEpoch (%*d/%*d): (%*d/%*d) -> %s' %
                                         (len_num_epochs, epoch+1, len_num_epochs, epochs,
                                          len_tot_samples, samples, len_tot_samples, tot_samples,
@@ -814,16 +926,16 @@ def evaluate_model(model, dataset, loss_fn=None, batch_size=64, metrics=None, nu
                 batch_loss = loss_tensor.item()
 
                 # compute all metrics for this batch
-                compute_metrics__(logits, labels, metrics, batch_metrics, val_set=False)
+                compute_metrics__(logits, labels, metrics, batch_metrics, validation_dataset=False)
                 batch_metrics['loss'] = batch_loss
                 # same as cum_metrics[metric_name] += batch_metrics[metric_name] for all metrics
-                cum_metrics = accumulate_metrics__(metrics_list, cum_metrics, batch_metrics, val_set=False)
+                cum_metrics = accumulate_metrics__(metrics_list, cum_metrics, batch_metrics, validation_dataset=False)
 
                 samples += len(labels)
                 num_batches += 1
 
                 # display progress for this batch
-                metrics_str = get_metrics_str__(metrics_list, batch_metrics, val_set=False)
+                metrics_str = get_metrics_str__(metrics_list, batch_metrics, validation_dataset=False)
                 print('\rEvaluating (%*d/%*d) -> %s' %
                         (len_tot_samples, samples, len_tot_samples, tot_samples,
                          metrics_str),
@@ -833,7 +945,7 @@ def evaluate_model(model, dataset, loss_fn=None, batch_size=64, metrics=None, nu
                 for metric_name in metrics_list:
                     cum_metrics[metric_name] = cum_metrics[metric_name] / num_batches
                 
-                metrics_str = get_metrics_str__(metrics_list, cum_metrics, val_set=False)
+                metrics_str = get_metrics_str__(metrics_list, cum_metrics, validation_dataset=False)
                 print('\rEvaluating (%*d/%*d) -> %s' %
                         (len_tot_samples, tot_samples, len_tot_samples, tot_samples,
                          metrics_str),
@@ -880,9 +992,6 @@ def predict_dataset(model, dataset, batch_size=64, num_workers=0):
             with torch.no_grad():
                 model.eval()
                 logits = model(images)
-                # take max for each row along columns
-                #_, batch_preds = torch.max(logits.data, 1)
-                #batch_preds = list(batch_preds.to("cpu").numpy())
                 batch_preds = list(logits.to("cpu").numpy())
                 batch_actuals = list(labels.to("cpu").numpy())
                 preds.extend(batch_preds)
@@ -1147,11 +1256,11 @@ class XyDataset(Dataset):
 class PytModule(nn.Module):
     """
     A class that you can inherit from to define your project's model
-    Inheriting from this class provides a Keras-like interface for training model, evaluating performance
+    Inheriting from this class provides a Keras-like interface for training model, evaluating model performance
     and for generating predictions.
-        - You must override the constructor and the forward() method in your derived class, as usual.
+        - As usual, you must override the constructor and the forward() method in your derived class.
         - You may provide a compile() function to set loss, optimizer and metrics at one location, else
-        you will have to provide these as parameters to the fit(), evaluate() calls
+          you will have to provide these as parameters to the fit(), evaluate() calls
     
     This class provides the following convenience methods that call functions defined above
     You call this class's functions with the same parameters, except model, which is passed as 'self'
@@ -1162,13 +1271,14 @@ class PytModule(nn.Module):
        - evaluate() - evaluate on numpy arrays (X & y)
        - evaluate_dataset() - evaluate on torch.utils.data.Dataset
        - predict() - generates class predictions
-       - predict_proba() - generates prediction probabilities instead of distinct nos.
-       - save() - same as save_model()
+       - save() - same as save_model(). Saved model's state to disk
        - summary() - provides a Keras like summary of model
+       NOTE:
+       - a load() function, to load model's state from disk is not implemented, use stand-alone load_model() 
+         function instead
     """
     def __init__(self):
         super(PytModule, self).__init__()
-        #self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.loss_fn = None
         self.optimizer = None
         self.metrics_list = None
@@ -1184,8 +1294,8 @@ class PytModule(nn.Module):
         raise NotImplementedError("You have landed up calling PytModule.forward(). " +
             "You must re-implement this menthod in your derived class!")
 
-    def fit_dataset(self, train_dataset, loss_fn=None, optimizer=None, val_dataset=None,
-            lr_scheduler=None, epochs=25, batch_size=64, metrics=None, shuffle=True, num_workers=0):
+    def fit_dataset(self, train_dataset, loss_fn=None, optimizer=None, validation_dataset=None, lr_scheduler=None,
+                    epochs=25, batch_size=64, metrics=None, shuffle=True, num_workers=0, early_stopping=None):
         """ 
         train model on instance of torch.utils.data.Dataset
         @params:
@@ -1196,8 +1306,8 @@ class PytModule(nn.Module):
             - optimizer (optional, default=None): instance of any optimizer defined by Pytorch
               You could pass optimizer as a parameter to this function or pre-set it using the compile function.
               Value passed into this parameter takes precedence over value set in compile(...) call
-            - val_dataset (optional, default=None) - instance of torch.utils.data.Dataset used for cross-validation
-              If you pass a valid instance, then model is cross-trained on train_dataset and val_dataset, else model
+            - validation_dataset (optional, default=None) - instance of torch.utils.data.Dataset used for cross-validation
+              If you pass a valid instance, then model is cross-trained on train_dataset and validation_dataset, else model
               is trained on just train_dataset. As a best practice, it is advisible to use cross training.
             - lr_scheduler (optional, default=NOne) - learning rate scheduler, used to step the learning rate across epochs 
                as model trains. Instance of any scheduler defined in torch.optim.lr_scheduler package
@@ -1214,48 +1324,54 @@ class PytModule(nn.Module):
                 'rmse' - root mean squared error
                metrics are provided as a list (e.g. ['acc','f1'])
                Loss is ALWAYS measures, even if you don't provide a list of metrics
-               NOTE: if val_dataset is provided, each metric is also measured for the validaton dataset
+               NOTE: if validation_dataset is provided, each metric is also measured for the validaton dataset
+            - num_workers: no of worker threads to use to load datasets
+            - early_stopping: instance of EarlyStopping class if early stopping is to be used (default: None)
         @returns:
            - history object (which is a map of metrics measured across epochs).
              Each metric list is accessed as hist[metric_name] (e.g. hist['loss'] or hist['acc'])
-             If val_dataset is also provided, it will return corresponding metrics for validation dataset too
+             If validation_dataset is also provided, it will return corresponding metrics for validation dataset too
              (e.g. hist['val_acc'], hist['val_loss'])
         """ 
         p_loss_fn = self.loss_fn if loss_fn is None else loss_fn
         p_optimizer = self.optimizer if optimizer is None else optimizer
         p_metrics_list = self.metrics_list if metrics is None else metrics
-        return train_model(self, train_dataset, loss_fn=p_loss_fn,
-            optimizer=p_optimizer, val_dataset=val_dataset, lr_scheduler=lr_scheduler,
-            epochs=epochs, batch_size=batch_size, metrics=p_metrics_list, shuffle=shuffle, num_workers=num_workers)
+        return train_model(self, train_dataset, loss_fn = p_loss_fn, optimizer = p_optimizer,
+                           validation_dataset = validation_dataset, lr_scheduler = lr_scheduler,
+                           epochs = epochs, batch_size = batch_size, metrics = p_metrics_list,
+                           shuffle = shuffle, num_workers=num_workers, early_stopping=early_stopping)
 
-    def fit(self, X_train, y_train, loss_fn=None, optimizer=None, val_set=None,
-            lr_scheduler=None, epochs=25, batch_size=64, metrics=None, shuffle=True, num_workers=0):
+    def fit(self, X_train, y_train, loss_fn=None, optimizer=None, validation_data=None, lr_scheduler=None,
+            epochs=25, batch_size=64, metrics=None, shuffle=True, num_workers=0, early_stopping=None):
 
-        assert ((X_train is not None) and (isinstance(X_train, np.ndarray))), "Parameter error: X_train is None or is NOT an instance of np.ndarray"
-        assert ((y_train is not None) and (isinstance(y_train, np.ndarray))), "Parameter error: y_train is None or is NOT an instance of np.ndarray"
+        assert ((X_train is not None) and (isinstance(X_train, np.ndarray))), \
+            "Parameter error: X_train is None or is NOT an instance of np.ndarray"
+        assert ((y_train is not None) and (isinstance(y_train, np.ndarray))), \
+            "Parameter error: y_train is None or is NOT an instance of np.ndarray"
         if (y_train.dtype == np.int) or (y_train.dtype == np.long):
             y_dtype = np.long
         else:
             y_dtype = np.float32
 
-        val_dataset = None
-        if val_set is not None:
-            assert isinstance(val_set, tuple)
-            assert isinstance(val_set[0], np.ndarray), "Expecting val_set[0] to be a Numpy array"
-            assert isinstance(val_set[1], np.ndarray), "Expecting val_set[1] to be a Numpy array"
-            if (val_set[1].dtype == np.int) or (val_set[1].dtype == np.long):
+        validation_dataset = None
+        if validation_data is not None:
+            assert isinstance(validation_data, tuple)
+            assert isinstance(validation_data[0], np.ndarray), "Expecting validation_dataset[0] to be a Numpy array"
+            assert isinstance(validation_data[1], np.ndarray), "Expecting validation_dataset[1] to be a Numpy array"
+            if (validation_data[1].dtype == np.int) or (validation_data[1].dtype == np.long):
                 y_val_dtype = np.long
             else:
                 y_val_dtype = np.float32
-            val_dataset = XyDataset(val_set[0], val_set[1], y_val_dtype)
+            validation_dataset = XyDataset(validation_data[0], validation_data[1], y_val_dtype)
 
         train_dataset = XyDataset(X_train, y_train, y_dtype)
         p_loss_fn = self.loss_fn if loss_fn is None else loss_fn
         p_optimizer = self.optimizer if optimizer is None else optimizer
         p_metrics_list = self.metrics_list if metrics is None else metrics
-        return self.fit_dataset(train_dataset, loss_fn=p_loss_fn, optimizer=p_optimizer, val_dataset=val_dataset,
-                                lr_scheduler=lr_scheduler, epochs=epochs, batch_size=batch_size,
-                                metrics=p_metrics_list, shuffle=shuffle, num_workers=num_workers)
+        return self.fit_dataset(train_dataset, loss_fn=p_loss_fn, optimizer=p_optimizer,
+                                validation_dataset=validation_dataset, lr_scheduler=lr_scheduler,
+                                epochs=epochs, batch_size=batch_size, metrics=p_metrics_list,
+                                shuffle=shuffle, num_workers=num_workers, early_stopping=early_stopping)
 
     def evaluate_dataset(self, dataset, loss_fn=None, batch_size=64, metrics=None, num_workers=0):
         p_loss_fn = self.loss_fn if loss_fn is None else loss_fn
@@ -1264,8 +1380,10 @@ class PytModule(nn.Module):
                               num_workers=num_workers)
 
     def evaluate(self, X, y, loss_fn=None, batch_size=64, metrics=None, num_workers=0):
-        assert ((X is not None) and (isinstance(X, np.ndarray))), "Parameter error: X is None or is NOT an instance of np.ndarray"
-        assert ((y is not None) and (isinstance(y, np.ndarray))), "Parameter error: y is None or is NOT an instance of np.ndarray"
+        assert ((X is not None) and (isinstance(X, np.ndarray))), \
+            "Parameter error: X is None or is NOT an instance of np.ndarray"
+        assert ((y is not None) and (isinstance(y, np.ndarray))), \
+            "Parameter error: y is None or is NOT an instance of np.ndarray"
 
         if (y.dtype == np.int) or (y.dtype == np.long):
             y_dtype = np.long
@@ -1273,7 +1391,8 @@ class PytModule(nn.Module):
             y_dtype = np.float32
 
         p_dataset = XyDataset(X, y, y_dtype)
-        return self.evaluate_dataset(p_dataset, loss_fn=loss_fn, batch_size=batch_size, metrics=metrics, num_workers=num_workers)
+        return self.evaluate_dataset(p_dataset, loss_fn=loss_fn, batch_size=batch_size,
+                                     metrics=metrics, num_workers=num_workers)
 
     def predict_dataset(self, dataset, batch_size=32, num_workers=0):
         assert dataset is not None
@@ -1289,7 +1408,7 @@ class PytModule(nn.Module):
     def save(self, model_save_name, model_save_dir='./model_states'):
         save_model(self, model_save_name, model_save_dir)
 
-    # NOTE: load() is not implemented    def summary(self, input_shape):
+    # NOTE: load() is not implemented. Use standalone load_model() function instead
 
     def summary(self, input_shape):
         if torch.cuda.is_available():
@@ -1297,11 +1416,15 @@ class PytModule(nn.Module):
         else:
             summary(self.cpu(), input_shape)
 
-class PytSequential():
+class PytModuleWrapper():
+    """
+    Utility class that wraps an instance of nn.Module or nn.Sequential or a pre-trained Pytorch module
+    and provides a Keras-like interface to train, evaluate & predict results from model.
+    """
     def __init__(self, model):
-        super(PytSequential, self).__init__()
-        assert (model is not None) and isinstance(model, nn.Sequential), \
-            "model parameter is None or not of type nn.Sequential"
+        super(PytModuleWrapper, self).__init__()
+        assert (model is not None) and isinstance(model, nn.Module), \
+            "model parameter is None or not of type nn.Module"
         self.model = model
         self.loss_fn = None
         self.optimizer = None
@@ -1320,33 +1443,49 @@ class PytSequential():
     def parameters(self, recurse=True):
         return self.model.parameters(recurse)
 
-    def fit_dataset(self, train_dataset, loss_fn=None, optimizer=None, val_dataset=None,
-            lr_scheduler=None, epochs=25, batch_size=64, metrics=None, num_workers=0):
+    def fit_dataset(self, train_dataset, loss_fn=None, optimizer=None, validation_dataset=None, lr_scheduler=None,
+                    epochs=25, batch_size=64, metrics=None, shuffle=True, num_workers=0, early_stopping=None):
         p_loss_fn = self.loss_fn if loss_fn is None else loss_fn
         p_optimizer = self.optimizer if optimizer is None else optimizer
         p_metrics_list = self.metrics_list if metrics is None else metrics
+
         return train_model(self.model, train_dataset, loss_fn=p_loss_fn,
-            optimizer=p_optimizer, val_dataset=val_dataset, lr_scheduler=lr_scheduler,
-            epochs=epochs, batch_size=batch_size, metrics=p_metrics_list, num_workers=num_workers)
+            optimizer=p_optimizer, validation_dataset=validation_dataset, lr_scheduler=lr_scheduler,
+            epochs=epochs, batch_size=batch_size, metrics=p_metrics_list, shuffle=shuffle,
+            num_workers=num_workers, early_stopping=early_stopping)
 
-    def fit(self, X_train, y_train, loss_fn=None, optimizer=None, val_set=None,
-            lr_scheduler=None, epochs=25, batch_size=64, metrics=None, num_workers=0):
+    def fit(self, X_train, y_train, loss_fn=None, optimizer=None, validation_data=None, lr_scheduler=None,
+            epochs=25, batch_size=64, metrics=None, shuffle=True, num_workers=0, early_stopping=None):
 
-        assert ((X_train is not None) and (isinstance(X_train, np.ndarray))), "Parameter error: X_train is None or is NOT an instance of np.ndarray"
-        assert ((y_train is not None) and (isinstance(y_train, np.ndarray))), "Parameter error: y_train is None or is NOT an instance of np.ndarray"
+        assert ((X_train is not None) and (isinstance(X_train, np.ndarray))), \
+            "Parameter error: X_train is None or is NOT an instance of np.ndarray"
+        assert ((y_train is not None) and (isinstance(y_train, np.ndarray))), \
+            "Parameter error: y_train is None or is NOT an instance of np.ndarray"
+        if (y_train.dtype == np.int) or (y_train.dtype == np.long):
+            y_dtype = np.long
+        else:
+            y_dtype = np.float32
 
-        if val_set is not None:
-            assert isinstance(val_set, tuple)
-            assert isinstance(val_set[0], np.ndarray), "Expecting val_set[0] to be a Numpy array"
-            assert isinstance(val_set[1], np.ndarray), "Expecting val_set[1] to be a Numpy array"
+        validation_dataset = None
+        if validation_data is not None:
+            assert isinstance(validation_data, tuple)
+            assert isinstance(validation_data[0], np.ndarray), "Expecting validation_dataset[0] to be a Numpy array"
+            assert isinstance(validation_data[1], np.ndarray), "Expecting validation_dataset[1] to be a Numpy array"
+            if (validation_data[1].dtype == np.int) or (validation_data[1].dtype == np.long):
+                y_val_dtype = np.long
+            else:
+                y_val_dtype = np.float32
+            validation_dataset = XyDataset(validation_data[0], validation_data[1], y_val_dtype)
 
+        train_dataset = XyDataset(X_train, y_train, y_dtype)
         p_loss_fn = self.loss_fn if loss_fn is None else loss_fn
         p_optimizer = self.optimizer if optimizer is None else optimizer
         p_metrics_list = self.metrics_list if metrics is None else metrics
         
-        return train_model_xy(self.model, X_train, y_train, loss_fn=p_loss_fn, optimizer=p_optimizer, val_set=val_set,
-                             lr_scheduler=lr_scheduler, epochs=epochs, batch_size=batch_size,
-                             metrics=p_metrics_list, num_workers=num_workers)
+        return self.fit_dataset(train_dataset, loss_fn=p_loss_fn, optimizer=p_optimizer,
+                                validation_dataset=validation_dataset, lr_scheduler=lr_scheduler,
+                                epochs=epochs, batch_size=batch_size, metrics=p_metrics_list,
+                                shuffle=shuffle, num_workers=num_workers, early_stopping=early_stopping)
 
     def evaluate_dataset(self, dataset, loss_fn=None, batch_size=64, metrics=None, num_workers=0):
         p_loss_fn = self.loss_fn if loss_fn is None else loss_fn
@@ -1357,8 +1496,12 @@ class PytSequential():
     def evaluate(self, X, y, loss_fn=None, batch_size=64, metrics=None, num_workers=0):
         assert ((X is not None) and (isinstance(X, np.ndarray))), "Parameter error: X is None or is NOT an instance of np.ndarray"
         assert ((y is not None) and (isinstance(y, np.ndarray))), "Parameter error: y is None or is NOT an instance of np.ndarray"
+        if (y.dtype == np.int) or (y.dtype == np.long):
+            y_dtype = np.long
+        else:
+            y_dtype = np.float32
 
-        p_dataset = XyDataset(X, y)
+        p_dataset = XyDataset(X, y, y_dtype)
         return self.evaluate_dataset(p_dataset, loss_fn=loss_fn, batch_size=batch_size,
                                      metrics=metrics, num_workers=num_workers)
 

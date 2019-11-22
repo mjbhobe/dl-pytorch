@@ -93,18 +93,14 @@ def main():
         model = WineNet(13, 20, 3)
         # define the loss function & optimizer that model should
         criterion = nn.CrossEntropyLoss()
-        #optimizer = optim.Adam(params=model.parameters(), lr=0.0001, weight_decay=0.001)
-        optimizer = torch.optim.SGD(model.parameters(), lr=0.001, nesterov=True, momentum=0.9,
-                                    dampening=0) #, weight_decay=0.1)
+        optimizer = torch.optim.SGD(model.parameters(), lr=0.001, nesterov=True, momentum=0.9, dampening=0) 
         lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.1)
         model.compile(loss=criterion, optimizer=optimizer, metrics=['acc'])
         print(model)
 
         # train model
         print('Training model...')
-        hist = model.fit(X_train, y_train, val_set=(X_val, y_val), epochs=75, batch_size=16)
-        # hist = model.fit(train_dataset, loss_fn=loss_fn, optimizer=optimizer, #lr_scheduler=lr_scheduler,
-        #                  val_dataset=eval_dataset, epochs=75, batch_size=16)
+        hist = model.fit(X_train, y_train, validation_data=(X_val, y_val), epochs=75, batch_size=16)
         pyt.show_plots(hist)
 
         # evaluate model performance on train/eval & test datasets
@@ -123,8 +119,15 @@ def main():
     if DO_PREDICTION:
         print('\nRunning predictions...')
         # load model state from .pt file
-        # model = pyt.load_model(MODEL_SAVE_NAME)
         model = pyt.load_model(MODEL_SAVE_NAME)
+
+        print('\nEvaluating model performance...')
+        loss, acc = model.evaluate(X_train, y_train)
+        print('  Training dataset  -> loss: %.4f - acc: %.4f' % (loss, acc))
+        loss, acc = model.evaluate(X_val, y_val)
+        print('  Cross-val dataset -> loss: %.4f - acc: %.4f' % (loss, acc))
+        oss, acc = model.evaluate(X_test, y_test)
+        print('  Test dataset      -> loss: %.4f - acc: %.4f' % (loss, acc))
 
         y_preds = np.argmax(model.predict(X_test), axis=1)
         # display all predictions

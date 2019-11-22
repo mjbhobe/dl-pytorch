@@ -137,16 +137,13 @@ def main():
         model = WBCNet(NUM_FEATURES, 30, 30, NUM_CLASSES)
         # define the loss function & optimizer that model should
         loss_fn = nn.BCELoss() #nn.CrossEntropyLoss()
-        optimizer = torch.optim.SGD(model.parameters(), lr=LEARNING_RATE,
-                nesterov=True, momentum=0.9, dampening=0) #, weight_decay=0.1)
-        lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.1)
+        optimizer = torch.optim.SGD(model.parameters(), lr=LEARNING_RATE, nesterov=True, momentum=0.9, dampening=0) 
         model.compile(loss=loss_fn, optimizer=optimizer, metrics=['acc','f1'])
         print(model)
 
         # train model
         print('Training model...')
-        #metrics_list = ['acc','f1'] 
-        hist = model.fit(X_train, y_train, val_set=(X_val, y_val), epochs=NUM_EPOCHS, batch_size=BATCH_SIZE)
+        hist = model.fit(X_train, y_train, validation_data=(X_val, y_val), epochs=NUM_EPOCHS, batch_size=BATCH_SIZE)
         pyt.show_plots(hist)
 
         # evaluate model performance on train/eval & test datasets
@@ -166,9 +163,8 @@ def main():
         print('\nRunning predictions...')
         model = pyt.load_model(MODEL_SAVE_NAME)
         
-        y_pred = model.predict(X_test)
-        y_pred = np.argmax(y_pred, axis=1)
-        # we have just 30 elements in dataset, showing ALL
+        y_pred = np.round(model.predict(X_test)).reshape(-1)
+        # display output
         print('Sample labels: ', y_test)
         print('Sample predictions: ', y_pred)
         print('We got %d/%d incorrect!' % ((y_test != y_pred).sum(), len(y_test)))

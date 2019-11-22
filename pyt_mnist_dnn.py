@@ -49,7 +49,8 @@ def load_data():
 
     print("No of training records: %d" % len(train_dataset))
 
-    test_dataset = datasets.MNIST('./data', download=True, train=False,                                    transform=transformations)
+    test_dataset = datasets.MNIST('./data', train=False, download=True,
+                                  transform=transformations)
     print("No of test records: %d" % len(test_dataset))
 
     # lets split the test dataset into val_dataset & test_dataset -> 8000:2000 records
@@ -168,7 +169,7 @@ def main():
 
         # train model
         print('Training model...')
-        hist = model.fit_dataset(train_dataset, val_dataset=val_dataset, lr_scheduler=scheduler,
+        hist = model.fit_dataset(train_dataset, validation_dataset=val_dataset, lr_scheduler=scheduler,
                                  epochs=25, num_workers=3)
         pyt.show_plots(hist)
 
@@ -188,10 +189,8 @@ def main():
     if DO_PREDICTION:
         print('Running predictions...')
         # load model state from .pt file
-        # model = pyt.load_model(MODEL_SAVE_NAME)
         model = pyt.load_model(MODEL_SAVE_NAME)
 
-        # _, all_preds, all_labels = pyt.predict_dataset(model, test_dataset)
         y_pred, y_true = model.predict_dataset(test_dataset)
         y_pred = np.argmax(y_pred, axis=1)
         print('Sample labels (50): ', y_true[:50])
@@ -203,7 +202,6 @@ def main():
         trainloader = torch.utils.data.DataLoader(test_dataset, batch_size=64, shuffle=True)
         data_iter = iter(trainloader)
         images, labels = data_iter.next()  # fetch a batch of 64 random images
-        #_, preds = pyt.predict(model, images)
         preds = np.argmax(model.predict(images), axis=1)
         display_sample(images, labels, sample_predictions=preds,
                        grid_shape=(8, 8), plot_title='Sample Predictions')
