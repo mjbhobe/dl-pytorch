@@ -448,7 +448,7 @@ def create_hist_and_metrics_ds__(metrics, include_val_metrics=True):
 
     return history, batch_metrics, cum_metrics
 
-def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_dataset=None,
+def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_split=0.0, validation_dataset=None,
                 lr_scheduler=None, epochs=25, batch_size=64, metrics=None, shuffle=True,
                 num_workers=0, early_stopping=None):
     """
@@ -464,9 +464,13 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_d
           from the torch.optim package)
             if optimizer == None, then model must define an attribute self.optimizer, which is 
             an instance of any optimizer defined in the torch.optim package
+        - validation_split: Float between 0 and 1. Fraction of the training data to be used as validation data. 
+           The model will set apart this fraction of the training data, will not train on it, and will 
+           evaluate the loss and any model metrics on this data at the end of each epoch.
         - validation_dataset: cross-validation dataset to use during training (optional, default=None)
             if validation_dataset is not None, then model is cross trained on test dataset & 
             cross-validation dataset (good practice to always use a cross-validation dataset!)
+            (NOTE: validation_dataset will supercede validation_split if both specified)
         - lr_scheduler: learning rate scheduler to use during training (optional, default=None)
             if specified, should be one of the learning rate schedulers (e.g. StepLR) defined
             in the torch.optim.lr_scheduler package
@@ -479,8 +483,7 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_d
             when metrics not None, in addition to loss all specified metrics are computed for training
             set (and validation set, if specified)
         - shuffle (boolean, default = True): determines if the training dataset shuould be shuffled between
-            epochs or not. Emperically it has been observed that shuffling improves performance for classification
-            but presents problems for regression (I set it to False for regression problems)
+            epochs or not. 
         - num_workers (int, default=0): number of worker threads to use when loading datasets internally using 
             DataLoader objects.
         - early_stopping(EarlyStopping, default=None): instance of EarlyStopping class to be passed in if training
@@ -497,13 +500,14 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_d
         assert isinstance(model, nn.Module), "train_model() works with instances of nn.Module only!"
         assert isinstance(train_dataset, torch.utils.data.Dataset), \
             "train_dataset must be a subclass of torch.utils.data.Dataset"
+        assert (0.0 <= validation_split < 1.0), "validation_split must be a float between (0.0, 1.0]"
         if validation_dataset is not None:
             assert isinstance(validation_dataset, torch.utils.data.Dataset), \
                 "validation_dataset must be a subclass of torch.utils.data.Dataset"
         check_attribs__(model, loss_fn, optimizer)
         if loss_fn is None: loss_fn = model.loss_fn
         if loss_fn is None:
-            raise ValueError("Loss function is not defined. Must pass as parameter or define in class")
+            raise ValueError("Loss function is not defined. Must pass as paf rameter or define in class")
         if optimizer is None: optimizer = model.optimizer
         if optimizer is None:
             raise ValueError("Optimizer is not defined. Must pass as parameter or define in class")
@@ -515,6 +519,18 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_d
             assert isinstance(early_stopping, EarlyStopping), \
                 "early_stopping: incorrect type. Expecting instance of EarlyStopping class"
             early_stopping_metric = early_stopping.monitor
+
+        # if validation_split is provided by user, then split train_dataset
+        if (validation_split > 0.0) and (validation_dataset is None):
+            # NOTE: validation_dataset supercedes validation_split
+            num_recs = len(train_dataset)
+            train_count = int((1.0 - validation_split) * num_recs)
+            val_count = num_recs - train_count
+            train_dataset, validation_dataset = torch.utils.data.random_split(train_dataset, [train_count, val_count])
+            assert (train_dataset is not None) and (len(train_dataset) == train_count), \
+                "Something is wrong with validation_split - getting incorrect train_dataset counts!!"
+            assert (validation_dataset is not None) and (len(validation_dataset) == val_count), \
+                "Something is wrong with validation_split - getting incorrect validation_dataset counts!!"
 
         # train on GPU if available
         gpu_available = torch.cuda.is_available()
@@ -676,7 +692,7 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_d
             if (lr_scheduler is not None) and (epoch <= epochs-1):
                 lr_scheduler.step()
                 step_lr = lr_scheduler.get_lr()
-                print('   StepLR (log): curr_lr = {}, new_lr = {}'.format(curr_lr, step_lr))
+                #print('   StepLR (log): curr_lr = {}, new_lr = {}'.format(curr_lr, step_lr))
                 if np.round(np.array(step_lr),10) != np.round(np.array(curr_lr),10):
                     print('Stepping learning rate to {}'.format(step_lr))
                     curr_lr = step_lr
@@ -685,8 +701,9 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_d
     finally:
         model = model.cpu()
 
-def train_model_xy(model, X_train, y_train, loss_fn=None, optimizer=None, validation_dataset=None,
+def train_model_xy(model, X_train, y_train, loss_fn=None, optimizer=None, validation_split=0.0, validation_dataset=None,
                    lr_scheduler=None, epochs=25, batch_size=64, metrics=None, shuffle=True):
+    raise NotImplementedError("train_model_xy should not be used!!")
     try:
         # checks for parameters
         assert isinstance(model, nn.Module), "train_model() works with instances of nn.Module only!"
@@ -1294,8 +1311,9 @@ class PytModule(nn.Module):
         raise NotImplementedError("You have landed up calling PytModule.forward(). " +
             "You must re-implement this menthod in your derived class!")
 
-    def fit_dataset(self, train_dataset, loss_fn=None, optimizer=None, validation_dataset=None, lr_scheduler=None,
-                    epochs=25, batch_size=64, metrics=None, shuffle=True, num_workers=0, early_stopping=None):
+    def fit_dataset(self, train_dataset, loss_fn=None, optimizer=None, validation_split=0.0,
+                    validation_dataset=None, lr_scheduler=None, epochs=25, batch_size=64, metrics=None,
+                    shuffle=True, num_workers=0, early_stopping=None):
         """ 
         train model on instance of torch.utils.data.Dataset
         @params:
@@ -1306,6 +1324,9 @@ class PytModule(nn.Module):
             - optimizer (optional, default=None): instance of any optimizer defined by Pytorch
               You could pass optimizer as a parameter to this function or pre-set it using the compile function.
               Value passed into this parameter takes precedence over value set in compile(...) call
+            - validation_split: Float between 0 and 1. Fraction of the training data to be used as validation data. 
+              The model will set apart this fraction of the training data, will not train on it, and will 
+              evaluate the loss and any model metrics on this data at the end of each epoch.
             - validation_dataset (optional, default=None) - instance of torch.utils.data.Dataset used for cross-validation
               If you pass a valid instance, then model is cross-trained on train_dataset and validation_dataset, else model
               is trained on just train_dataset. As a best practice, it is advisible to use cross training.
@@ -1337,12 +1358,13 @@ class PytModule(nn.Module):
         p_optimizer = self.optimizer if optimizer is None else optimizer
         p_metrics_list = self.metrics_list if metrics is None else metrics
         return train_model(self, train_dataset, loss_fn = p_loss_fn, optimizer = p_optimizer,
-                           validation_dataset = validation_dataset, lr_scheduler = lr_scheduler,
-                           epochs = epochs, batch_size = batch_size, metrics = p_metrics_list,
-                           shuffle = shuffle, num_workers=num_workers, early_stopping=early_stopping)
+                           validation_split = validation_split, validation_dataset = validation_dataset,
+                           lr_scheduler = lr_scheduler, epochs = epochs, batch_size = batch_size,
+                           metrics = p_metrics_list, shuffle = shuffle, num_workers = num_workers,
+                           early_stopping=early_stopping)
 
-    def fit(self, X_train, y_train, loss_fn=None, optimizer=None, validation_data=None, lr_scheduler=None,
-            epochs=25, batch_size=64, metrics=None, shuffle=True, num_workers=0, early_stopping=None):
+    def fit(self, X_train, y_train, loss_fn=None, optimizer=None, validation_split=0.0, validation_data=None,
+            lr_scheduler=None, epochs=25, batch_size=64, metrics=None, shuffle=True, num_workers=0, early_stopping=None):
 
         assert ((X_train is not None) and (isinstance(X_train, np.ndarray))), \
             "Parameter error: X_train is None or is NOT an instance of np.ndarray"
@@ -1369,7 +1391,8 @@ class PytModule(nn.Module):
         p_optimizer = self.optimizer if optimizer is None else optimizer
         p_metrics_list = self.metrics_list if metrics is None else metrics
         return self.fit_dataset(train_dataset, loss_fn=p_loss_fn, optimizer=p_optimizer,
-                                validation_dataset=validation_dataset, lr_scheduler=lr_scheduler,
+                                validation_split=validation_split, validation_dataset=validation_dataset,
+                                lr_scheduler=lr_scheduler,
                                 epochs=epochs, batch_size=batch_size, metrics=p_metrics_list,
                                 shuffle=shuffle, num_workers=num_workers, early_stopping=early_stopping)
 
@@ -1443,19 +1466,20 @@ class PytModuleWrapper():
     def parameters(self, recurse=True):
         return self.model.parameters(recurse)
 
-    def fit_dataset(self, train_dataset, loss_fn=None, optimizer=None, validation_dataset=None, lr_scheduler=None,
-                    epochs=25, batch_size=64, metrics=None, shuffle=True, num_workers=0, early_stopping=None):
+    def fit_dataset(self, train_dataset, loss_fn=None, optimizer=None, validation_split=0.0,
+                    validation_dataset=None, lr_scheduler=None, epochs=25, batch_size=64, metrics=None,
+                    shuffle=True, num_workers=0, early_stopping=None):
         p_loss_fn = self.loss_fn if loss_fn is None else loss_fn
         p_optimizer = self.optimizer if optimizer is None else optimizer
         p_metrics_list = self.metrics_list if metrics is None else metrics
 
         return train_model(self.model, train_dataset, loss_fn=p_loss_fn,
-            optimizer=p_optimizer, validation_dataset=validation_dataset, lr_scheduler=lr_scheduler,
-            epochs=epochs, batch_size=batch_size, metrics=p_metrics_list, shuffle=shuffle,
-            num_workers=num_workers, early_stopping=early_stopping)
+            optimizer=p_optimizer, validation_split=validation_split, validation_dataset=validation_dataset,
+            lr_scheduler=lr_scheduler, epochs=epochs, batch_size=batch_size, metrics=p_metrics_list,
+            shuffle=shuffle, num_workers=num_workers, early_stopping=early_stopping)
 
-    def fit(self, X_train, y_train, loss_fn=None, optimizer=None, validation_data=None, lr_scheduler=None,
-            epochs=25, batch_size=64, metrics=None, shuffle=True, num_workers=0, early_stopping=None):
+    def fit(self, X_train, y_train, loss_fn=None, optimizer=None, validation_split=0.0, validation_data=None,
+            lr_scheduler=None, epochs=25, batch_size=64, metrics=None, shuffle=True, num_workers=0, early_stopping=None):
 
         assert ((X_train is not None) and (isinstance(X_train, np.ndarray))), \
             "Parameter error: X_train is None or is NOT an instance of np.ndarray"
@@ -1483,8 +1507,8 @@ class PytModuleWrapper():
         p_metrics_list = self.metrics_list if metrics is None else metrics
         
         return self.fit_dataset(train_dataset, loss_fn=p_loss_fn, optimizer=p_optimizer,
-                                validation_dataset=validation_dataset, lr_scheduler=lr_scheduler,
-                                epochs=epochs, batch_size=batch_size, metrics=p_metrics_list,
+                                validation_split=validation_split, validation_dataset=validation_dataset,
+                                lr_scheduler=lr_scheduler, epochs=epochs, batch_size=batch_size, metrics=p_metrics_list,
                                 shuffle=shuffle, num_workers=num_workers, early_stopping=early_stopping)
 
     def evaluate_dataset(self, dataset, loss_fn=None, batch_size=64, metrics=None, num_workers=0):
@@ -1494,8 +1518,10 @@ class PytModuleWrapper():
                               metrics=p_metrics_list, num_workers=num_workers)
 
     def evaluate(self, X, y, loss_fn=None, batch_size=64, metrics=None, num_workers=0):
-        assert ((X is not None) and (isinstance(X, np.ndarray))), "Parameter error: X is None or is NOT an instance of np.ndarray"
-        assert ((y is not None) and (isinstance(y, np.ndarray))), "Parameter error: y is None or is NOT an instance of np.ndarray"
+        assert ((X is not None) and (isinstance(X, np.ndarray))), \
+            "Parameter error: X is None or is NOT an instance of np.ndarray"
+        assert ((y is not None) and (isinstance(y, np.ndarray))), \
+            "Parameter error: y is None or is NOT an instance of np.ndarray"
         if (y.dtype == np.int) or (y.dtype == np.long):
             y_dtype = np.long
         else:

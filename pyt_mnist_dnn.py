@@ -10,7 +10,7 @@ Use at your own risk!! I am not responsible if your CPU or GPU gets fried :D
 import warnings
 warnings.filterwarnings('ignore')
 
-import random
+import sys, os, random
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -142,7 +142,7 @@ DO_TRAINING = True
 DO_PREDICTION = True
 SHOW_SAMPLE = True
 
-MODEL_SAVE_NAME = 'pyt_mnist_dnn'
+MODEL_SAVE_PATH = os.path.join('.', 'model_states','pyt_mnist_dnn')
 
 def main():
     print('Loading datasets...')
@@ -183,13 +183,13 @@ def main():
         print('  Test dataset      -> loss: %.4f - acc: %.4f' % (loss, acc))
 
         # save model state
-        model.save(MODEL_SAVE_NAME)
+        model.save(MODEL_SAVE_PATH)
         del model
 
     if DO_PREDICTION:
         print('Running predictions...')
         # load model state from .pt file
-        model = pyt.load_model(MODEL_SAVE_NAME)
+        model = pyt.load_model(MODEL_SAVE_PATH)
 
         y_pred, y_true = model.predict_dataset(test_dataset)
         y_pred = np.argmax(y_pred, axis=1)

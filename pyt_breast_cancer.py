@@ -55,7 +55,7 @@ def download_data_file():
     wis_df = pd.read_csv(url, header=None, names=df_cols, index_col=0)
     wis_df.to_csv(data_file_path)
 
-def load_data(val_split=0.20, test_split=0.10):
+def load_data(test_split=0.20):
     from sklearn.model_selection import train_test_split
     from sklearn.preprocessing import StandardScaler
 
@@ -75,18 +75,14 @@ def load_data(val_split=0.20, test_split=0.10):
 
     # split into train/test sets
     X_train, X_test, y_train, y_test = \
-        train_test_split(X, y, test_size=val_split, random_state=seed)
+        train_test_split(X, y, test_size=test_split, random_state=seed)
     
     # scale data
     ss = StandardScaler()
     X_train = ss.fit_transform(X_train)
     X_test = ss.transform(X_test)
 
-    # split into train/eval sets
-    X_val, X_test, y_val, y_test = \
-        train_test_split(X_test, y_test, test_size=test_split, random_state=seed)
-    
-    return (X_train, y_train), (X_val, y_val), (X_test, y_test)
+    return (X_train, y_train), (X_test, y_test)
 
 # our ANN
 class WBCNet(pyt.PytModule):
@@ -128,9 +124,9 @@ LEARNING_RATE = 0.001
 
 def main():
 
-    (X_train, y_train), (X_val, y_val), (X_test, y_test) = load_data()
-    print(X_train.shape, y_train.shape, X_val.shape, y_val.shape, X_test.shape, y_test.shape)
-    y_train, y_val, y_test = y_train.astype(np.float), y_val.astype(np.float), y_test.astype(np.float)
+    (X_train, y_train), (X_test, y_test) = load_data()
+    print(X_train.shape, y_train.shape, X_test.shape, y_test.shape)
+    y_train, y_test = y_train.astype(np.float), y_test.astype(np.float)
 
     if DO_TRAINING:
         print('Building model...')
@@ -143,15 +139,14 @@ def main():
 
         # train model
         print('Training model...')
-        hist = model.fit(X_train, y_train, validation_data=(X_val, y_val), epochs=NUM_EPOCHS, batch_size=BATCH_SIZE)
+        # split training data into train/cross-val datasets in 80:20 ratio
+        hist = model.fit(X_train, y_train, validation_split=0.20, epochs=NUM_EPOCHS, batch_size=BATCH_SIZE)
         pyt.show_plots(hist)
 
         # evaluate model performance on train/eval & test datasets
         print('\nEvaluating model performance...')
         loss, acc, f1 = model.evaluate(X_train, y_train)
         print('  Training dataset  -> loss: %.4f - acc: %.4f - f1: %.4f' % (loss, acc, f1))
-        loss, acc, f1 = model.evaluate(X_val, y_val)
-        print('  Cross-val dataset  -> loss: %.4f - acc: %.4f - f1: %.4f' % (loss, acc, f1))
         loss, acc, f1 = model.evaluate(X_test, y_test)
         print('  Test dataset  -> loss: %.4f - acc: %.4f - f1: %.4f' % (loss, acc, f1))
 
@@ -167,7 +162,7 @@ def main():
         # display output
         print('Sample labels: ', y_test)
         print('Sample predictions: ', y_pred)
-        print('We got %d/%d incorrect!' % ((y_test != y_pred).sum(), len(y_test)))
+        print('We got %d/%d correct!' % ((y_test == y_pred).sum(), len(y_test)))
 
 if __name__ == "__main__":
     main()

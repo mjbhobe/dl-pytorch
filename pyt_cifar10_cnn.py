@@ -196,8 +196,6 @@ DO_TRAINING = True
 DO_PREDICTION = True
 SHOW_SAMPLE = False
 
-MODEL_SAVE_NAME = 'pyt_mnist_dnn'
-
 def main():
     print('Loading datasets...')
     train_dataset, val_dataset, test_dataset = load_data()
@@ -235,18 +233,18 @@ def main():
         print('  Training dataset  -> loss: %.4f - acc: %.4f' % (loss, acc))
         loss, acc = model.evaluate_dataset(val_dataset)
         print('  Cross-val dataset -> loss: %.4f - acc: %.4f' % (loss, acc))
-        oss, acc = model.evaluate_dataset(test_dataset)
+        loss, acc = model.evaluate_dataset(test_dataset)
         print('  Test dataset      -> loss: %.4f - acc: %.4f' % (loss, acc))
 
         # save model state
-        model.save(MODEL_SAVE_NAME)
+        model.save(MODEL_SAVE_PATH)
         del model
 
     if DO_PREDICTION:
         print('Running predictions...')
         # load model state from .pt file
         # model = pyt.load_model(MODEL_SAVE_NAME)
-        model = pyt.PytModuleWrapper(pyt.load_model(MODEL_SAVE_NAME))
+        model = pyt.PytModuleWrapper(pyt.load_model(MODEL_SAVE_PATH))
         # needed for PytModuleWrapper
         loss_fn = nn.CrossEntropyLoss()
         optimizer = optim.SGD(params=model.parameters(), lr=LEARNING_RATE, weight_decay=L2_REG)
