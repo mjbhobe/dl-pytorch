@@ -341,7 +341,6 @@ class EarlyStopping:
             mod = model.model
         torch.save(mod.state_dict(), self.checkpoint_file_path)
 
-
 # -------------------------------------------------------------------------------------
 # helper functions for training model, evaluating performance & making predictions
 # -------------------------------------------------------------------------------------
