@@ -19,6 +19,7 @@ provides a Keras like interface to train & evaluate model and generate predictio
 * `pyt_mnist_dnn.py` - `MNIST digits` _multiclass classification_ with Pytorch ANN
 * `pyt_cifar10_cnn.py` - _multiclass classification_ with **CNN** on `CIFAR-10` dataset
 * `Pytorch-Fruits360(Kaggle)_CNN.ipynb` - iPython Notebook for the [Kaggle Fruits360](https://www.kaggle.com/moltean/fruits) multiclass classification problem
+* `Pytorch-Malaria Cell Detection(Kaggle)_CNN.ipynb` - iPython Notebook for the [Kaggle Malaric Cell Detection Dataset](https://www.kaggle.com/moltean/fruitshttps://www.kaggle.com/iarunava/cell-images-for-detecting-malaria) binary classification problem
 
 ### Regression Examples:
 * `pyt_regression.py` - _univariate regression_ on synthesized data
