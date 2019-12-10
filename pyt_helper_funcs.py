@@ -24,6 +24,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.utils import shuffle
+import itertools
 
 # torch imports
 import torch
@@ -511,7 +512,9 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
         if optimizer is None:
             raise ValueError("Optimizer is not defined. Must pass as parameter or define in class")
         if lr_scheduler is not None:
-            assert isinstance(lr_scheduler, torch.optim.lr_scheduler._LRScheduler), \
+            assert isinstance(lr_scheduler, torch.optim.lr_schedulation_dataset) == val_count), \
+                "Something is wrong with validation_split - getting incorrect validation_dataset counts!!"
+er._LRScheduler), \
                 "lr_scheduler: incorrect type. Expecting class derived from torch.optim._LRScheduler"
         early_stopping_metric = None
         if early_stopping is not None:
@@ -1251,14 +1254,17 @@ class XyDataset(Dataset):
     @params:
         - X: numpy array for the features (m rows X n feature cols Numpy array)
         - y: numpy array for labels/targets (m rows X 1 array OR a flattened array of m values)
+        - y_dtype: which datatype to cast y to (could be float if you choose, normally long)
+        - xforms (default: None) - transforms to apply to X returned by __getitem__
     """
-    def __init__(self, X, y, y_dtype):
-        assert isinstance(X, np.ndarray), "X parameter should be an instance of Numpy array"
+    def __init__(self, X, y, y_dtype=np.long, xforms=None):
+        assert isinstance(X, np.ndarray), "X parameter should be an instance of Numpy array or list"
         assert isinstance(y, np.ndarray), "y parameter should be an instance of Numpy array"
 
         self.X = X
         self.y = y
         self.y_dtype = y_dtype
+        self.transforms = xforms
         
     def __len__(self):
         return self.X.shape[0]
@@ -1266,6 +1272,10 @@ class XyDataset(Dataset):
     def __getitem__(self, index):
         ## NOTE: set data.type = np.float32 & label to np.int, else I get wierd errors!
         data = self.X[index].astype(np.float32)
+        #print(f'XyDataset [log]: data.shape = {data.shape}')
+        if self.transforms is not None:
+            # apply the transforms
+            data = self.transforms(data)
         label = self.y[index].astype(self.y_dtype)
         return (data, label)
 
