@@ -32,10 +32,19 @@ from torchsummary import summary
 # My helper functions for training/evaluating etc.
 import pyt_helper_funcs as pyt
 
+# to ensure that you get consistent results across runs & machines
+# @see: https://discuss.pytorch.org/t/reproducibility-over-different-machines/63047
 seed = 123
 random.seed(seed)
+os.environ['PYTHONHASHSEED'] = str(seed)
 np.random.seed(seed)
-torch.manual_seed(seed);
+torch.manual_seed(seed)
+torch.cuda.manual_seed(seed)
+torch.cuda.manual_seed_all(seed)
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
+torch.backends.cudnn.enabled = False
+
 
 def load_data(val_split=0.20, test_split=0.20):
     from sklearn.datasets import load_iris
@@ -112,11 +121,11 @@ def main():
         # evaluate model performance on train/eval & test datasets
         print('\nEvaluating model performance...')
         loss, acc = model.evaluate(X_train, y_train)
-        print('  Training dataset  -> loss: %.4f - acc: %.4f' % (loss, acc))
+        print(f'  Training dataset  -> loss: {loss:.4f} - acc: {acc:.4f}')
         loss, acc = model.evaluate(X_val, y_val)
-        print('  Cross-val dataset -> loss: %.4f - acc: %.4f' % (loss, acc))
+        print(f'  Cross-val dataset -> loss: {loss:.4f} - acc: {acc:.4f}')
         loss, acc = model.evaluate(X_test, y_test)
-        print('  Test dataset      -> loss: %.4f - acc: %.4f' % (loss, acc))
+        print(f'  Test dataset      -> loss: {loss:.4f} - acc: {acc:.4f}')
 
         # save model state
         model.save(MODEL_SAVE_NAME)
@@ -129,9 +138,9 @@ def main():
 
         y_pred = np.argmax(model.predict(X_test), axis=1)
         # we have just 5 elements in dataset, showing ALL
-        print('Sample labels: ', y_test)
-        print('Sample predictions: ', y_pred)
-        print('We got %d/%d incorrect predictions!' % ((y_test != y_pred).sum(), len(y_test)))
+        print(f'Sample labels: {y_test}')
+        print(f'Sample predictions: {y_pred}')
+        print(f'We got {(y_test == y_pred).sum()}/{len(y_test)} correct!!')
 
 if __name__ == "__main__":
     main()

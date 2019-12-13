@@ -33,11 +33,18 @@ from torch.autograd import Variable
 from torchsummary import summary
 from torch.utils.data.dataset import Dataset
  
-# seed
+# to ensure that you get consistent results across runs & machines
+# @see: https://discuss.pytorch.org/t/reproducibility-over-different-machines/63047
 seed = 123
 random.seed(seed)
+os.environ['PYTHONHASHSEED'] = str(seed)
 np.random.seed(seed)
-torch.manual_seed(seed);
+torch.manual_seed(seed)
+torch.cuda.manual_seed(seed)
+torch.cuda.manual_seed_all(seed)
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
+torch.backends.cudnn.enabled = False
 
 # -----------------------------------------------------------------------------
 # helper function to create various layers of model
@@ -512,9 +519,7 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
         if optimizer is None:
             raise ValueError("Optimizer is not defined. Must pass as parameter or define in class")
         if lr_scheduler is not None:
-            assert isinstance(lr_scheduler, torch.optim.lr_schedulation_dataset) == val_count), \
-                "Something is wrong with validation_split - getting incorrect validation_dataset counts!!"
-er._LRScheduler), \
+            assert isinstance(lr_scheduler, torch.optim.lr_scheduler._LRScheduler), \
                 "lr_scheduler: incorrect type. Expecting class derived from torch.optim._LRScheduler"
         early_stopping_metric = None
         if early_stopping is not None:

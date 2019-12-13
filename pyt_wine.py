@@ -32,10 +32,18 @@ from torchsummary import summary
 # My helper functions for training/evaluating etc.
 import pyt_helper_funcs as pyt
 
+# to ensure that you get consistent results across runs & machines
+# @see: https://discuss.pytorch.org/t/reproducibility-over-different-machines/63047
 seed = 123
 random.seed(seed)
+os.environ['PYTHONHASHSEED'] = str(seed)
 np.random.seed(seed)
-torch.manual_seed(seed);
+torch.manual_seed(seed)
+torch.cuda.manual_seed(seed)
+torch.cuda.manual_seed_all(seed)
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
+torch.backends.cudnn.enabled = False
 
 def load_data(val_split=0.20, test_split=0.10):
     from sklearn.datasets import load_wine
@@ -131,9 +139,9 @@ def main():
 
         y_preds = np.argmax(model.predict(X_test), axis=1)
         # display all predictions
-        print('Sample labels: ', y_test)
-        print('Sample predictions: ', y_preds)
-        print('We got %d/%d incorrect!' % ((y_preds != y_test).sum(), len(y_test)))
+        print(f'Sample labels: {y_test}')
+        print(f'Sample predictions: {y_preds}')
+        print(f'We got {(y_preds == y_test).sum()}/{len(y_test)} correct!!')
 
 if __name__ == "__main__":
     main()
