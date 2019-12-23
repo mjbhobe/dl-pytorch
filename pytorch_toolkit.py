@@ -1,15 +1,14 @@
 # encoding='utf-8'
 """
-pyt_helper_funcs.py - generic helper functions that can be used across Pytorch code
-    - provides helper functions to create various layers (pre-initialized weights & biases)
-    - provides functions to train/evaluate models
-    - provides a list of metrics that we can use during training (acc, precision, recall, mse etc.)
-    - provides PytModule class, which helps provide a Keras-like training mechanism
-    - provides classes for custom Datasets (for use with pandas DataFrame & Numpy arrays)
+pytorch_toolkit.py: 
+    Functions, Classes and Metrics to ease the process of training, evaluating and testing models.
+    This module provides a Keras-like API to preclude the need to write boiler-plate code when
+    training your Pytorch models. Convenience functions and classes that wrap those functions
+    have been provided to ease the process of training, evaluating & testing your models.
 
 @author: Manish Bhobe
-This code is shared with MIT license for educational purposes only. Use at your own risk!!
-I am not responsible if your computer explodes of GPU gets fried :P
+This code is shared with MIT license as-is. Fell free to use it, extend it, but please give me 
+some credit as the original author of this code :).
 
 Usage:
   - Copy this file into a directory in sys.path
@@ -54,7 +53,7 @@ def Conv2d(in_channels, out_channels, kernel_size=3, stride=1, padding=1,
     """
     (convenience function)
     creates a nn.Conv2d layer, with weights initiated using glorot_uniform initializer
-    and bias initialized using zeros initializer
+    and bias initialized using zeros initializer as is the default in Keras.
     @params:
         - same as nn.Conv2d params
     @returns:
@@ -122,7 +121,6 @@ def accuracy(logits, labels):
     else:
         vals, predicted = torch.max(logits.data, 1)
     
-    #_, predicted = torch.max(logits.data, 1)
     total_count = labels.size(0)
 
     y_pred = predicted.long()
@@ -696,11 +694,12 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
                     return history
                 
             # step the learning rate scheduler at end of epoch
-            if (lr_scheduler is not None) and (epoch <= epochs-1):
+            if (lr_scheduler is not None) and (epoch < epochs-1):
                 lr_scheduler.step()
                 step_lr = lr_scheduler.get_lr()
                 #print('   StepLR (log): curr_lr = {}, new_lr = {}'.format(curr_lr, step_lr))
-                if np.round(np.array(step_lr),10) != np.round(np.array(curr_lr),10):
+                if np.round(np.array(step_lr), 10) != np.round(np.array(curr_lr), 10):
+                    #print(f'type(step_lr) = {type(step_lr)} and type(curr_lr) = {type(curr_lr)}')
                     print('Stepping learning rate to {}'.format(step_lr))
                     curr_lr = step_lr
 
@@ -1236,6 +1235,7 @@ class PandasDataset(Dataset):
             - target_col_name: column name of Pandas dataframe to use as target/label
             - target_col_type (optional, default: np.int): datatype of target/label column 
         """
+        raise NotImplementedError("PandasDataset() should not be used!!")
         assert isinstance(df, pd.DataFrame), "df parameter should be an instance of pd.DataFrame"
         assert isinstance(target_col_name, str), "target_col_name parameter should be a string"
 
@@ -1284,7 +1284,7 @@ class XyDataset(Dataset):
         label = self.y[index].astype(self.y_dtype)
         return (data, label)
 
-class PytModule(nn.Module):
+class PytkModule(nn.Module):
     """
     A class that you can inherit from to define your project's model
     Inheriting from this class provides a Keras-like interface for training model, evaluating model performance
@@ -1309,7 +1309,7 @@ class PytModule(nn.Module):
          function instead
     """
     def __init__(self):
-        super(PytModule, self).__init__()
+        super(PytkModule, self).__init__()
         self.loss_fn = None
         self.optimizer = None
         self.metrics_list = None
@@ -1453,13 +1453,13 @@ class PytModule(nn.Module):
         else:
             summary(self.cpu(), input_shape)
 
-class PytModuleWrapper():
+class PytkModuleWrapper():
     """
     Utility class that wraps an instance of nn.Module or nn.Sequential or a pre-trained Pytorch module
     and provides a Keras-like interface to train, evaluate & predict results from model.
     """
     def __init__(self, model):
-        super(PytModuleWrapper, self).__init__()
+        super(PytkModuleWrapper, self).__init__()
         assert (model is not None) and isinstance(model, nn.Module), \
             "model parameter is None or not of type nn.Module"
         self.model = model

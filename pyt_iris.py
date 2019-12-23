@@ -29,8 +29,9 @@ import torch.nn.functional as F
 from torch.utils.data.dataset import Dataset
 from torch import optim
 from torchsummary import summary
-# My helper functions for training/evaluating etc.
-import pyt_helper_funcs as pyt
+
+# import the pytorch tookit - training nirvana :)
+import pytorch_toolkit as pytk
 
 # to ensure that you get consistent results across runs & machines
 # @see: https://discuss.pytorch.org/t/reproducibility-over-different-machines/63047
@@ -72,19 +73,21 @@ def load_data(val_split=0.20, test_split=0.20):
 
     return (X_train, y_train), (X_val, y_val), (X_test, y_test)
 
-# our ANN
-class IrisNet(pyt.PytModule):
+# our model - note that it is created the same way as your usual Pytorch model
+# Only difference is that it has been derived from 
+class IrisNet(pytk.PytkModule):
     def __init__(self, inp_size, hidden1, hidden2, num_classes):
         super(IrisNet, self).__init__()
-        self.fc1 = pyt.Linear(inp_size, hidden1)
+        self.fc1 = nn.Linear(inp_size, hidden1)
         self.relu1 = nn.ReLU()
-        self.fc2 = pyt.Linear(hidden1, hidden2)
+        self.fc2 = nn.Linear(hidden1, hidden2)
         self.relu2 = nn.ReLU()
-        self.out = pyt.Linear(hidden2, num_classes)
+        self.out = nn.Linear(hidden2, num_classes)
         self.dropout = nn.Dropout(0.01)
 
     def forward(self, x):
         x = self.relu1(self.fc1(x))
+        x = self.relu2(self.fc2(x))
         # NOTE: nn.CrossEntropyLoss() includes a logsoftmax call, which applies a softmax
         # function to outputs. So, don't apply one yourself!
         # x = F.softmax(self.out(x), dim=1)  # -- don't do this!
@@ -95,7 +98,7 @@ DO_TRAINING = True
 DO_TESTING = True
 DO_PREDICTION = True
 MODEL_SAVE_NAME = 'pyt_iris_ann'
-NUM_EPOCHS = 500
+NUM_EPOCHS = 250
 BATCH_SIZE = 32
 
 def main():
@@ -106,19 +109,21 @@ def main():
 
     if DO_TRAINING:
         print('Building model...')
-        model = IrisNet(4, 10, 10, 3)
+        model = IrisNet(4, 16, 16, 3)
         # define the loss function & optimizer that model should
         loss_fn = nn.CrossEntropyLoss()
-        optimizer = torch.optim.SGD(model.parameters(), lr=0.001, nesterov=True, momentum=0.9, dampening=0)
+        optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=0.005)
         model.compile(loss=loss_fn, optimizer=optimizer, metrics=['acc'])
         print(model)
 
-        # train model
+        # train model - here is the magic, notice the Keras-like fit(...) call
         print('Training model...')
-        hist = model.fit(X_train, y_train, validation_data=(X_val, y_val), epochs=NUM_EPOCHS, batch_size=BATCH_SIZE) 
-        pyt.show_plots(hist)
+        hist = model.fit(X_train, y_train, validation_data=(X_val, y_val), epochs=250, batch_size=BATCH_SIZE)
+        # display plots of loss & accuracy against epochs
+        pytk.show_plots(hist)
 
         # evaluate model performance on train/eval & test datasets
+        # Again, notice the Keras-like API to evaluate model performance
         print('\nEvaluating model performance...')
         loss, acc = model.evaluate(X_train, y_train)
         print(f'  Training dataset  -> loss: {loss:.4f} - acc: {acc:.4f}')
@@ -134,7 +139,8 @@ def main():
     if DO_PREDICTION:
         print('\nRunning predictions...')
         # load model state from .pt file
-        model = pyt.load_model(MODEL_SAVE_NAME)
+        model = pytk.load_model(MODEL_SAVE_NAME)
+        print(f'I loaded model of type -> {type(model)}')
 
         y_pred = np.argmax(model.predict(X_test), axis=1)
         # we have just 5 elements in dataset, showing ALL

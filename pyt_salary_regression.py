@@ -35,7 +35,7 @@ from torch import optim
 from torchsummary import summary
 
 # My helper functions for training/evaluating etc.
-import pyt_helper_funcs as pyt
+import pytorch_toolkit as pytk
 
 seed = 123
 random.seed(seed)
@@ -76,7 +76,7 @@ def get_data(test_split=0.20, shuffle_it=True):
     return (X_train, y_train), (X_test, y_test)
 
 # our regression model
-class Net(pyt.PytModule):
+class Net(pytk.PytkModule):
     def __init__(self, in_features, out_features):
         super(Net, self).__init__()
         self.fc1 = nn.Linear(in_features, out_features)
@@ -103,12 +103,12 @@ def main():
     net = Net(1, 1)
     criterion = nn.MSELoss()
     optimizer = torch.optim.SGD(net.parameters(), lr=LR, weight_decay=0.10)
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=NUM_EPOCHS//5, gamma=0.1)
+    #scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=NUM_EPOCHS//5, gamma=0.1)
     net.compile(loss=criterion, optimizer=optimizer)
     print(net)
 
     hist = net.fit(X_train, y_train, epochs=NUM_EPOCHS, batch_size=BATCH_SIZE) #, lr_scheduler=scheduler)
-    pyt.show_plots(hist)
+    pytk.show_plots(hist)
 
     # run predictions
     y_pred = net.predict(X_test)

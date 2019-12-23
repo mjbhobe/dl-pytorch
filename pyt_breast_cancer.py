@@ -28,8 +28,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch import optim
 from torchsummary import summary
-# My helper functions for training/evaluating etc.
-import pyt_helper_funcs as pyt
+
+# import pytorch_toolkit - training Nirvana :)
+import pytorch_toolkit as pytk
 
 # to ensure that you get consistent results across runs & machines
 # @see: https://discuss.pytorch.org/t/reproducibility-over-different-machines/63047
@@ -94,7 +95,7 @@ def load_data(test_split=0.20):
     return (X_train, y_train), (X_test, y_test)
 
 # our ANN
-class WBCNet(pyt.PytModule):
+class WBCNet(pytk.PytkModule):
     def __init__(self, inp_size, hidden1, hidden2, num_classes):
         super(WBCNet, self).__init__()
         self.fc1 = nn.Linear(inp_size, hidden1)
@@ -102,19 +103,13 @@ class WBCNet(pyt.PytModule):
         self.fc2 = nn.Linear(hidden1, hidden2)
         self.relu2 = nn.ReLU()
         self.out = nn.Linear(hidden2, num_classes)
-        self.dropout = nn.Dropout(0.20)
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, inp):
         x = self.fc1(inp)
         x = self.relu1(x)
-        #x = self.dropout(x)
         x = self.fc2(x)
         x = self.relu2(x)
-        #x = self.dropout(x)
-        # NOTE: nn.CrossEntropyLoss() includes a logsoftmax call, which applies a softmax
-        # function to outputs. So, don't apply one yourself!
-        #x = F.softmax(self.out(x), dim=1)  # -- don't do this!
         x = self.out(x)
         x = self.sigmoid(x)
         return x
@@ -142,7 +137,8 @@ def main():
         model = WBCNet(NUM_FEATURES, 30, 30, NUM_CLASSES)
         # define the loss function & optimizer that model should
         loss_fn = nn.BCELoss() #nn.CrossEntropyLoss()
-        optimizer = torch.optim.SGD(model.parameters(), lr=LEARNING_RATE, nesterov=True, momentum=0.9, dampening=0) 
+        optimizer = torch.optim.SGD(model.parameters(), lr=LEARNING_RATE, nesterov=True, weight_decay=0.005,
+                                    momentum=0.9, dampening=0) 
         model.compile(loss=loss_fn, optimizer=optimizer, metrics=['acc','f1'])
         print(model)
 
@@ -150,7 +146,7 @@ def main():
         print('Training model...')
         # split training data into train/cross-val datasets in 80:20 ratio
         hist = model.fit(X_train, y_train, validation_split=0.20, epochs=NUM_EPOCHS, batch_size=BATCH_SIZE)
-        pyt.show_plots(hist)
+        pytk.show_plots(hist)
 
         # evaluate model performance on train/eval & test datasets
         print('\nEvaluating model performance...')
@@ -165,7 +161,7 @@ def main():
 
     if DO_PREDICTION:
         print('\nRunning predictions...')
-        model = pyt.load_model(MODEL_SAVE_NAME)
+        model = pytk.load_model(MODEL_SAVE_NAME)
         
         y_pred = np.round(model.predict(X_test)).reshape(-1)
         # display output

@@ -170,7 +170,7 @@ def main():
         # define the loss function & optimizer that model should
         loss_fn = nn.CrossEntropyLoss()
         optimizer = optim.Adam(params=model.parameters(), lr=0.01, weight_decay=0.001)
-        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.1)
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.2)
         model.compile(loss=loss_fn, optimizer=optimizer, metrics=['acc'])
         # display Keras like summary
         model.summary((NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH))

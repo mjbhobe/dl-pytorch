@@ -166,7 +166,7 @@ def display_sample(sample_images, sample_labels, grid_shape=(8, 8),
 
 # some hyper-parameters
 IMAGE_HEIGHT, IMAGE_WIDTH, NUM_CHANNELS, NUM_CLASSES = 32, 32, 3, 10
-NUM_EPOCHS, BATCH_SIZE, LEARNING_RATE, L2_REG = 100, 64, 0.01, 0.01
+NUM_EPOCHS, BATCH_SIZE, LEARNING_RATE, L2_REG = 100, 64, 0.001, 0.0002
 MODEL_SAVE_DIR = os.path.join('.', 'model_states')
 MODEL_SAVE_PATH = os.path.join(MODEL_SAVE_DIR, 'pyt_cifar10_cnn')
 
@@ -179,25 +179,31 @@ def build_model(l1, l2, l3):
     model = nn.Sequential(
         pyt.Conv2d(3, l1, 5, padding=1),
         nn.ReLU(),
+        nn.BatchNorm2d(l1),
         nn.MaxPool2d(kernel_size=2, stride=2),
         #nn.Dropout(0.05),
 
         pyt.Conv2d(l1, l2, 5, padding=1),
         nn.ReLU(),
+        nn.BatchNorm2d(l2),
         nn.MaxPool2d(kernel_size=2, stride=2),
         #nn.Dropout(0.10),
 
         pyt.Conv2d(l2, l3, 5, padding=1),
         nn.ReLU(),
+        nn.BatchNorm2d(l3),
         nn.MaxPool2d(kernel_size=2, stride=2),
-        nn.Dropout(0.20),
+        #nn.Dropout(0.20),
 
         Flatten(),
 
         nn.Linear(2*2*l3, 512),
-        nn.Dropout(0.20),        
+        #nn.Dropout(0.20),        
 
-        nn.Linear(512, 10)
+        nn.Linear(512, 256),
+        #nn.Dropout(0.20),        
+
+        nn.Linear(256, 10)
     )
     return model
 
@@ -223,17 +229,18 @@ def main():
         model = pyt.PytModuleWrapper(build_model(16,32,64))
         # define the loss function & optimizer that model should
         loss_fn = nn.CrossEntropyLoss()
-        optimizer = optim.SGD(params=model.parameters(), lr=LEARNING_RATE, momentum=0.9, weight_decay=L2_REG)
-        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=NUM_EPOCHS//5, gamma=0.1)
+        #optimizer = optim.SGD(params=model.parameters(), lr=LEARNING_RATE, momentum=0.9, weight_decay=L2_REG)
+        optimizer = optim.Adam(params=model.parameters(), lr=LEARNING_RATE, weight_decay=L2_REG)
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=NUM_EPOCHS//10, gamma=0.2)
         model.compile(loss=loss_fn, optimizer=optimizer, metrics=['acc'])
         # display Keras like summary
         print(model.summary((NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
 
         # train model
         print('Training model...')
-        early_stop = pyt.EarlyStopping(monitor='val_loss', patience=10, verbose=False, save_best_weights=True)
+        early_stopper = pyt.EarlyStopping(monitor='val_loss', patience=10, verbose=False, save_best_weights=True)
         hist = model.fit_dataset(train_dataset, validation_dataset=val_dataset, lr_scheduler=scheduler,
-                                 epochs=NUM_EPOCHS, batch_size=BATCH_SIZE, num_workers=0, early_stopping=early_stop)
+                                 epochs=NUM_EPOCHS, batch_size=BATCH_SIZE, num_workers=0, early_stopping=early_stopper)
         pyt.show_plots(hist)
 
         # evaluate model performance on train/eval & test datasets

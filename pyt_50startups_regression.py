@@ -35,7 +35,7 @@ from torch import optim
 from torchsummary import summary
 
 # My helper functions for training/evaluating etc.
-import pyt_helper_funcs as pyt
+import pytorch_toolkit as pytk
 
 seed = 123
 random.seed(seed)
@@ -76,7 +76,7 @@ def get_data(test_split=0.20, shuffle_it=True):
     return (X_train, y_train), (X_test, y_test)
 
 # our regression model
-class Net(pyt.PytModule):
+class Net(pytk.PytkModule):
     def __init__(self, in_features, out_features):
         super(Net, self).__init__()
         self.fc1 = nn.Linear(in_features, out_features)
@@ -103,7 +103,7 @@ def main():
 
     hist = net.fit(X_train, y_train, validation_split=0.10, epochs=NUM_EPOCHS,
                    batch_size=BATCH_SIZE, lr_scheduler=scheduler)
-    pyt.show_plots(hist)
+    pytk.show_plots(hist)
 
     # run predictions
     y_pred = net.predict(X_test)
@@ -113,14 +113,14 @@ def main():
     print('R2 score: %.3f' % r2) # got 0.974
 
     # display plot
-    plt.figure(figsize=(8, 6))
-    X = np.vstack([X_train, X_test])
-    y = np.vstack([y_train, y_test])
-    plt.scatter(X, y, s=40, c='steelblue')
-    plt.plot(X, net.predict(X), lw=2, color='firebrick')
-    title = 'Regression Plot: R2 Score = %.3f' % r2
-    plt.title(title)
-    plt.show()
+    # plt.figure(figsize=(8, 6))
+    # X = np.vstack([X_train, X_test])
+    # y = np.vstack([y_train, y_test])
+    # plt.scatter(X, y, s=40, c='steelblue')
+    # plt.plot(X, net.predict(X), lw=2, color='firebrick')
+    # title = 'Regression Plot: R2 Score = %.3f' % r2
+    # plt.title(title)
+    # plt.show()
 
     if RUN_SKLEARN:
         # what does scikit-learn give me
@@ -129,7 +129,7 @@ def main():
         lr = LinearRegression()
         lr.fit(X_train, y_train)
         y_pred_skl = lr.predict(X_test)
-        print('sklearn Logistic Regression: r2_score = %.3f' % r2_score(y_test, y_pred_skl))
+        print(f'sklearn Logistic Regression: r2_score = {r2_score(y_test, y_pred_skl)}')
         print('Pytorch Model: r2_score = %.3f' % r2_score(y_test, y_pred))
 
     if RUN_KERAS:
@@ -154,11 +154,4 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-# Results:
-# Before training: 
-#    M = 2, C = 1
-# After training (1000 epochs)
-#    Weight: 1.986 bias: 0.997
-# R2 score: 0.974
 

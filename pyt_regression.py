@@ -31,7 +31,7 @@ from torch import optim
 from torchsummary import summary
 
 # My helper functions for training/evaluating etc.
-import pyt_helper_funcs as pyt
+import pytorch_toolkit as pytk
 
 seed = 123
 random.seed(seed)
@@ -49,7 +49,7 @@ def get_synthesized_data(m, c, numelems=100, std=10):
     return (X.cpu().numpy(), y.cpu().numpy())
 
 # our regression model
-class Net(pyt.PytModule):
+class Net(pytk.PytkModule):
     def __init__(self, in_features, out_features):
         super(Net, self).__init__()
         self.fc1 = nn.Linear(in_features, out_features)
@@ -80,7 +80,7 @@ def main():
 
     # train on the data
     hist = net.fit(X, y, epochs=1000, batch_size=50) 
-    pyt.show_plots(hist)
+    pytk.show_plots(hist)
 
     # print the results
     print('After training: ')

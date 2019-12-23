@@ -12,3 +12,6 @@ __pycache_
 
 # ignore pyc files
 *.pyc
+
+# ignore tutorial folder (for now)
+tutorial
