@@ -1,5 +1,5 @@
 # Pytorch Toolkit - Tutorial
-Thank you for your interest in the **Pytorch Toolkit** - an API that tucks away boilerplate code to _train_, _evaluate_ and _test_ Pytorch models, thus allowing you to focus on the core tasks of data preparation, defining the architecture of your model and tuning hyper-parameters for the same.
+Thank you for your interest in the *Pytorch Toolkit* - an API that tucks away boilerplate code to _train_, _evaluate_ and _test_ Pytorch models, thus allowing you to focus on the core tasks of data preparation, defining the architecture of your model and tuning hyper-parameters for the same.
 
 I am assuming that you have already installed the pre-requisites and have done the preliminary test as explained in the [Readme](Readme.md) file - if not, please do so now.
 
