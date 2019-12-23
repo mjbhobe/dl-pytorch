@@ -58,7 +58,7 @@ You would normally create your Pytorch model by deriving your class from `nn.Mod
 
 ```python
 # import...
-# Not showing other Python imports, include torch imports
+# Not showing other Python imports, including torch imports
 
 class WBCNet(nn.Module):
     def __init__(self, inp_size, hidden1, hidden2, num_classes):
@@ -84,7 +84,7 @@ With the `Pytorch Toolkit` the **only change** is the base class from which you 
 
 ```python
 # import...
-# Not showing other Python imports, include torch imports (same as before)
+# Not showing other Python imports, including torch imports (same as before)
 
 # import the Pytorch toolkit
 import pytorch_toolkit as pytk
@@ -136,19 +136,19 @@ model.compile(loss=loss_fn, optimizer=optimizer, metrics=['acc'])
 
 **Table of available metrics**
 
->String | Metric | 
->:---|:---|
->`acc`| Accuracy (works for binary and multiclass classification)
->`prec`| Precision
->`rec`| Recall
->`f1`| F1 Score
->`roc_auc`| ROC AUC Score
->`mse`| Mean Square Error
->`rmse`| Root Mean Square Error
->`mae`| Mean Absolute Error
+|String | Metric | 
+|:---|:---|
+|`'acc'`| Accuracy (works for binary and multiclass classification)
+|`'prec'`| Precision
+|`'rec'`| Recall
+|`'f1'`| F1 Score
+|`'roc_auc'`| ROC AUC Score
+|`'mse'`| Mean Square Error
+|`'rmse'`| Root Mean Square Error
+|`'mae'`| Mean Absolute Error
 
 ### Training our model
-Here is where the Pytorch Tooklit shines - **you don't have to write the code that loops through epochs, generates batches of data etc. etc. - just call the model's `fit(...)` function as shown below:
+Here is where the Pytorch Tooklit shines - **you don't have to write the code that loops through epochs, generates batches of data etc. etc.** - just call the model's `fit(...)` function as shown below:
 
 ```python
 hist = model.fit(X_train, y_train, epochs=100, batch_size=16)
@@ -158,12 +158,9 @@ The `fit(...)` call takes many more parameters, which I will cover later. At the
 ```
 Epoch (  1/100): (455/455) -> loss: 0.6900 - acc: 0.6296
 Epoch (  2/100): (455/455) -> loss: 0.6696 - acc: 0.6373
-Epoch (  3/100): (455/455) -> loss: 0.6499 - acc: 0.6496
-Epoch (  4/100): (455/455) -> loss: 0.6286 - acc: 0.6820
 ...
+... many more lines (truncated)
 ...
-Epoch ( 97/100): (455/455) -> loss: 0.0516 - acc: 0.9871
-Epoch ( 98/100): (455/455) -> loss: 0.0521 - acc: 0.9849
 Epoch ( 99/100): (455/455) -> loss: 0.0512 - acc: 0.9871
 Epoch (100/100): (455/455) -> loss: 0.0506 - acc: 0.9871
 ```
@@ -182,12 +179,9 @@ Here I have used `validation_split` parameter, which takes a value between 0.0 a
 ```
 Epoch (  1/100): (364/364) -> loss: 0.6926 - acc: 0.6196 - val_loss: 0.6790 - val_acc: 0.6884
 Epoch (  2/100): (364/364) -> loss: 0.6771 - acc: 0.6214 - val_loss: 0.6638 - val_acc: 0.6884
-Epoch (  3/100): (364/364) -> loss: 0.6607 - acc: 0.6368 - val_loss: 0.6479 - val_acc: 0.6884
-Epoch (  4/100): (364/364) -> loss: 0.6435 - acc: 0.6803 - val_loss: 0.6329 - val_acc: 0.7197
 ...
+... many more (truncated)
 ...
-Epoch ( 97/100): (364/364) -> loss: 0.0499 - acc: 0.9891 - val_loss: 0.0975 - val_acc: 0.9688
-Epoch ( 98/100): (364/364) -> loss: 0.0495 - acc: 0.9891 - val_loss: 0.0975 - val_acc: 0.9688
 Epoch ( 99/100): (364/364) -> loss: 0.0496 - acc: 0.9891 - val_loss: 0.0974 - val_acc: 0.9688
 Epoch (100/100): (364/364) -> loss: 0.0489 - acc: 0.9891 - val_loss: 0.0971 - val_acc: 0.9688
 ```
