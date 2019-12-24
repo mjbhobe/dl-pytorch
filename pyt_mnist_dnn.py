@@ -30,7 +30,7 @@ from torchvision import datasets, transforms
 from torch import optim
 from torchsummary import summary
 # My helper functions for training/evaluating etc.
-import pyt_helper_funcs as pyt
+import pytorch_toolkit as pytk
 
 # to ensure that you get consistent results across runs & machines
 # @see: https://discuss.pytorch.org/t/reproducibility-over-different-machines/63047
@@ -58,6 +58,7 @@ def load_data():
     print("No of training records: %d" % len(train_dataset))
 
     test_dataset = datasets.MNIST('./data', train=False, download=True,
+    
                                   transform=transformations)
     print("No of test records: %d" % len(test_dataset))
 
@@ -124,18 +125,18 @@ def display_sample(sample_images, sample_labels, grid_shape=(10, 10), plot_title
 # some globals
 IMAGE_HEIGHT, IMAGE_WIDTH, NUM_CHANNELS, NUM_CLASSES = 28, 28, 1, 10
 
-# define our network
-class MNISTNet(pyt.PytModule):
+# define our network using Linear layers only
+class MNISTNet(pytk.PytkModule):
     def __init__(self):
         super(MNISTNet, self).__init__()
-        self.fc1 = pyt.Linear(IMAGE_HEIGHT * IMAGE_WIDTH * NUM_CHANNELS, 128)
-        self.fc2 = pyt.Linear(128, 64)
-        self.out = pyt.Linear(64, NUM_CLASSES)
+        self.fc1 = pytk.Linear(IMAGE_HEIGHT * IMAGE_WIDTH * NUM_CHANNELS, 128)
+        self.fc2 = pytk.Linear(128, 64)
+        self.out = pytk.Linear(64, NUM_CLASSES)
         self.dropout = nn.Dropout(0.10)
 
     def forward(self, x):
         # flatten input (for DNN)
-        x = pyt.Flatten(x)
+        #x = pytk.Flatten(x)
         x = F.relu(self.fc1(x))
         #x = self.dropout(x)
         x = F.relu(self.fc2(x))
@@ -146,11 +147,46 @@ class MNISTNet(pyt.PytModule):
         x = self.out(x)
         return x
 
+# if you prefer to use Convolutional Neural Network, use the following model definition
+class MNISTConvNet(pytk.PytkModule):
+    def __init__(self):
+        super(MNISTConvNet, self).__init__()
+        self.conv1 = pytk.Conv2d(1, 32, kernel_size=5)
+        self.conv2 = pytk.Conv2d(32, 64, kernel_size=5)
+        self.conv3 = pytk.Conv2d(64, 64, kernel_size=5)
+        self.fc1 = pytk.Linear(1*1*64, 256)
+        self.fc2 = pytk.Linear(256, 128)
+        self.out = pytk.Linear(128, NUM_CLASSES)
+        self.dropout = nn.Dropout(0.10)
+
+    def forward(self, x):
+        x = F.max_pool2d(F.relu(self.conv1(x)), 2)
+        x = F.dropout(x, p=0.5, training=self.training)
+        x = F.max_pool2d(F.relu(self.conv2(x)), 2)
+        x = F.dropout(x, p=0.5, training=self.training)
+        x = F.max_pool2d(F.relu(self.conv3(x)),2)
+        x = F.dropout(x, p=0.5, training=self.training)
+        # flatten input (for DNN)
+        x = pytk.Flatten(x)
+        x = F.relu(self.fc1(x))
+        x = F.dropout(x, training=self.training)
+        x = F.relu(self.fc2(x))
+        x = F.dropout(x, training=self.training)
+        # NOTE: nn.CrossEntropyLoss() includes a logsoftmax call, which applies a softmax
+        # function to outputs. So, don't apply one yourself!
+        # x = F.softmax(self.out(x), dim=1)  # -- don't do this!
+        x = self.out(x)
+        return x
+
 DO_TRAINING = True
 DO_PREDICTION = True
 SHOW_SAMPLE = True
+USE_CNN = True     # if False, will use an ANN
 
-MODEL_SAVE_PATH = os.path.join('.', 'model_states','pyt_mnist_dnn')
+MODEL_SAVE_NAME = 'pyt_mnist_cnn' if USE_CNN else 'pyt_mnist_dnn'
+MODEL_SAVE_PATH = os.path.join('.', 'model_states', MODEL_SAVE_NAME)
+
+NUM_EPOCHS, BATCH_SIZE, LEARNING_RATE, L2_REG = 25, 32, 0.01, 0.0005
 
 def main():
     print('Loading datasets...')
@@ -166,20 +202,20 @@ def main():
 
     if DO_TRAINING:
         print('Building model...')
-        model = MNISTNet()
+        model = MNISTConvNet() if USE_CNN else MNISTNet()
         # define the loss function & optimizer that model should
         loss_fn = nn.CrossEntropyLoss()
-        optimizer = optim.Adam(params=model.parameters(), lr=0.01, weight_decay=0.001)
+        optimizer = optim.Adam(params=model.parameters(), lr=LEARNING_RATE, weight_decay=L2_REG)
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.2)
         model.compile(loss=loss_fn, optimizer=optimizer, metrics=['acc'])
         # display Keras like summary
         model.summary((NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH))
 
         # train model
-        print('Training model...')
+        print(f'Training {"CNN" if USE_CNN else "ANN"} model')
         hist = model.fit_dataset(train_dataset, validation_dataset=val_dataset, lr_scheduler=scheduler,
-                                 epochs=25, num_workers=3)
-        pyt.show_plots(hist)
+                                 epochs=NUM_EPOCHS, batch_size=BATCH_SIZE)
+        pytk.show_plots(hist)
 
         # evaluate model performance on train/eval & test datasets
         print('Evaluating model performance...')
@@ -197,7 +233,7 @@ def main():
     if DO_PREDICTION:
         print('Running predictions...')
         # load model state from .pt file
-        model = pyt.load_model(MODEL_SAVE_PATH)
+        model = pytk.load_model(MODEL_SAVE_PATH)
 
         y_pred, y_true = model.predict_dataset(test_dataset)
         y_pred = np.argmax(y_pred, axis=1)
@@ -217,3 +253,11 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# ----------------------------------------------
+# Results: 
+# CNN with epochs=25, batch-size=32, LR=0.01
+#   Training  -> acc: 82.73%
+#   Cross-val -> acc: 81.55%
+#   Testing   -> acc: 82.96%
+# ----------------------------------------------

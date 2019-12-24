@@ -307,10 +307,10 @@ class EarlyStopping:
         self.early_stop = False
 
     def __call__(self, model, curr_metric_val, epoch):
-        # if not (isinstance(model, PytModule) or isinstance(model, PytModuleWrapper)):
-        #     raise TypeError("model should be derived from PytModule or PytModuleWrapper")
+        # if not (isinstance(model, PytModule) or isinstance(model, PytkModuleWrapper)):
+        #     raise TypeError("model should be derived from PytModule or PytkModuleWrapper")
 
-        #self.is_wrapped = isinstance(model, PytModuleWrapper)
+        #self.is_wrapped = isinstance(model, PytkModuleWrapper)
         
         if self.monitor_op(curr_metric_val - self.min_delta, self.best_score):
             if self.save_best_weights:
@@ -343,7 +343,7 @@ class EarlyStopping:
             print('   EarlyStopping (log): \'%s\' metric has \'improved\' - from %.4f to %.4f. Saving checkpoint...' % (
                     metric_name, self.best_score, curr_metric_val))
         mod = model
-        if isinstance(model, PytModuleWrapper):
+        if isinstance(model, PytkModuleWrapper):
             mod = model.model
         torch.save(mod.state_dict(), self.checkpoint_file_path)
 
@@ -527,7 +527,7 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
 
         # if validation_split is provided by user, then split train_dataset
         if (validation_split > 0.0) and (validation_dataset is None):
-            # NOTE: validation_dataset supercedes validation_split
+            # NOTE: validation_dataset supercedes validation_split, use validation_split only if validation_dataset is None
             num_recs = len(train_dataset)
             train_count = int((1.0 - validation_split) * num_recs)
             val_count = num_recs - train_count
@@ -688,7 +688,7 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
                     print("Early stopping training at epoch %d" % epoch)
                     if early_stopping.save_best_weights:
                         mod = model
-                        if isinstance(model, PytModuleWrapper):
+                        if isinstance(model, PytkModuleWrapper):
                             mod = model.model
                         mod.load_state_dict(torch.load(early_stopping.checkpoint_file_path))
                     return history

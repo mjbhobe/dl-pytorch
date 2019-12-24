@@ -32,8 +32,9 @@ import torch.nn.functional as F
 from torchvision import datasets, transforms
 from torch import optim
 from torchsummary import summary
+
 # My helper functions for training/evaluating etc.
-import pyt_helper_funcs as pyt
+import pytorch_toolkit as pytk
 
 # to ensure that you get consistent results across runs & machines
 # @see: https://discuss.pytorch.org/t/reproducibility-over-different-machines/63047
@@ -166,7 +167,7 @@ def display_sample(sample_images, sample_labels, grid_shape=(8, 8),
 
 # some hyper-parameters
 IMAGE_HEIGHT, IMAGE_WIDTH, NUM_CHANNELS, NUM_CLASSES = 32, 32, 3, 10
-NUM_EPOCHS, BATCH_SIZE, LEARNING_RATE, L2_REG = 100, 64, 0.001, 0.0002
+NUM_EPOCHS, BATCH_SIZE, LEARNING_RATE, L2_REG = 100, 128, 0.001, 0.0005
 MODEL_SAVE_DIR = os.path.join('.', 'model_states')
 MODEL_SAVE_PATH = os.path.join(MODEL_SAVE_DIR, 'pyt_cifar10_cnn')
 
@@ -177,37 +178,46 @@ class Flatten(nn.Module):
 
 def build_model(l1, l2, l3):
     model = nn.Sequential(
-        pyt.Conv2d(3, l1, 5, padding=1),
+        pytk.Conv2d(3, l1, 5, padding=1),
+        nn.ReLU(),
+        nn.BatchNorm2d(l1),
+        pytk.Conv2d(l1, l1, 5, padding=1),
         nn.ReLU(),
         nn.BatchNorm2d(l1),
         nn.MaxPool2d(kernel_size=2, stride=2),
-        #nn.Dropout(0.05),
+        nn.Dropout(0.10),
 
-        pyt.Conv2d(l1, l2, 5, padding=1),
+        pytk.Conv2d(l1, l2, 5, padding=1),
+        nn.ReLU(),
+        nn.BatchNorm2d(l2),
+        pytk.Conv2d(l2, l2, 5, padding=1),
         nn.ReLU(),
         nn.BatchNorm2d(l2),
         nn.MaxPool2d(kernel_size=2, stride=2),
-        #nn.Dropout(0.10),
+        nn.Dropout(0.10),
 
-        pyt.Conv2d(l2, l3, 5, padding=1),
+        pytk.Conv2d(l2, l3, 5, padding=1),
+        nn.ReLU(),
+        nn.BatchNorm2d(l3),
+        pytk.Conv2d(l3, l3, 5, padding=1),
         nn.ReLU(),
         nn.BatchNorm2d(l3),
         nn.MaxPool2d(kernel_size=2, stride=2),
-        #nn.Dropout(0.20),
+        nn.Dropout(0.10),
 
         Flatten(),
 
-        nn.Linear(2*2*l3, 512),
-        #nn.Dropout(0.20),        
+        nn.Linear(1*1*l3, 512),
+        nn.Dropout(0.20),        
 
         nn.Linear(512, 256),
-        #nn.Dropout(0.20),        
+        nn.Dropout(0.25),        
 
         nn.Linear(256, 10)
     )
     return model
 
-DO_TRAINING = True
+DO_TRAINING = False
 DO_PREDICTION = True
 SHOW_SAMPLE = False
 
@@ -226,10 +236,9 @@ def main():
     if DO_TRAINING:
         print('Building model...')
         # build model
-        model = pyt.PytModuleWrapper(build_model(16,32,64))
+        model = pytk.PytkModuleWrapper(build_model(16,32,64))
         # define the loss function & optimizer that model should
         loss_fn = nn.CrossEntropyLoss()
-        #optimizer = optim.SGD(params=model.parameters(), lr=LEARNING_RATE, momentum=0.9, weight_decay=L2_REG)
         optimizer = optim.Adam(params=model.parameters(), lr=LEARNING_RATE, weight_decay=L2_REG)
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=NUM_EPOCHS//10, gamma=0.2)
         model.compile(loss=loss_fn, optimizer=optimizer, metrics=['acc'])
@@ -238,10 +247,10 @@ def main():
 
         # train model
         print('Training model...')
-        early_stopper = pyt.EarlyStopping(monitor='val_loss', patience=10, verbose=False, save_best_weights=True)
+        early_stopper = pytk.EarlyStopping(monitor='val_loss', patience=10, verbose=False, save_best_weights=True)
         hist = model.fit_dataset(train_dataset, validation_dataset=val_dataset, lr_scheduler=scheduler,
-                                 epochs=NUM_EPOCHS, batch_size=BATCH_SIZE, num_workers=0, early_stopping=early_stopper)
-        pyt.show_plots(hist)
+                                 epochs=NUM_EPOCHS, batch_size=BATCH_SIZE, num_workers=3, early_stopping=early_stopper)
+        pytk.show_plots(hist)
 
         # evaluate model performance on train/eval & test datasets
         print('Evaluating model performance...')
@@ -259,12 +268,10 @@ def main():
     if DO_PREDICTION:
         print('Running predictions...')
         # load model state from .pt file
-        # model = pyt.load_model(MODEL_SAVE_NAME)
-        model = pyt.PytModuleWrapper(pyt.load_model(MODEL_SAVE_PATH))
-        # needed for PytModuleWrapper
+        model = pytk.PytkModuleWrapper(pytk.load_model(MODEL_SAVE_PATH))
+        # needed for PytkModuleWrapper
         loss_fn = nn.CrossEntropyLoss()
         optimizer = optim.SGD(params=model.parameters(), lr=LEARNING_RATE, weight_decay=L2_REG)
-        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=NUM_EPOCHS//5, gamma=0.1)        
         model.compile(loss=loss_fn, optimizer=optimizer, metrics=['acc'])
 
         print('Evaluating model performance...')
@@ -275,7 +282,7 @@ def main():
         oss, acc = model.evaluate_dataset(test_dataset)
         print('  Test dataset      -> loss: %.4f - acc: %.4f' % (loss, acc))
 
-        # _, all_preds, all_labels = pyt.predict_dataset(model, test_dataset)
+        # run predictions...
         y_pred, y_true = model.predict_dataset(test_dataset)
         y_pred = np.argmax(y_pred, axis=1)
         print('Sample labels (50): ', y_true[:50])
@@ -287,7 +294,7 @@ def main():
         loader = torch.utils.data.DataLoader(test_dataset, batch_size=64, shuffle=True)
         data_iter = iter(loader)
         images, labels = data_iter.next()  # fetch a batch of 64 random images
-        #_, preds = pyt.predict(model, images)
+        #_, preds = pytk.predict(model, images)
         preds = np.argmax(model.predict(images), axis=1)
         display_sample(images.cpu().numpy(), labels.cpu().numpy(), sample_predictions=preds,
                        grid_shape=(8, 8), plot_title='Sample Predictions')
@@ -297,8 +304,8 @@ if __name__ == "__main__":
     main()
 
 # ----------------------------------------------
-# Results: 300 epochs, 32 batch-size, 0.01 LR
-#   Training  -> acc 78%
-#   Cross-val -> acc 78.33%
-#   Testing   -> acc 79.30%
+# Results: epochs=100, batch-size=128, LR=0.01
+#   Training  -> acc: 82.73%
+#   Cross-val -> acc: 81.55%
+#   Testing   -> acc: 82.96%
 # ----------------------------------------------

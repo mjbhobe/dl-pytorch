@@ -140,7 +140,6 @@ def main():
         print('\nRunning predictions...')
         # load model state from .pt file
         model = pytk.load_model(MODEL_SAVE_NAME)
-        print(f'I loaded model of type -> {type(model)}')
 
         y_pred = np.argmax(model.predict(X_test), axis=1)
         # we have just 5 elements in dataset, showing ALL
