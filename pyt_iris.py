@@ -74,7 +74,7 @@ def load_data(val_split=0.20, test_split=0.20):
     return (X_train, y_train), (X_val, y_val), (X_test, y_test)
 
 # our model - note that it is created the same way as your usual Pytorch model
-# Only difference is that it has been derived from 
+# Only difference is that it has been derived from pytk.PytkModule class 
 class IrisNet(pytk.PytkModule):
     def __init__(self, inp_size, hidden1, hidden2, num_classes):
         super(IrisNet, self).__init__()
@@ -150,6 +150,13 @@ def main():
 if __name__ == "__main__":
     main()
 
+# --------------------------------------------------
+# Results: 
+#   MLP with epochs=250, batch-size=32, LR=0.001
+#       Training  -> acc: 99.22%
+#       Cross-val -> acc: 100%$
+#       Testing   -> acc: 100%
+# --------------------------------------------------
 
 
 

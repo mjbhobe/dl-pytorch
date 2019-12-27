@@ -111,6 +111,9 @@ class WBCNet(pytk.PytkModule):
         x = self.out(x)
         x = self.sigmoid(x)
         return x
+
+# instantiate the model
+model = WBCNet()
 ```
 
 Notice that **the only change is the base class from which your model is derived!**. You code the constructor `__init__(...)` and the `forward(...)` function as before!
@@ -304,7 +307,9 @@ There is **absolutely no change** in the way you would train, evaluate and test 
 
 ## Training with Pytorch Datasets & Transforms
 Pytorch provides powerful `dataset` and `transforms` classes in its `torchvision` package. These are indespensible, especially for image classification problems. The 
-`Pytorch Toolkit` provides equivalent functions `fit_dataset(...)`, `evaluate_dataset(...)` and `predict_dataset(...)` that seamlessly allow you to work with `torchvision` datasets. As before, let's walk through an example - this is the MNIST digits classification example.
+`Pytorch Toolkit` provides equivalent functions `fit_dataset(...)`, `evaluate_dataset(...)` and `predict_dataset(...)` that allow you to seamlessly work with `torchvision` datasets. As before, let's walk through an example - this is the MNIST digits classification example, for which we can use either an Multilayer Perceptron (MLP) or a Convolutional Neural Network (CNN).
+
+For the complete code used in this section, refer to the [MNIST Classification](pyt_mnist_dnn.py) example.
 
 ### Loading data
 Again, this section _does not strictly pertain to the Pytorch Toolkit API_, but I am showing the code nonetheless so you have some perspective on how the data is loaded using `torchvision.datasets` and `torchvision.transforms`
@@ -316,15 +321,16 @@ from torchvision import datasets, transforms
 transformations = transforms.Compose([transforms.ToTensor(),])
 
 # download the training & test datasets, if required, and apply transforms
-train_dataset = datasets.MNIST(root='./data', train=True, download=True, transform=transformations) 
+train_dataset = datasets.MNIST(root='./data', train=True, download=True, 
+                               transform=transformations) 
 print("No of training records: %d" % len(train_dataset))
 
-test_dataset = datasets.MNIST('./data', train=False, download=True, transform=transformations)
+test_dataset = datasets.MNIST('./data', train=False, download=True, 
+                              transform=transformations)
 print("No of test records: %d" % len(test_dataset))
 
-# I know that the training dataset has 10,000 records
-# Randomly split this into 8000:2000 records, which we assign to the training &
-# cross-validation datasets
+# Randomly split the 10,000 records in the training datsset in ratio of 8000:2000 records, 
+# which we assign to the training & cross-validation datasets respectively
 val_dataset, test_dataset = torch.utils.data.random_split(test_dataset, [8000, 2000])
 print("No of cross-val records: %d" % len(val_dataset))
 print("No of test records: %d" % len(test_dataset))
@@ -341,6 +347,7 @@ IMAGE_HEIGHT, IMAGE_WIDTH, NUM_CLASSES = 28, 28, 1
 # we are classifying 10 classes corresponding to 10 digits 0-9
 NUM_CLASSES = 10
 
+# a multi-layer Perceptron (MLP) network
 class MNISTNet(pyt.PytModule):
     def __init__(self):
         super(MNISTNet, self).__init__()
@@ -359,9 +366,12 @@ class MNISTNet(pyt.PytModule):
         # x = F.softmax(self.out(x), dim=1)  # -- don't do this!
         x = self.out(x)
         return x
+
+# instantiate the model
+model = MNISTNet()
 ```
 
-The astute observer will notice that I have used `pytk.Linear()` instead of `nn.Linear()`. This is a function implementes in `pytorch_toolkit.py` as follows:
+The astute observer will notice that I have used `pytk.Linear()` instead of `nn.Linear()`. This is a function implemented in `pytorch_toolkit.py` as follows:
 
 ```python
 def Linear(in_nodes, out_nodes, bias=True):
@@ -402,8 +412,10 @@ class MNISTConvNet(pytk.PytkModule):
         # x = F.softmax(self.out(x), dim=1)  # -- don't do this!
         x = self.out(x)
         return x
-```
 
+# instantiate the model
+model = MNISTConvNet()
+```
 Again, notice that I have used `pytk.Conv2d()` instead of `nn.Conv2d()`. Just like in the previous case, this implements the added step of initializing a `nn.Conv2d()` layer's weights with `xavier_uniform()` (or `glorot_uniform()` for Keras users) and the layer's bias to all-zeros.
 
 I also include a utility function `pytk.Flatten()`, which flattens the previous Conv2d (3D) layer into a 2D layer, which can then be fed into a `nn.Linear` layer. `pytk.Flatten()` is implemented as below:
@@ -413,5 +425,94 @@ def Flatten(x):
     return x.view(x.shape[0],-1)
 ```
 
+As before, we need to call `compile()` on the model instance passing in a loss function, an optimizer and metrics we want to track. Here is the code for the same:
+
+```python
+loss_fn = nn.CrossEntropyLoss()
+optimizer = optim.Adam(params=model.parameters(), lr=0.01, weight_decay=0.0005)
+model.compile(loss=loss_fn, optimizer=optimizer, metrics=['acc'])
+```
+
 ### Training model using datasets
-Since we are using Pytorch datasets,
+Since we are using Pytorch datasets API, training, evaluating and testing the model will us different functions of the model class.
+
+To train the model, call the `fit_dataset(...)` function as follows:
+
+```python
+hist = model.fit_dataset(train_dataset, validation_dataset=val_dataset, 
+                         epochs=NUM_EPOCHS, batch_size=BATCH_SIZE)
+```
+This is almost similar to the `fit()` call - instead of passing `X_train/y_train` Numpy arrays, we pass datasets `train_dataset` and `val_dataset`. Output is similar to the one you saw with the `fit()` call.
+
+```
+Training on 60000 samples, cross-validating on 8000 samples
+Epoch ( 1/25): (60000/60000) -> loss: 0.2446 - acc: 0.9285 - val_loss: 0.1272 - val_acc: 0.9617
+Epoch ( 2/25): (60000/60000) -> loss: 0.1128 - acc: 0.9660 - val_loss: 0.0955 - val_acc: 0.9701
+...
+... many more records
+...
+Epoch (24/25): (60000/60000) -> loss: 0.0159 - acc: 0.9984 - val_loss: 0.0507 - val_acc: 0.9839
+Epoch (25/25): (60000/60000) -> loss: 0.0159 - acc: 0.9984 - val_loss: 0.0509 - val_acc: 0.9845
+```
+
+#### Evaluating model's performance on test dataset
+To get an unbiased view of the model's performance, we should evaluate it against `test dataset` that the model has not _seen_ during the entire training process. Notice that we have not used `test_dataset` so far. To evaluate model performance using Pytorch datasets, use the following call:
+
+```python
+loss, acc = model.evaluate_dataset(test_dataset)
+print('  Test dataset      -> loss: %.4f - acc: %.4f' % (loss, acc))
+```
+
+As before, the `evaluate_dataset()` will return _as may values as the number of metrics_ you specify in the `compile()` call. **The `loss` metric will always be tracked even if you do not specify it in the metrics list**. Output of the above call is something like shown below:
+
+```
+Evaluating (2000/2000) -> loss: 0.0642 - acc: 0.9790
+  Test dataset      -> loss: 0.0642 - acc: 0.9790
+```
+
+#### Making predictions
+To make predictions after training our model using a Pytorch `dataset` just call the `model.predict_dataset(...)` function as shown below:
+
+```python
+y_pred, y_true = model.predict_dataset(test_dataset)
+y_pred = np.argmax(y_pred, axis=1)
+print('We got %d/%d incorrect!' % ((y_pred != y_true).sum(), len(y_true)))
+```
+Notice that this function returns 2 values (both Numpy arrays) - the predictions (`y_pred`) and the actual values (`y_true`). `y_pred.shape = (X_train.shape[0], NUM_CLASSES)`, hence the following `np.argmax(...)` call to reduce the dimension to 1 along the columns. `y_pred` will have shape of `(X_train.shape[0],)`.
+
+Output from the above function is something like below:
+
+```
+Sample labels (50):  [7 8 3 6 9 4 5 7 2 2 3 5 0 0 3 3 0 8 2 9 8 2 4 8 8 5 1 3 6 3 1 2 3 7 4 7 3 8 7 7 9 9 3 9 0 7 7 1 4 0]
+Sample predictions:  [7 8 3 6 9 4 5 7 2 2 3 5 0 0 3 3 0 8 2 9 8 2 4 8 8 5 1 3 6 3 1 2 3 7 4 7 3 8 7 7 9 9 3 9 0 7 7 1 4 0]
+We got 43/2000 incorrect!
+```
+
+### Using Learning Rate Schedulers during training
+Often it is useful to step the learning as epochs increase to prevent the model from overshooting the global minima as it tries to descend towards it. There are several learning rate schedulers that the Pytorch library supplies - we can use anyone that we prefer.
+
+I normally use the `StepLR` learning rate scheduler, which I instantiate as follows:
+
+```python
+# reduce LR every 10th epoch by 0.2 times
+scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.2)
+```
+where, `optimizer` points to the optimizer we use with our model.
+
+To use the scheduler when training, we supply it via the `lr_scheduler` parameter of the `fit()` or the `fit_dataset()` calls. For example, to use this with the Wisconsin Breast Cancer example, I would use the following `fit()` call
+
+```python
+# for the Wisconsin Breast Cancer example
+hist = model.fit(X_train, y_train, epochs=100, batch_size=16,
+                 validation_split=0.20, lr_scheduler=scheduler)
+```
+and with the MNIST example, where we use datasets, the call would be as follows:
+
+```python
+# for the Wisconsin Breast Cancer example
+hist = model.fit_dataset(train_dataset, validation_dataset=val_dataset, 
+                         epochs=NUM_EPOCHS, batch_size=BATCH_SIZE, lr_scheduler=scheduler)
+```
+
+For the complete code used in this section, refer to the [MNIST Classification](pyt_mnist_dnn.py) example, where you can train/evaluate/test both MLP and CNN architectures.
+

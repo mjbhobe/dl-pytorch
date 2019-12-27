@@ -90,6 +90,7 @@ DO_TRAINING = True
 DO_TESTING = True
 DO_PREDICTION = True
 MODEL_SAVE_NAME = 'pyt_wine_ann'
+NUM_EPOCHS, BATCH_SIZE, LEARNING_RATE, L2_REG = 75, 16, 0.001, 0.0005
 
 def main():
 
@@ -101,14 +102,14 @@ def main():
         model = WineNet(13, 20, 3)
         # define the loss function & optimizer that model should
         criterion = nn.CrossEntropyLoss()
-        optimizer = torch.optim.SGD(model.parameters(), lr=0.001, nesterov=True, momentum=0.9, dampening=0, weight_decay=0.005)
-        lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.1)
+        optimizer = torch.optim.SGD(model.parameters(), lr=LEARNING_RATE, nesterov=True,
+                                    momentum=0.9, dampening=0, weight_decay=L2_REG)
         model.compile(loss=criterion, optimizer=optimizer, metrics=['acc'])
         print(model)
 
         # train model
         print('Training model...')
-        hist = model.fit(X_train, y_train, validation_data=(X_val, y_val), epochs=75, batch_size=16)
+        hist = model.fit(X_train, y_train, validation_data=(X_val, y_val), epochs=NUM_EPOCHS, batch_size=BATCH_SIZE)
         pytk.show_plots(hist)
 
         # evaluate model performance on train/eval & test datasets
@@ -147,6 +148,13 @@ def main():
 if __name__ == "__main__":
     main()
 
+# --------------------------------------------------
+# Results: 
+#   MLP with epochs=75, batch-size=16, LR=0.001
+#       Training  -> acc: 97.10%
+#       Cross-val -> acc: 100%$
+#       Testing   -> acc: 100%
+# --------------------------------------------------
 
 
 

@@ -136,7 +136,7 @@ class MNISTNet(pytk.PytkModule):
 
     def forward(self, x):
         # flatten input (for DNN)
-        #x = pytk.Flatten(x)
+        x = pytk.Flatten(x)
         x = F.relu(self.fc1(x))
         #x = self.dropout(x)
         x = F.relu(self.fc2(x))
@@ -151,42 +151,35 @@ class MNISTNet(pytk.PytkModule):
 class MNISTConvNet(pytk.PytkModule):
     def __init__(self):
         super(MNISTConvNet, self).__init__()
-        self.conv1 = pytk.Conv2d(1, 32, kernel_size=5)
-        self.conv2 = pytk.Conv2d(32, 64, kernel_size=5)
-        self.conv3 = pytk.Conv2d(64, 64, kernel_size=5)
-        self.fc1 = pytk.Linear(1*1*64, 256)
-        self.fc2 = pytk.Linear(256, 128)
-        self.out = pytk.Linear(128, NUM_CLASSES)
-        self.dropout = nn.Dropout(0.10)
+        self.conv1 = pytk.Conv2d(1, 128, kernel_size=3)
+        self.conv2 = pytk.Conv2d(128, 64, kernel_size=3)
+        self.fc1 = pytk.Linear(7*7*64, 512)
+        self.out = pytk.Linear(512, NUM_CLASSES)
 
     def forward(self, x):
         x = F.max_pool2d(F.relu(self.conv1(x)), 2)
-        x = F.dropout(x, p=0.5, training=self.training)
+        x = F.dropout(x, p=0.20, training=self.training)
         x = F.max_pool2d(F.relu(self.conv2(x)), 2)
-        x = F.dropout(x, p=0.5, training=self.training)
-        x = F.max_pool2d(F.relu(self.conv3(x)),2)
-        x = F.dropout(x, p=0.5, training=self.training)
+        x = F.dropout(x, p=0.10, training=self.training)
         # flatten input (for DNN)
         x = pytk.Flatten(x)
         x = F.relu(self.fc1(x))
-        x = F.dropout(x, training=self.training)
-        x = F.relu(self.fc2(x))
-        x = F.dropout(x, training=self.training)
+        x = F.dropout(x, p=0.20, training=self.training)
         # NOTE: nn.CrossEntropyLoss() includes a logsoftmax call, which applies a softmax
         # function to outputs. So, don't apply one yourself!
         # x = F.softmax(self.out(x), dim=1)  # -- don't do this!
         x = self.out(x)
         return x
 
-DO_TRAINING = True
+DO_TRAINING = False
 DO_PREDICTION = True
 SHOW_SAMPLE = True
-USE_CNN = True     # if False, will use an ANN
+USE_CNN = False     # if False, will use an MLP
 
 MODEL_SAVE_NAME = 'pyt_mnist_cnn' if USE_CNN else 'pyt_mnist_dnn'
 MODEL_SAVE_PATH = os.path.join('.', 'model_states', MODEL_SAVE_NAME)
 
-NUM_EPOCHS, BATCH_SIZE, LEARNING_RATE, L2_REG = 25, 32, 0.01, 0.0005
+NUM_EPOCHS, BATCH_SIZE, LEARNING_RATE, L2_REG = 25, 32, 0.001, 0.0005
 
 def main():
     print('Loading datasets...')
@@ -206,7 +199,7 @@ def main():
         # define the loss function & optimizer that model should
         loss_fn = nn.CrossEntropyLoss()
         optimizer = optim.Adam(params=model.parameters(), lr=LEARNING_RATE, weight_decay=L2_REG)
-        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.2)
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.2)
         model.compile(loss=loss_fn, optimizer=optimizer, metrics=['acc'])
         # display Keras like summary
         model.summary((NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH))
@@ -223,7 +216,7 @@ def main():
         print('  Training dataset  -> loss: %.4f - acc: %.4f' % (loss, acc))
         loss, acc = model.evaluate_dataset(val_dataset)
         print('  Cross-val dataset -> loss: %.4f - acc: %.4f' % (loss, acc))
-        oss, acc = model.evaluate_dataset(test_dataset)
+        loss, acc = model.evaluate_dataset(test_dataset)
         print('  Test dataset      -> loss: %.4f - acc: %.4f' % (loss, acc))
 
         # save model state
@@ -254,10 +247,15 @@ def main():
 if __name__ == "__main__":
     main()
 
-# ----------------------------------------------
+# --------------------------------------------------
 # Results: 
-# CNN with epochs=25, batch-size=32, LR=0.01
-#   Training  -> acc: 82.73%
-#   Cross-val -> acc: 81.55%
-#   Testing   -> acc: 82.96%
-# ----------------------------------------------
+#   MLP with epochs=25, batch-size=32, LR=0.01
+#       Training  -> acc: 99.88%
+#       Cross-val -> acc: 98.45$
+#       Testing   -> acc: 97.90%
+#   CNN with epochs=25, batch-size=32, LR=0.01
+#       Training  -> acc: 99.89%
+#       Cross-val -> acc: 99.50%
+#       Testing   -> acc: 99.17%
+# Clearly the CNN performs better than the MLP
+# --------------------------------------------------

@@ -217,7 +217,7 @@ def build_model(l1, l2, l3):
     )
     return model
 
-DO_TRAINING = False
+DO_TRAINING = True
 DO_PREDICTION = True
 SHOW_SAMPLE = False
 
@@ -236,7 +236,7 @@ def main():
     if DO_TRAINING:
         print('Building model...')
         # build model
-        model = pytk.PytkModuleWrapper(build_model(16,32,64))
+        model = pytk.PytkModuleWrapper(build_model(32, 64, 128))
         # define the loss function & optimizer that model should
         loss_fn = nn.CrossEntropyLoss()
         optimizer = optim.Adam(params=model.parameters(), lr=LEARNING_RATE, weight_decay=L2_REG)

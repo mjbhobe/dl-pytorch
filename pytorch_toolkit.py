@@ -1389,6 +1389,11 @@ class PytkModule(nn.Module):
         else:
             y_dtype = np.float32
 
+        #train_dataset = XyDataset(X_train, y_train, y_dtype)
+        torch_X_train = torch.from_numpy(X_train).type(torch.FloatTensor)
+        torch_y_train = torch.from_numpy(y_train).type(torch.LongTensor if y_dtype == np.long else torch.FloatTensor)
+        train_dataset = torch.utils.data.TensorDataset(torch_X_train, torch_y_train)        
+
         validation_dataset = None
         if validation_data is not None:
             assert isinstance(validation_data, tuple)
@@ -1398,9 +1403,11 @@ class PytkModule(nn.Module):
                 y_val_dtype = np.long
             else:
                 y_val_dtype = np.float32
-            validation_dataset = XyDataset(validation_data[0], validation_data[1], y_val_dtype)
+            #validation_dataset = XyDataset(validation_data[0], validation_data[1], y_val_dtype)
+            torch_X_val = torch.from_numpy(validation_data[0]).type(torch.FloatTensor)
+            torch_y_val = torch.from_numpy(validation_data[1]).type(torch.LongTensor if y_val_dtype == np.long else torch.FloatTensor)
+            validation_dataset = torch.utils.data.TensorDataset(torch_X_val,torch_y_val)
 
-        train_dataset = XyDataset(X_train, y_train, y_dtype)
         p_loss_fn = self.loss_fn if loss_fn is None else loss_fn
         p_optimizer = self.optimizer if optimizer is None else optimizer
         p_metrics_list = self.metrics_list if metrics is None else metrics
@@ -1427,7 +1434,10 @@ class PytkModule(nn.Module):
         else:
             y_dtype = np.float32
 
-        p_dataset = XyDataset(X, y, y_dtype)
+        #p_dataset = XyDataset(X, y, y_dtype)
+        torch_X = torch.from_numpy(X).type(torch.FloatTensor)
+        torch_y = torch.from_numpy(y).type(torch.LongTensor if y_dtype == np.long else torch.FloatTensor)
+        p_dataset = torch.utils.data.TensorDataset(torch_X, torch_y)
         return self.evaluate_dataset(p_dataset, loss_fn=loss_fn, batch_size=batch_size,
                                      metrics=metrics, num_workers=num_workers)
 
@@ -1504,6 +1514,11 @@ class PytkModuleWrapper():
         else:
             y_dtype = np.float32
 
+        #train_dataset = XyDataset(X_train, y_train, y_dtype)
+        torch_X_train = torch.from_numpy(X_train).type(torch.FloatTensor)
+        torch_y_train = torch.from_numpy(y_train).type(torch.LongTensor if y_dtype == np.long else torch.FloatTensor)
+        train_dataset = torch.utils.data.TensorDataset(torch_X_train, torch_y_train)   
+
         validation_dataset = None
         if validation_data is not None:
             assert isinstance(validation_data, tuple)
@@ -1513,9 +1528,11 @@ class PytkModuleWrapper():
                 y_val_dtype = np.long
             else:
                 y_val_dtype = np.float32
-            validation_dataset = XyDataset(validation_data[0], validation_data[1], y_val_dtype)
+            #validation_dataset = XyDataset(validation_data[0], validation_data[1], y_val_dtype)
+            torch_X_val = torch.from_numpy(validation_data[0]).type(torch.FloatTensor)
+            torch_y_val = torch.from_numpy(validation_data[1]).type(torch.LongTensor if y_val_dtype == np.long else torch.FloatTensor)
+            validation_dataset = torch.utils.data.TensorDataset(torch_X_val,torch_y_val)
 
-        train_dataset = XyDataset(X_train, y_train, y_dtype)
         p_loss_fn = self.loss_fn if loss_fn is None else loss_fn
         p_optimizer = self.optimizer if optimizer is None else optimizer
         p_metrics_list = self.metrics_list if metrics is None else metrics
@@ -1541,7 +1558,10 @@ class PytkModuleWrapper():
         else:
             y_dtype = np.float32
 
-        p_dataset = XyDataset(X, y, y_dtype)
+        #p_dataset = XyDataset(X, y, y_dtype)
+        torch_X = torch.from_numpy(X).type(torch.FloatTensor)
+        torch_y = torch.from_numpy(y).type(torch.LongTensor if y_dtype == np.long else torch.FloatTensor)
+        p_dataset = torch.utils.data.TensorDataset(torch_X, torch_y)
         return self.evaluate_dataset(p_dataset, loss_fn=loss_fn, batch_size=batch_size,
                                      metrics=metrics, num_workers=num_workers)
 
