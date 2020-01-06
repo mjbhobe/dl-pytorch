@@ -1,13 +1,15 @@
 # Pytorch Toolkit - Tutorial
-Thank you for your interest in the *Pytorch Toolkit* - an API that tucks away boilerplate code to _train_, _evaluate_ and _test_ Pytorch models, thus allowing you to focus on the core tasks of data preparation, defining the architecture of your model and tuning hyper-parameters for the same.
-
-I am assuming that you have already installed the pre-requisites and have done the preliminary test as explained in the [Readme](Readme.md) file - if not, please do so now.
+Thank you for your interest in the `Pytorch Toolkit`. I wrote this as a set of utility functions & classes that will ease the process of training, evaluating & running predictions from a model. As a developer, I would rather spend my time productively concentrating on the core tasks of ML - viz. preparing data, designing/re-using appropriate model architecture and tuning the hyperparameters to get the best performance from the model. Keras does a great job of hiding boilerplate code for training the model, evaluating performance and running predictions. I aim to bring the ease that Keras provides to Pytorch via the `Pytorch Toolkit`. Most of the API is similar to the Keras API, so Keras users should find it very easy to understand.
 
 This tutorial will gradually expose you to the API provided by the **Pytorch Toolkit**, so it is best that you follow along from beginning to the end. I use a very informal style of writing, which I hope you'll like. The API is inspired by Keras, so if you have used Keras before you'll feel at home.
 
-**One last thing**
+I am assuming that you have already installed the pre-requisites and have done the preliminary test as explained in the [Readme](Readme.md) file - if not, please do so now.
 
-In this tutorial, I **won't be covering tha rationale behind choosing a specific architecture for the model nor why I prepared the data in a specific way, nor which metrics to use**. This document is all about how to use the Pytorch Toolkit's API and not on how to design ML models. You can refer to several books or online tutorials for guidance on model design. With that perspective, let's get started.
+|**A Point To Note**|
+|:---|
+|This is NOT an ML tutorial - I don't _teach_ you how to create the best model, training techniques, data loading & preparation techniques etc. This tutorial is _strictly aimed_ at showing you how to use the `Pytorch Toolkit` and nothing more!|
+
+ With that perspective, let's get started.
 
 ## Training with data available in Numpy arrays
 Often data & labels are available in Numpy arrays, especially for structured datasets. For example: datasets available with the `scikit-learn` module (like Iris dataset, Boston Housing, the Wisconsin Breast Cancer dataset etc.) and in several repositories on Kaggle and UCI. 
@@ -120,16 +122,13 @@ class WBCNet(pytk.PytkModule):
 model = WBCNet(32, 32, 10)
 ```
 
-Notice that **the only change you made was the base class from which your model is derived!**. You code the constructor `__init__(...)` and the `forward(...)` function are the same as before! Of course, you also imported all functions & modules of the `Pytorch Toolkit` with the following line:
-
-```python
-# Change #1 -> import the Pytorch toolkit
-import pytorch_toolkit as pytk
-```
+Notice that **the only change you made was the base class from which your model is derived!**. You code the constructor `__init__(...)` and the `forward(...)` method exactly the same way as before! 
 
 Before you can start training the module, you'll need to specify the `loss` function, the `optimizer` and `metrics` to track during the training epochs (Yes! The `Pytorch Toolkit` provides several common metrics that you can use out-of the box - like Accuracy, F1-Score, MSE, MAE etc., which you can use). 
 
-**NOTE:** At this time there is no support to add your own metrics - something that I plan on adding at a future date. I do include the most common metrics that I normally use during traininf. So, hopefully, this does not prove to be a significanrt impediment.
+|**NOTE**|
+|:---|
+|At this time there is no support to add your own metrics - something that I plan on adding at a future date. However, I do include the most common metrics that I normally use during training. So, hopefully, this omission does not prove to be a major impediment.|
 
 ```python
 # instantiate the loss function & optimizer (nothing PyTk specific here)
@@ -138,21 +137,24 @@ optimizer = torch.optim.SGD(model.parameters(), lr=0.001,
     nesterov=True, weight_decay=0.005, momentum=0.9, dampening=0) 
 ```
 
-and this is how you _attach_ these to your model using it's `compile()` function:
+and this is how you _attach_ these to your model using it's `compile()` method:
 
 ```python
 # NOTE: model is an instance of PytkModule class
-# it provides a compile() method, which allows me to specify the loss function, optimizer and metrics to track when training
+# it provides a compile() method, which allows me to specify the loss function, the optimizer 
+# and metrics to track when training
 model.compile(loss=loss_fn, optimizer=optimizer, metrics=['acc'])
 ```
 
-* Notice that the above line is very Keras-like (I've done this on purpose). Keras does a lot more with it's `compile(...)` function. I merely set attributes of the `PytkModule` derived class! 
+* Notice that the above line is very Keras-like (I've done this on purpose). Keras does a lot more with it's `compile(...)` method. I merely set attributes of the `PytkModule` derived class! 
 * You can _optionally specify_ one or more metrics that the training loop should track using the `metrics` parameter of the `compile()` method. Metrics are specified using their associated string aliases (just like in Keras) - refer to the table below for supported metrics.
 * You _need not specify any metrics_ (for example by omitting the optional`metrics` parameter in above call). 
 
-|NOTE|
+|**NOTE**|
 |:---|
-|The training loop will **always track** the `loss` metric though, _even if you leave out the metrics parameter in the `compile()` call_. <br/>The `loss` metric is tracked _in addition to any other metrics you supply_ in the metrics parameter. Additionally, you don't have to specifically mention the `loss` metric explicitly in your `metrics` parameter.|
+|* The training loop will **always track** the `loss` metric though, _even if you leave out the metrics parameter in the `compile()` call_. 
+* The `loss` metric is always tracked _in addition to any other metrics you supply_ in the metrics parameter. 
+* Additionally, you don't have to specifically mention the `loss` metric explicitly in your `metrics` parameter.|
 
 **Table of available metrics**
 
@@ -185,7 +187,7 @@ Epoch (  2/100): (455/455) -> loss: 0.6696 - acc: 0.6373
 Epoch ( 99/100): (455/455) -> loss: 0.0512 - acc: 0.9871
 Epoch (100/100): (455/455) -> loss: 0.0506 - acc: 0.9871
 ```
-The output should be fairly easy to comprehend, especially if you have used Keras before. Each line shows the epoch wise progress of training followed by record count and then the metrics you specified (here `loss` and `acc`) - `loss` will be tracked even if you don't specify any metrics.
+The output should be fairly easy to comprehend, especially if you have used Keras before. Each line shows the epoch wise progress of training loop - this is followed by by record count and then the metrics you specified (here `loss` and `acc`) - `loss` will be tracked even if you don't specify any metrics.
 
 #### Cross-training with validation data
 It is always a good practice to cross-train your model on a `training` dataset and an `evaluation` dataset. You can easily accomplish this with the Pytorch Toolkit as shown below. Just modify the `fit(...)` call as follows:
@@ -218,7 +220,7 @@ hist = model.fit(X_train, y_train, epochs=100, batch_size=16,
 
 We have asked the model to to use `X_val` and `y_val` as the cross-validation data & labels by passing them as a tuple via the `validation_data` parameter. We don't use `validation_split` parameter in this case. 
 
-|NOTE|
+|**NOTE**|
 |:---|
 |If both `validation_split` and `validation_data` are specified in the `fit()` call, then the `validation_dataset` parameter takes precedence and `validation_split` is simply ignored.|
 

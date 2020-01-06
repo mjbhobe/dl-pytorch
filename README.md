@@ -1,21 +1,25 @@
 # Introducing Pytorch Toolkit (PyTk) 
 ## A Keras-like API to train, evaluate and test Pytorch Models
 
+Jump straight to the [step-by-step tutorial](Tutorial.md)
+
 **Pytorch**, with it's _Pythonic_ interface and _dynamic graph evaluation_ makes it much easier to debug your deep learning models compared with Tensorflow 1.0. However, on the flip side, it's still a _low level_ library, which requires us to (often) write the same (or almost same) boilerplate code to train, evaluate & test our model. Some ML authors love to code this way as they feel _in control_ of what they create.
 
-Me? I _hate_ writing the same boilerplate code repeatedly. I'd rathen have my library handle the mundane tasks while I focus on the tasks that _really matter_ viz. designing my model architecture, preparing data for my model & tuning the hyper-parameters to get the best performance. Keras does a remarkable job of providing a clean & simple API to train, evaluate & test models. So I though why not create a Keras-like API for Pytorch? The result - `Pytorch Toolkit` (I could have chosen a better name perhaps. Frankly, I'm not good at coming up with catchy names for the libraries I write - one of my million and one shortcomings :( ). Hopefully, the library itself proves much more useful to you :).
+Me? I _hate_ writing the same boilerplate code repeatedly. I'd rathen have my library handle the mundane tasks while I focus on the tasks that _really matter_ viz. designing my model architecture, preparing data for my model & tuning the hyper-parameters to get the best performance. Keras does a remarkable job of providing a clean & simple API to train, evaluate & test models. With the `Pytorch Toolkit` I aim to bring the ease that Keras provides to Pytorch. Most of the API is similar to the Keras API, so Keras users should find it very easy to understand.
 
-The `Pytorch Toolkit` tucks away the mundane tasks of training, evaluating and testing models and also provides some helper functions to graphically view training performance plots. I provide some helper classes, which you - the ML developer - extend to help the toolkit do it's job well.
+I must confess, I'm not good at coming up with snazzy names for the libraries I create. I tried several acronyms and finally settled on a rather unfancy name `Pytorch Toolkit` (or `PyTk`). If you can come up with a really cool name, please let me know!
 
-This Github repository includes the tooklit, along with several examples on how to use it. Also included is a [step-by-step tutorial](Tutorial.md) which gradually introduces you to the complete API included in the toolkit. All functions & classes are included in just 1 Python file (_ingeniously_ named `pytorch_toolkit.py` - I did warn you that I am not good at coming up with names, didn't I?). I have not yet created a complete module - maybe someday...
+This Github repository includes the tooklit, along with several examples on how to use it. Also included is a [step-by-step tutorial](Tutorial.md) which gradually introduces you to the complete API included in the toolkit. All functions & classes are included in just 1 Python file (_ingeniously_ named `pytorch_toolkit.py` - I did warn you that I am not good at coming up with names, didn't I?). I have not yet created a module - maybe someday...
 
 ## Installing Pytorch Toolkit
 Since all functions & classes are included in just 1 file - `pytorch_toolkit.py`, there are strictly no special installation steps required to use this toolkit. 
 * Clone this repository - so you get _entire_ Pytorch Tooklit and several example files
-* Copy the `pytorch_toolkit.py` file into your project's (or if you don't like several copies scattered across your disk drive, copy this file to any one folder in your Python SYSPATH)
+* Copy the `pytorch_toolkit.py` file into your project's directory and you are done! (Alternately, if you don't like several copies scattered across your disk drive, copy this file to any one folder in your Python SYSPATH)
 * At the top of your code file (or Jupyter Notebook) and after all your other imports, enter the following code to import the toolkit into your project - I use the `pytk` alias - you can use whatever you prefer.
 
-    `import pytorch_tooklit as pytk`
+    ```python
+    import pytorch_tooklit as pytk
+    ```
 
 * This library depends on several other Python libraries, viz:
     * itertools
@@ -26,11 +30,12 @@ Since all functions & classes are included in just 1 file - `pytorch_toolkit.py`
     * Pytorch (of course!)
     * torchsummary - if you want to see a Keras-like summary of your model (optional!)
 
-I am assuming that you have these installed already - if you are an aspiring Data Scientist or ML enthusiast, you would have these (except perhaps Pytorch). Please refer to the respective module documentation on how to install these libraries.
+I am assuming that you have these installed already - if you are an aspiring Data Scientist or ML enthusiast, you would have these (except perhaps Pytorch & torchsummary). Please refer to the respective module documentation on how to install these libraries.
 
 ### Testing the installation
 * I assume you have followed the instructions above & have installed the pre-requisites, including Pytorch itself.
 * Start with a new Python code file (or Jupyter notebook) - add the following line at the top (after all your other imports):
+
     ```python
     # ... your imports including Pytorch imports
 
