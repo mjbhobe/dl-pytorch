@@ -79,7 +79,7 @@ def Dense(in_nodes, out_nodes, bias=True):
       - an instance of nn.Linear class with weights (params) initialized
         using xavier_uniform initializer & bias initialized with zeros
     """
-    layer = nn.Linear(in_nodes, out_nodes)
+    layer = nn.Linear(in_nodes, out_nodes, bias)
     # @see: https://msdn.microsoft.com/en-us/magazine/mt833293.aspx for example
     torch.nn.init.xavier_uniform_(layer.weight)
     if bias: torch.nn.init.zeros_(layer.bias)

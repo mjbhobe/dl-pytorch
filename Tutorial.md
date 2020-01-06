@@ -7,7 +7,7 @@ This tutorial will gradually expose you to the API provided by the **Pytorch Too
 
 **One last thing**
 
-In this tutorial, I **won't be covering tha rationale behind choosing a specific architecture for the model nor why I prepared the data in a specific way**. This document is all about how to use the Pytorch Toolkit's API and not on how to design ML models. You can refer to several books or online tutorials for guidance on model design. With that perspective, let's get started.
+In this tutorial, I **won't be covering tha rationale behind choosing a specific architecture for the model nor why I prepared the data in a specific way, nor which metrics to use**. This document is all about how to use the Pytorch Toolkit's API and not on how to design ML models. You can refer to several books or online tutorials for guidance on model design. With that perspective, let's get started.
 
 ## Training with data available in Numpy arrays
 Often data & labels are available in Numpy arrays, especially for structured datasets. For example: datasets available with the `scikit-learn` module (like Iris dataset, Boston Housing, the Wisconsin Breast Cancer dataset etc.) and in several repositories on Kaggle and UCI. 
@@ -41,8 +41,9 @@ df = pd.read_csv(url, header=None, names=cols, index_col=0)
 # map 'M' (malignant) to 1 and 'B' (benign) to 0
 df['diagnosis'] = df['diagnosis'].map({'M':1, 'B':0})
 
-X = wis_df.drop(['diagnosis'], axis=1).values
-y = wis_df['diagnosis'].values
+# grab the data & labels - these will be Numpy arrays!
+X = df.drop(['diagnosis'], axis=1).values
+y = df['diagnosis'].values
 
 # split into train/test sets
 X_train, X_test, y_train, y_test = \
@@ -52,11 +53,10 @@ X_train, X_test, y_train, y_test = \
 ss = StandardScaler()
 X_train = ss.fit_transform(X_train)
 X_test = ss.transform(X_test)
-
 ```
 
 ### Creating our model
-You would normally create your Pytorch model by deriving your class from `nn.Module` as follows:
+You would normally create your Pytorch model by deriving your class from `nn.Module`, somewhat as follows:
 
 ```python
 import torch
@@ -81,18 +81,22 @@ class WBCNet(nn.Module):
         x = self.out(x)
         x = self.sigmoid(x)
         return x
+
+# instantiate the model
+model = WBCNet(32, 32, 10)
 ```
 
-With the `Pytorch Toolkit` the **only change** is the base class from which you derive the module. I provide a class called `PytkModule`, which derives from `nn.Module` and provides additional functions to help with model training, evaluation and testing. Here is how you define your Module when using the Pytorch Toolkit:
+With the `Pytorch Toolkit` the **only change** you make is to the base class from which you derive the module. I provide a class called `PytkModule`, which derives from `nn.Module`. This class provides additional functions to help with model training, evaluation and testing. Here is how you'll define your Module when using the Pytorch Toolkit:
 
 ```python
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-# import the Pytorch toolkit
+# Change #1 -> import the Pytorch toolkit
 import pytorch_toolkit as pytk
 
+# Change #2 -> change the base class from nn.Module to pytk.PytkModule
 class WBCNet(pytk.PytkModule):
     def __init__(self, inp_size, hidden1, hidden2, num_classes):
         super(WBCNet, self).__init__()
@@ -113,14 +117,19 @@ class WBCNet(pytk.PytkModule):
         return x
 
 # instantiate the model
-model = WBCNet()
+model = WBCNet(32, 32, 10)
 ```
 
-Notice that **the only change is the base class from which your model is derived!**. You code the constructor `__init__(...)` and the `forward(...)` function as before!
+Notice that **the only change you made was the base class from which your model is derived!**. You code the constructor `__init__(...)` and the `forward(...)` function are the same as before! Of course, you also imported all functions & modules of the `Pytorch Toolkit` with the following line:
 
-Next, you'll need to specify the `loss` function, the `optimizer` and `metrics` to track during the training epochs (Yes! The `Pytorch Toolkit` provides several common metrics that you can use out-of the box - like Accuracy, F1-Score, MSE, MAE etc., which you can use). 
+```python
+# Change #1 -> import the Pytorch toolkit
+import pytorch_toolkit as pytk
+```
 
-**NOTE:** At this time there is no support to add your own metrics - something that I plan on adding at a future date. I do include the most common metrics that I normally use. So far this has not proved to be an impediment.
+Before you can start training the module, you'll need to specify the `loss` function, the `optimizer` and `metrics` to track during the training epochs (Yes! The `Pytorch Toolkit` provides several common metrics that you can use out-of the box - like Accuracy, F1-Score, MSE, MAE etc., which you can use). 
+
+**NOTE:** At this time there is no support to add your own metrics - something that I plan on adding at a future date. I do include the most common metrics that I normally use during traininf. So, hopefully, this does not prove to be a significanrt impediment.
 
 ```python
 # instantiate the loss function & optimizer (nothing PyTk specific here)
@@ -129,17 +138,21 @@ optimizer = torch.optim.SGD(model.parameters(), lr=0.001,
     nesterov=True, weight_decay=0.005, momentum=0.9, dampening=0) 
 ```
 
-and here is how you _attach_ these to your model
+and this is how you _attach_ these to your model using it's `compile()` function:
 
 ```python
-# NOTE: model is an instance of PytkModule class - it provides a compile() function
-# which allows me to specify the loss function, optimizer and metrics to track when training
+# NOTE: model is an instance of PytkModule class
+# it provides a compile() method, which allows me to specify the loss function, optimizer and metrics to track when training
 model.compile(loss=loss_fn, optimizer=optimizer, metrics=['acc'])
 ```
 
 * Notice that the above line is very Keras-like (I've done this on purpose). Keras does a lot more with it's `compile(...)` function. I merely set attributes of the `PytkModule` derived class! 
-* You can optionally specify one or more metrics that the training loop should track using the `metrics` parameter. Metrics are specified using its associated string alias (just like in Keras) - refer to the table below for available metrics.
-* You _need not specify any metrics_ (for example by omitting the optional`metrics` parameter in above call). The training loop will **always track** the `loss` metric though, _even if you leave out the metrics parameter in the `compile()` call. The `loss` metric is tracked _in addition to any other metrics you supply_ in the metrics parameter. You don't have to specifically mention the `loss` metric explicitly in your `metrics` parameter.
+* You can _optionally specify_ one or more metrics that the training loop should track using the `metrics` parameter of the `compile()` method. Metrics are specified using their associated string aliases (just like in Keras) - refer to the table below for supported metrics.
+* You _need not specify any metrics_ (for example by omitting the optional`metrics` parameter in above call). 
+
+|NOTE|
+|:---|
+|The training loop will **always track** the `loss` metric though, _even if you leave out the metrics parameter in the `compile()` call_. <br/>The `loss` metric is tracked _in addition to any other metrics you supply_ in the metrics parameter. Additionally, you don't have to specifically mention the `loss` metric explicitly in your `metrics` parameter.|
 
 **Table of available metrics**
 
@@ -150,17 +163,18 @@ model.compile(loss=loss_fn, optimizer=optimizer, metrics=['acc'])
 |`'rec'`| Recall
 |`'f1'`| F1 Score
 |`'roc_auc'`| ROC AUC Score
-|`'mse'`| Mean Square Error
-|`'rmse'`| Root Mean Square Error
-|`'mae'`| Mean Absolute Error
+|`'mse'`| Mean Square Error (for regression)
+|`'rmse'`| Root Mean Square Error (for regression)
+|`'mae'`| Mean Absolute Error (for regression)
 
 ### Training our model
-Here is where the Pytorch Tooklit shines - **you don't have to write the code that loops through epochs, generates batches of data etc. etc.** - just call the model's `fit(...)` function as shown below:
+Here is where the Pytorch Tooklit shines - **you don't have to write the code that loops through epochs, generates batches of data etc. etc.** - just call the model's `fit(...)` method as shown below:
 
 ```python
 hist = model.fit(X_train, y_train, epochs=100, batch_size=16)
 ```
-The `fit(...)` call takes many more parameters, which I will cover as we progress through this tutorial. At the minumum, you need to specify the X (data), y (labels) [both Numpy arrays], the number of epochs to loop through and the batch size to use. You should see output like the one shown below (output has been truncated for brevity).
+
+The `fit(...)` method takes many more parameters, which I will cover as we progress through this tutorial. At the minumum, you need to specify the X (data), y (labels) [both Numpy arrays], the number of epochs to loop through and the batch size to use. You should see output like the one shown below (output has been truncated for brevity).
 
 ```
 Epoch (  1/100): (455/455) -> loss: 0.6900 - acc: 0.6296
@@ -171,16 +185,17 @@ Epoch (  2/100): (455/455) -> loss: 0.6696 - acc: 0.6373
 Epoch ( 99/100): (455/455) -> loss: 0.0512 - acc: 0.9871
 Epoch (100/100): (455/455) -> loss: 0.0506 - acc: 0.9871
 ```
-The output should be fairly easy to comprehend, especially if you have used Keras before. Basically each line shows the epoch wise progress of training followed by record count and then the metrics (here `loss` and `acc`) - `loss` will be tracked even if you don't specify any metrics.
+The output should be fairly easy to comprehend, especially if you have used Keras before. Each line shows the epoch wise progress of training followed by record count and then the metrics you specified (here `loss` and `acc`) - `loss` will be tracked even if you don't specify any metrics.
 
 #### Cross-training with validation data
 It is always a good practice to cross-train your model on a `training` dataset and an `evaluation` dataset. You can easily accomplish this with the Pytorch Toolkit as shown below. Just modify the `fit(...)` call as follows:
 
 ```python
-hist = model.fit(X_train, y_train, epochs=100, batch_size=16, validation_split=0.20)
+hist = model.fit(X_train, y_train, epochs=100, batch_size=16, 
+                 validation_split=0.20)
 ```
 
-Here I have used `validation_split` parameter, which takes a value between 0.0 and 1.0. This will internally randomly split the training data  & labels into `training` and `cross-validation` datasets using the `validation_split` proportion specified. For example, in the above call, the original training data & labels get randomly split in a 80%:20%, with 20% getting assigned as the cross-validation data & labels. Output from the training loop will be slightly different, as shown below:
+The `validation_split` parameter takes a value between `0.0` and `1.0`. The `X_train` & `y_train` training data & labels (Numpy arrays) are internally split into `training` and `cross-validation` datasets using the `validation_split` proportion specified. For example, in the above call, the `X_train` & `y_train` get randomly split in a 80%:20% proportion, with 20% getting assigned as the cross-validation data & labels. Output from the training loop will be slightly different, as shown below:
 
 ```
 Epoch (  1/100): (364/364) -> loss: 0.6926 - acc: 0.6196 - val_loss: 0.6790 - val_acc: 0.6884
@@ -194,15 +209,18 @@ Epoch (100/100): (364/364) -> loss: 0.0489 - acc: 0.9891 - val_loss: 0.0971 - va
 Notice that metrics are now being tracked for the `training` data & labels as well as the `cross-validation` data and labels (values preceedes by `val_`)
 
 #### Using a _decicated_ validation dataset
-Sometimes validation data & labels are available in separate Numpy arrays (let's say we call these `X_val` and `y_val` for the data and labels respectively). To use this, make the following change to the `fit(...)` call, as shown below:
+Sometimes validation data & labels are available in separate Numpy arrays (let's say we call these `X_val` and `y_val` for the data and labels respectively). To use these, make the following change to the `fit(...)` call, as shown below:
 
 ```python
-hist = model.fit(X_train, y_train, epochs=100, batch_size=16, validation_data=(X_val, y_val))
+hist = model.fit(X_train, y_train, epochs=100, batch_size=16, 
+                 validation_data=(X_val, y_val))
 ```
 
 We have asked the model to to use `X_val` and `y_val` as the cross-validation data & labels by passing them as a tuple via the `validation_data` parameter. We don't use `validation_split` parameter in this case. 
 
-**NOTE:** If both `validation_split` and `validation_data` are specified in the `fit()` call, then the `validation_dataset` parameter takes precedence and `validation_split` is simply ignored.
+|NOTE|
+|:---|
+|If both `validation_split` and `validation_data` are specified in the `fit()` call, then the `validation_dataset` parameter takes precedence and `validation_split` is simply ignored.|
 
 #### Tracking multiple metrics
 Suppose you want to track `accuracy` and `F1-Score` by epoch. Here is what you do:
@@ -210,13 +228,15 @@ Suppose you want to track `accuracy` and `F1-Score` by epoch. Here is what you d
 * Specify the metrics you want to track in your `model.compile(...)` call as follows (for metric aliases please refer to table above):
 
 ```python
-model.compile(loss=loss_fn, optimizer=optimizer, metrics=['acc', 'f1']
+model.compile(loss=loss_fn, optimizer=optimizer, 
+              metrics=['acc', 'f1'])
 ```
 
 * Call `fit(...)` as usual - no changes here!
 
 ```python
-hist = model.fit(X_train, y_train, epochs=100, batch_size=16, validation_split=0.20)
+hist = model.fit(X_train, y_train, epochs=100, batch_size=16, 
+                 validation_split=0.20)
 ```
 
 You should see output like the following - notice the extra metric being tracked for the `training` and `cross-validation` datasets.
@@ -246,7 +266,9 @@ pytk.show_plots(hist)
 
 ![](images/show_plots.png)
 
-In this version of the `Pytorch Toolkit`, the `show_plot()` function plots _only_ the `loss` and `acc` metric (if specified). I'll be adding support to plot other metrics in upcoming versions. For now, this suffices for most problems.
+|NOTE|
+|:---|
+|In this version of the `Pytorch Toolkit`, the `show_plot()` function plots _only_ the `loss` and `acc` (if specified) metrics. I'll be adding support to plot other metrics in upcoming versions. For now, this suffices for most problems.|
 
 ### Evaluating Model performance
 Once you are done with training, you will want to verify model's performance on `testing` data & labels, which the model _has not seen_ during the entire cross-training process. This can be done as follows:
@@ -264,17 +286,19 @@ Evaluating (114/114) -> loss: 0.0622 - acc: 0.9922 - f1: 0.9906
   Test dataset  -> loss: 0.0622 - acc: 0.9922 - f1: 0.9906
 ```
 
-**NOTE:** The `evaluate(...)` call returns _as many values_ as the metrics you are tracking (remember that the `fit(...)` call **always** tracks `loss` even if you do not specify it in the metrics list!). We specified `acc` and `f1`, hence we'll get back 3 values.
+|NOTE|
+|:---|
+|The `evaluate(...)` call returns _as many values_ as the metrics you are tracking during training. Recall that the `fit(...)` call **always** tracks `loss` even if you don't explicitly specify it in the metrics list! of the `compile(...)` call. We also specified `acc` and `f1`, hence we'll get back 3 values.|
 
 ### Saving the model's state:
-Once you are happy with the model's performance, you may want to save the model's weights and structure to disk, so you can just load this at a later date and use the model without having to re-train it. The `Pytorch Toolkit's PytModule` provides a `save()` function to do just that. Use it on an instance of the model as follows:
+Once you are happy with the model's performance, you may want to save the model's weights and structure to disk, so you can just load this at a later date and use the model without having to re-train it. The `PytModule` provides a `save()` method to do just that. Use it on an instance of the model as follows:
 
 ```python
 # specify path of file where model state should be saved
 model.save('./model_states/wbc.pt')
 ```
 
-`save()` takes a path to file where the model state is saved - if the directory leading up to the path does not exist, it is created the very first time `save()` is called. You need not specify the `.pt` extension. It is tagged on if omitted. The `.pt` file is a binary file, which only Pytorch API can comprehend.
+`save()` takes a path to file where the model state is saved - if the directory leading up to the path does not exist, it is created the very first time `save()` is called. You need not specify the `.pt` extension is optional - it will be tagged on to file name. **The `.pt` file is a binary file, which only Pytorch API can comprehend.**
 
 ### Loading model's state from disk
 The `Pytorch Toolkit` provides a **stand alone** `load()` function to load the model's state from disk - I could have coded this as a static function of the PytModule class, but I chose to code a stand-alone function instead. Here is how you use it.
@@ -302,7 +326,7 @@ This completes our first example - please refer to the code for [Wisconsin Breas
 ### Multiclass Classifiction with data & labels in Numpy Arrays
 There is **absolutely no change** in the way you would train, evaluate and test a model's performance for multi-class classification. You may need to change the way you prepare data, and most probably create a model with a different architecture (no of layers, types of layers etc.). I have included multi-class classification problems on Numpy arrays in the Github repository:
 
-* Refer to the [Iris Flower Classification](pyt_iris.py) example and compatre it with our previous example.
+* Refer to the [Iris Flower Classification](pyt_iris.py) example, which classifies 4 flower species depending on various sepal & petal attributes.
 * Also see the [Wine Classification](pyt_wine.py) Python file for another example.
 
 ## Training with Pytorch Datasets & Transforms
@@ -354,7 +378,6 @@ class MNISTNet(pyt.PytModule):
         self.fc1 = pytk.Linear(IMAGE_HEIGHT * IMAGE_WIDTH * NUM_CHANNELS, 128)
         self.fc2 = pytk.Linear(128, 64)
         self.out = pytk.Linear(64, NUM_CLASSES)
-        self.dropout = nn.Dropout(0.10)
 
     def forward(self, x):
         # flatten input (for DNN)
@@ -375,15 +398,15 @@ The astute observer will notice that I have used `pytk.Linear()` instead of `nn.
 
 ```python
 def Linear(in_nodes, out_nodes, bias=True):
-    layer = nn.Linear(in_nodes, out_nodes)
+    layer = nn.Linear(in_nodes, out_nodes, bias)
     # initialize weights with xavier_uniform and bias layer to all-zeros
     torch.nn.init.xavier_uniform_(layer.weight)
     if bias: torch.nn.init.zeros_(layer.bias)
     return layer
 ```
-So all it's doing is adding _initializing code_ to the weights & bias of the layer - weights are initialized using `xavier_uniform()` (same as `glorot_uniform()` for Keras users) and the bias layer (if used) is initialized to all-zeros. You can use `nn.Linear()` instead of `pyt.Linear()` if you prefer the initialization that Pytorch uses by default.
+So all it's doing is adding _initializing code_ to the weights & bias of the layer - weights are initialized using `xavier_uniform()` (same as `glorot_uniform()` from Keras) and the bias layer (if used) is initialized to all-zeros. You can use `nn.Linear()` instead of `pyt.Linear()` if you prefer the initialization that Pytorch uses by default.
 
-If you prefer to use `Conv2d` layers instead, your module could be defined something like the following:
+If you prefer to use `Conv2d` layers instead, your module could be defined somewhat like the following:
 
 ```python
 class MNISTConvNet(pytk.PytkModule):
@@ -416,16 +439,16 @@ class MNISTConvNet(pytk.PytkModule):
 # instantiate the model
 model = MNISTConvNet()
 ```
-Again, notice that I have used `pytk.Conv2d()` instead of `nn.Conv2d()`. Just like in the previous case, this implements the added step of initializing a `nn.Conv2d()` layer's weights with `xavier_uniform()` (or `glorot_uniform()` for Keras users) and the layer's bias to all-zeros.
+Again, you'll notice that I have used `pytk.Conv2d()` instead of `nn.Conv2d()`. Just like in the previous case, this implements the added step of initializing a `nn.Conv2d()` layer's weights with `xavier_uniform()` (or `glorot_uniform()` for Keras users) and the layer's bias to all-zeros.
 
-I also include a utility function `pytk.Flatten()`, which flattens the previous Conv2d (3D) layer into a 2D layer, which can then be fed into a `nn.Linear` layer. `pytk.Flatten()` is implemented as below:
+I also include a utility function `pytk.Flatten()`, which flattens the previous Conv2d (a 3D layer) into a 2D layer, which can then be fed into a `nn.Linear` layer. `pytk.Flatten()` is implemented as below:
 
 ```python
 def Flatten(x):
     return x.view(x.shape[0],-1)
 ```
 
-As before, we need to call `compile()` on the model instance passing in a loss function, an optimizer and metrics we want to track. Here is the code for the same:
+As before, we need to call the `compile()` method of the model, passing in a loss function, an optimizer and metrics we want to track. Here is the code for the same:
 
 ```python
 loss_fn = nn.CrossEntropyLoss()
@@ -434,12 +457,13 @@ model.compile(loss=loss_fn, optimizer=optimizer, metrics=['acc'])
 ```
 
 ### Training model using datasets
-Since we are using Pytorch datasets API, training, evaluating and testing the model will us different functions of the model class.
+Since we are using Pytorch datasets API, training, evaluating and testing the model will use different functions of the model class.
 
-To train the model, call the `fit_dataset(...)` function as follows:
+To train the model, call the `fit_dataset(...)` method as follows:
 
 ```python
-hist = model.fit_dataset(train_dataset, validation_dataset=val_dataset, 
+hist = model.fit_dataset(train_dataset, 
+                         validation_dataset=val_dataset, 
                          epochs=NUM_EPOCHS, batch_size=BATCH_SIZE)
 ```
 This is almost similar to the `fit()` call - instead of passing `X_train/y_train` Numpy arrays, we pass datasets `train_dataset` and `val_dataset`. Output is similar to the one you saw with the `fit()` call.
@@ -454,31 +478,34 @@ Epoch ( 2/25): (60000/60000) -> loss: 0.1128 - acc: 0.9660 - val_loss: 0.0955 - 
 Epoch (24/25): (60000/60000) -> loss: 0.0159 - acc: 0.9984 - val_loss: 0.0507 - val_acc: 0.9839
 Epoch (25/25): (60000/60000) -> loss: 0.0159 - acc: 0.9984 - val_loss: 0.0509 - val_acc: 0.9845
 ```
+|NOTE|
+|:---|
+|The `validation_dataset` parameter is optional - omit it if you do not want to use a validation dataset. However, it is a good practice to cross-train model|
 
 #### Evaluating model's performance on test dataset
 To get an unbiased view of the model's performance, we should evaluate it against `test dataset` that the model has not _seen_ during the entire training process. Notice that we have not used `test_dataset` so far. To evaluate model performance using Pytorch datasets, use the following call:
 
 ```python
 loss, acc = model.evaluate_dataset(test_dataset)
-print('  Test dataset      -> loss: %.4f - acc: %.4f' % (loss, acc))
+print('  Test dataset -> loss: %.4f - acc: %.4f' % (loss, acc))
 ```
 
 As before, the `evaluate_dataset()` will return _as may values as the number of metrics_ you specify in the `compile()` call. **The `loss` metric will always be tracked even if you do not specify it in the metrics list**. Output of the above call is something like shown below:
 
 ```
 Evaluating (2000/2000) -> loss: 0.0642 - acc: 0.9790
-  Test dataset      -> loss: 0.0642 - acc: 0.9790
+  Test dataset -> loss: 0.0642 - acc: 0.9790
 ```
 
 #### Making predictions
-To make predictions after training our model using a Pytorch `dataset` just call the `model.predict_dataset(...)` function as shown below:
+To make predictions after training our model using a Pytorch `dataset`, call the `model.predict_dataset(...)` method as shown below:
 
 ```python
 y_pred, y_true = model.predict_dataset(test_dataset)
 y_pred = np.argmax(y_pred, axis=1)
 print('We got %d/%d incorrect!' % ((y_pred != y_true).sum(), len(y_true)))
 ```
-Notice that this function returns 2 values (both Numpy arrays) - the predictions (`y_pred`) and the actual values (`y_true`). `y_pred.shape = (X_train.shape[0], NUM_CLASSES)`, hence the following `np.argmax(...)` call to reduce the dimension to 1 along the columns. `y_pred` will have shape of `(X_train.shape[0],)`.
+Notice that this function returns 2 values (**both Numpy arrays**) - the predictions (`y_pred`) and the actual values (`y_true`). `y_pred.shape = (X_train.shape[0], NUM_CLASSES)`, hence the following `np.argmax(...)` call to reduce the dimension to 1 along the columns. `y_pred` will have shape of `(X_train.shape[0],)` so the `np.argmax(...)` call is not required for `y_true`.
 
 Output from the above function is something like below:
 
@@ -489,17 +516,20 @@ We got 43/2000 incorrect!
 ```
 
 ### Using Learning Rate Schedulers during training
-Often it is useful to step the learning as epochs increase to prevent the model from overshooting the global minima as it tries to descend towards it. There are several learning rate schedulers that the Pytorch library supplies - we can use anyone that we prefer.
+Often it is useful to step the learning as epochs increase to prevent the model from overshooting the global minima as it tries to descend towards it. There are several learning rate schedulers that the Pytorch library supplies - we can use anyone of them.
 
 I normally use the `StepLR` learning rate scheduler, which I instantiate as follows:
 
 ```python
+# instantiate your preferred learning rate scheduler
 # reduce LR every 10th epoch by 0.2 times
 scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.2)
 ```
 where, `optimizer` points to the optimizer we use with our model.
 
-To use the scheduler when training, we supply it via the `lr_scheduler` parameter of the `fit()` or the `fit_dataset()` calls. For example, to use this with the Wisconsin Breast Cancer example, I would use the following `fit()` call
+To use the scheduler when training, we supply it via the `lr_scheduler` parameter of the `fit()` or the `fit_dataset()` methods of our `PytkModule`. 
+
+For example, to use this with the Wisconsin Breast Cancer example, I would use the following `fit()` call
 
 ```python
 # for the Wisconsin Breast Cancer example
@@ -510,8 +540,10 @@ and with the MNIST example, where we use datasets, the call would be as follows:
 
 ```python
 # for the Wisconsin Breast Cancer example
-hist = model.fit_dataset(train_dataset, validation_dataset=val_dataset, 
-                         epochs=NUM_EPOCHS, batch_size=BATCH_SIZE, lr_scheduler=scheduler)
+hist = model.fit_dataset(train_dataset, 
+                         validation_dataset=val_dataset, 
+                         epochs=NUM_EPOCHS, batch_size=BATCH_SIZE, 
+                         lr_scheduler=scheduler)
 ```
 
 For the complete code used in this section, refer to the [MNIST Classification](pyt_mnist_dnn.py) example, where you can train/evaluate/test both MLP and CNN architectures.
