@@ -3,7 +3,7 @@ Thank you for your interest in the `Pytorch Toolkit`. I wrote this as a set of u
 
 |**NOTE**|
 |:---|
-|This tutorial is work-in-progress and is expected to change to some extend, especially if I enhance the `Pytorch Toolkit` with more functions. Do keep checking back for changes - I don't expect the API to change drastically henceforth|
+|<font color='firebrick'>This tutorial is **work-in-progress** and is expected to change to some extend, especially if I enhance the `Pytorch Toolkit` with more functions. Do keep checking back for changes - I don't expect the API to change drastically henceforth</font>|
 
 This tutorial will gradually expose you to the API provided by the **Pytorch Toolkit**, so it is best that you **follow along from beginning to the end**. I use a very informal style of writing, which I hope you'll like. The API is inspired by Keras, so if you have used Keras before you'll feel at home.
 
