@@ -1,7 +1,7 @@
 # Pytorch Toolkit - Tutorial
 Thank you for your interest in the `Pytorch Toolkit`. I wrote this as a set of utility functions & classes that will ease the process of training, evaluating & running predictions from a model. As a developer, I would rather spend my time productively concentrating on the core tasks of ML - viz. preparing data, designing/re-using appropriate model architecture and tuning the hyperparameters to get the best performance from the model. Keras does a great job of hiding boilerplate code for training the model, evaluating performance and running predictions. I aim to bring the ease that Keras provides to Pytorch via the `Pytorch Toolkit`. Most of the API is similar to the Keras API, so Keras users should find it very easy to understand.
 
-This tutorial will gradually expose you to the API provided by the **Pytorch Toolkit**, so it is best that you follow along from beginning to the end. I use a very informal style of writing, which I hope you'll like. The API is inspired by Keras, so if you have used Keras before you'll feel at home.
+This tutorial will gradually expose you to the API provided by the **Pytorch Toolkit**, so it is best that you **follow along from beginning to the end**. I use a very informal style of writing, which I hope you'll like. The API is inspired by Keras, so if you have used Keras before you'll feel at home.
 
 I am assuming that you have already installed the pre-requisites and have done the preliminary test as explained in the [Readme](Readme.md) file - if not, please do so now.
 
@@ -152,22 +152,21 @@ model.compile(loss=loss_fn, optimizer=optimizer, metrics=['acc'])
 
 |**NOTE**|
 |:---|
-|* The training loop will **always track** the `loss` metric though, _even if you leave out the metrics parameter in the `compile()` call_. 
-* The `loss` metric is always tracked _in addition to any other metrics you supply_ in the metrics parameter. 
-* Additionally, you don't have to specifically mention the `loss` metric explicitly in your `metrics` parameter.|
+|The training loop will **always track** the `loss` metric though, _even if you leave out the metrics parameter in the `compile()` call_.<br/>The `loss` metric is always tracked _in addition to any other metrics you supply_ in the metrics parameter.<br/> Additionally, you don't have to specifically mention the `loss` metric explicitly in your `metrics` parameter.|
+
 
 **Table of available metrics**
 
 |String Alias | Metric | 
 |:---|:---|
-|`'acc'`| Accuracy (works for binary and multiclass classification)
-|`'prec'`| Precision
-|`'rec'`| Recall
-|`'f1'`| F1 Score
-|`'roc_auc'`| ROC AUC Score
-|`'mse'`| Mean Square Error (for regression)
-|`'rmse'`| Root Mean Square Error (for regression)
-|`'mae'`| Mean Absolute Error (for regression)
+|`'acc'`| Accuracy (works for binary and multiclass classification)|
+|`'prec'`| Precision|
+|`'rec'`| Recall|
+|`'f1'`| F1 Score|
+|`'roc_auc'`| ROC AUC Score|
+|`'mse'`| Mean Square Error (for regression)|
+|`'rmse'`| Root Mean Square Error (for regression)|
+|`'mae'`| Mean Absolute Error (for regression)|
 
 ### Training our model
 Here is where the Pytorch Tooklit shines - **you don't have to write the code that loops through epochs, generates batches of data etc. etc.** - just call the model's `fit(...)` method as shown below:
@@ -189,7 +188,7 @@ Epoch (100/100): (455/455) -> loss: 0.0506 - acc: 0.9871
 ```
 The output should be fairly easy to comprehend, especially if you have used Keras before. Each line shows the epoch wise progress of training loop - this is followed by by record count and then the metrics you specified (here `loss` and `acc`) - `loss` will be tracked even if you don't specify any metrics.
 
-#### Cross-training with validation data
+### Cross-training with validation data
 It is always a good practice to cross-train your model on a `training` dataset and an `evaluation` dataset. You can easily accomplish this with the Pytorch Toolkit as shown below. Just modify the `fit(...)` call as follows:
 
 ```python
@@ -210,7 +209,7 @@ Epoch (100/100): (364/364) -> loss: 0.0489 - acc: 0.9891 - val_loss: 0.0971 - va
 ```
 Notice that metrics are now being tracked for the `training` data & labels as well as the `cross-validation` data and labels (values preceedes by `val_`)
 
-#### Using a _decicated_ validation dataset
+### Using a _decicated_ validation dataset
 Sometimes validation data & labels are available in separate Numpy arrays (let's say we call these `X_val` and `y_val` for the data and labels respectively). To use these, make the following change to the `fit(...)` call, as shown below:
 
 ```python
@@ -224,7 +223,7 @@ We have asked the model to to use `X_val` and `y_val` as the cross-validation da
 |:---|
 |If both `validation_split` and `validation_data` are specified in the `fit()` call, then the `validation_dataset` parameter takes precedence and `validation_split` is simply ignored.|
 
-#### Tracking multiple metrics
+### Tracking Multiple Metrics
 Suppose you want to track `accuracy` and `F1-Score` by epoch. Here is what you do:
 
 * Specify the metrics you want to track in your `model.compile(...)` call as follows (for metric aliases please refer to table above):
@@ -292,6 +291,15 @@ Evaluating (114/114) -> loss: 0.0622 - acc: 0.9922 - f1: 0.9906
 |:---|
 |The `evaluate(...)` call returns _as many values_ as the metrics you are tracking during training. Recall that the `fit(...)` call **always** tracks `loss` even if you don't explicitly specify it in the metrics list! of the `compile(...)` call. We also specified `acc` and `f1`, hence we'll get back 3 values.|
 
+You can always evaluate model's performance on any dataset - for example, to evaluate performance on the training set, use the following code:
+
+```python
+# assuming you are tracking both accuracy & f1-score metrics
+loss, acc, f1 = model.evaluate(X_train, y_train)
+print(f'  Train dataset  -> loss: {loss:.4f} - acc: {acc:.4f} - f1: {f1:.4f}')
+```
+You should see output similar to the one shown above.
+
 ### Saving the model's state:
 Once you are happy with the model's performance, you may want to save the model's weights and structure to disk, so you can just load this at a later date and use the model without having to re-train it. The `PytModule` provides a `save()` method to do just that. Use it on an instance of the model as follows:
 
@@ -306,10 +314,9 @@ model.save('./model_states/wbc.pt')
 The `Pytorch Toolkit` provides a **stand alone** `load()` function to load the model's state from disk - I could have coded this as a static function of the PytModule class, but I chose to code a stand-alone function instead. Here is how you use it.
 
 ```python
-# NOTE: in this version load() is a stand-alone function and not a class member function!
+# NOTE: load() is a stand-alone function and not a class member function!
 model = pytk.load_model('./model_states/wbc.pt')
 ```
-
 This call will load the model's structure as well as the weights & biases of the various layers of the model. It is ready-to-go!
 
 ### Running Predictions
@@ -484,7 +491,7 @@ Epoch (25/25): (60000/60000) -> loss: 0.0159 - acc: 0.9984 - val_loss: 0.0509 - 
 |:---|
 |The `validation_dataset` parameter is optional - omit it if you do not want to use a validation dataset. However, it is a good practice to cross-train model|
 
-#### Evaluating model's performance on test dataset
+### Evaluating model's performance on test dataset
 To get an unbiased view of the model's performance, we should evaluate it against `test dataset` that the model has not _seen_ during the entire training process. Notice that we have not used `test_dataset` so far. To evaluate model performance using Pytorch datasets, use the following call:
 
 ```python
@@ -499,7 +506,7 @@ Evaluating (2000/2000) -> loss: 0.0642 - acc: 0.9790
   Test dataset -> loss: 0.0642 - acc: 0.9790
 ```
 
-#### Making predictions
+### Making Predictions
 To make predictions after training our model using a Pytorch `dataset`, call the `model.predict_dataset(...)` method as shown below:
 
 ```python
@@ -542,11 +549,236 @@ and with the MNIST example, where we use datasets, the call would be as follows:
 
 ```python
 # for the Wisconsin Breast Cancer example
-hist = model.fit_dataset(train_dataset, 
-                         validation_dataset=val_dataset, 
+hist = model.fit_dataset(train_dataset, validation_dataset=val_dataset, 
                          epochs=NUM_EPOCHS, batch_size=BATCH_SIZE, 
                          lr_scheduler=scheduler)
 ```
 
 For the complete code used in this section, refer to the [MNIST Classification](pyt_mnist_dnn.py) example, where you can train/evaluate/test both MLP and CNN architectures.
+
+## Using `nn.Sequential` API
+Personally I find using the traditional method, i.e. deriving your class from nn.Module, a bit tedious. I'll admit that I have spent hours debugging issues with my `forward()` method - I simply could never get it right the first time. The `nn.Sequential` API provided by Pytorch was a life-saver for me. It helps me clearly _visualize_ the sequence of operations in my module and what's mofe - I don't have to write a `forward()` method - how convenient!
+
+In this section I'll cover how we can use the `Pytorch Toolkit` with models created with the `nn.Sequential` API. I'll illustrate this with a multiclass classification problem, specifically classification of 10 image classes of the `CIFAR10` imagesets. You can get more information about the CIFAR10 datasets [here](https://www.cs.toronto.edu/~kriz/cifar.html)
+
+### Loading Data
+As before, this section _does not strictly apply to the `Pytorch Toolkit`_. For loading the `CIFAR10` images data, I use the following code - data (images & labels) is returned as torchvision datasets.
+
+```python
+def load_data():
+    """
+    Load the data using datasets API. 
+    We apply some random transforms to training datset as we load the data
+    We also split the test_dataset into cross-val/test datasets using 80:20 ratio
+    """
+    IMGNET_MEAN, IMGNET_STD = 0.5, 0.3  # approximate values
+
+    xforms = {
+        'train' : [
+            # add transforms here - scaling, shearing, flipping etc.
+            transforms.RandomCrop(32, padding=4),
+            transforms.RandomHorizontalFlip(),   
+            transforms.ToTensor(),
+            transforms.Normalize((IMGNET_MEAN, IMGNET_MEAN, IMGNET_MEAN),
+                                 (IMGNET_STD, IMGNET_STD, IMGNET_STD))
+        ],
+        'test' : [
+            transforms.ToTensor(),
+            transforms.Normalize((IMGNET_MEAN, IMGNET_MEAN, IMGNET_MEAN),
+                                 (IMGNET_STD, IMGNET_STD, IMGNET_STD))
+        ],
+    }
+
+    train_dataset = datasets.CIFAR10(root='./data', train=True, download=True,
+                                     transform=transforms.Compose(xforms['train']))
+    print("No of training records: %d" % len(train_dataset))
+
+    test_dataset = datasets.CIFAR10('./data', download=True, train=False,
+                                    transform=transforms.Compose(xforms['test']))
+    print("No of test records: %d" % len(test_dataset))
+
+    # randomly split the 10,000 records in the test dataset into cross-validation &
+    # test datasets in a 80:20 ratio
+    val_dataset, test_dataset = torch.utils.data.random_split(test_dataset, [8000, 2000])
+    print("No of cross-val records: %d" % len(val_dataset))
+    print("No of test records: %d" % len(test_dataset))
+
+    return train_dataset, val_dataset, test_dataset
+
+
+# load the data
+train_dataset, val_dataset, test_dataset = load_data()
+```
+
+### Building the model
+Building the model is a two step process:
+* Build the model using the `nn.Sequential` API as usual
+* Wrap the model using the `PytkModelWrapper` class provided by the `Pytorch Toolkit`
+
+These steps are shown below:
+
+```python
+class Flatten(nn.Module):
+    def forward(self, input):
+        return input.view(input.size(0), -1)
+
+def build_model(l1, l2, l3):
+    # NOTE: l2, l2 & l3 are nodes for the 3 Conv2d layers 
+    model = nn.Sequential(
+        pytk.Conv2d(3, l1, 5, padding=1),
+        nn.ReLU(),
+        nn.BatchNorm2d(l1),
+        pytk.Conv2d(l1, l1, 5, padding=1),
+        nn.ReLU(),
+        nn.BatchNorm2d(l1),
+        nn.MaxPool2d(kernel_size=2, stride=2),
+        nn.Dropout(0.10),
+
+        pytk.Conv2d(l1, l2, 5, padding=1),
+        nn.ReLU(),
+        nn.BatchNorm2d(l2),
+        pytk.Conv2d(l2, l2, 5, padding=1),
+        nn.ReLU(),
+        nn.BatchNorm2d(l2),
+        nn.MaxPool2d(kernel_size=2, stride=2),
+        nn.Dropout(0.10),
+
+        pytk.Conv2d(l2, l3, 3, padding=1),
+        nn.ReLU(),
+        nn.BatchNorm2d(l3),
+        pytk.Conv2d(l3, l3, 3, padding=1),
+        nn.ReLU(),
+        nn.BatchNorm2d(l3),
+        nn.MaxPool2d(kernel_size=2, stride=2),
+        nn.Dropout(0.10),
+
+        Flatten(),
+
+        nn.Linear(2*2*l3, 512),
+        nn.Dropout(0.20),        
+
+        nn.Linear(512, 256),
+        nn.Dropout(0.25),        
+
+        nn.Linear(256, 10)
+    )
+    return model
+
+# wrap our model using the PytkModuleWrapper class
+model = pytk.PytkModuleWrapper(build_model(32, 64, 128))
+```
+
+The `PytkModuleWrapper` class provides the same functions that the `PytkModule` class provided - viz. `fit()`, `fit_dataset()`, `evaluate()`, `evaluate_dataset()` etc. It wraps around a module created with the `nn.Sequential` API, hence the name.
+
+Once the module is created, you will assign it a loss function, an optimizer and (optionally) metrics to be tracked during the training loop - this is done the same was as shown with `PytkModule` class. Here is the code:
+
+```python
+LEARNING_RATE, L2_REG = 0.001, 0.0005
+loss_fn = nn.CrossEntropyLoss()
+optimizer = optim.Adam(params=model.parameters(), lr=LEARNING_RATE, weight_decay=L2_REG)
+model.compile(loss=loss_fn, optimizer=optimizer, metrics=['acc'])
+```
+In this example we are using the `Adam` optimizer and the `CrossEntropyLoss` loss function (as this is a multiclass classification problem). We choose to monitor the accuracy metric, with the `metrics=['acc']` parameter.
+
+### Training the model
+This is exactly as before, with the `PytkModule` derived class - just call the `fit_dataset()` (since we loaded data into datasets) on the instance of the model. Alternately, had you used Numpy arrays for data and labels, you would call `fit()` on the model instance.
+
+```python
+hist = model.fit_dataset(train_dataset, validation_dataset=val_dataset, 
+                         epochs=NUM_EPOCHS, batch_size=BATCH_SIZE)
+```
+
+Alternatively, had you sourced data & labels as Numpy arrays instead of torchvision datasets, you would use the following call:
+
+```python
+# either using validation_split
+hist = model.fit(X_train, y_train, validation_split=0.2,
+                 epochs=NUM_EPOCHS, batch_size=BATCH_SIZE)
+
+# or using validation_data
+hist = model.fit(X_train, y_train, validation_data=(X_val, y_val),
+                 epochs=NUM_EPOCHS, batch_size=BATCH_SIZE)
+```
+
+All the above calls return the same kind of `history` object as before, so you can plot your model's `loss` and `acc` curves as before:
+
+```python
+pytk.show_plots(hist)
+```
+
+### Evaluating model's performance
+This is done exactly as before, using `evaluate_dataset()` or `evaluate()` on an instance of the model, depending on whether data is fed from Pytorch datasets of Numpy arrays respectively.
+
+```python
+loss, acc = model.evaluate_dataset(test_dataset)
+print('  Test dataset -> loss: %.4f - acc: %.4f' % (loss, acc))
+```
+
+Or had you sourced data as Numpy arrays, you would use:
+
+```python
+loss, acc = model.evaluate(X_test)
+print('  Test dataset -> loss: %.4f - acc: %.4f' % (loss, acc))
+```
+
+As with an instance of the `PytkModule` class, the `evaluate_dataset()` and `evaluate()` functions return as many values as the number of metrics tracked. Recall that `loss` is **ALWAYS** tracked. In our case, we also specified `acc` in the `compile()` method. So this call will return 2 values - for `loss` and `acc`.
+
+### Saving the model state
+This is also just as before. Call the `save()` function on an instance of the model class as below, passing it a full path to the file where model state is to be saved. Example shown below:
+
+```python
+# save model to ./model_states/cifar10.pt binary file
+save_path = os.path.join('.','model_states','cifar10.pt')
+model.save(save_path)
+```
+
+### Loading model state from disk
+This is slightly different than before - just as construction was a 2 step process, so is loading the model state. Assuming you saved model state to `./model_states/cifar10.pt` file as shown above, you would reload it as follows:
+
+```python
+model = pytk.PytkModelWrapper(pytk.load_model(save_path))
+# NOTE: save_path is the path from where model state is to be loaded
+# Example - save_path = './model_states/cifar10.pt'
+```
+Now `model` points to an instance of `PytkModelWrapper` class and you can you all the functions like `fit()`, `fit_dataset()`, `evaluate()`, `evaluate_dataset()` etc. on it.
+
+### Making Predictions
+You make predictions the same way you did when using the `PytkModule` derived class.
+
+```python
+# when data is sourced from torchvision datasets (as in this example)
+y_pred, y_true = model.predict_dataset(test_dataset)
+```
+
+```python
+# when data is sourced from Numpy arrays
+y_pred = model.predict(X_test)
+```
+
+As before, `y_pred` and `y_true` are Numpy arrays. `y_pred.shape() -> (X_test.shape[0], NUM_CLASSES)`
+
+### Using Early Stopping 
+Frankly speaking, you don't really know how many epochs will be needed to train your model. I normally provide a very large value of epochs (e.g. 100), when I train my model for the very first time. However, in a lot of cases you'll realize that so many epochs are really not required. The model's performance stops improving after a certain number of epochs - typically `validation loss` stops improving (or flattens out). You would ideally like to stop the training here **and keep the model's state (i.e. weights & biases) intach at this point**. Enter the `EarlyStopping` class.
+
+Here is how you use the `EarlyStopping` class:
+* Instantiate an instance of the class (explained below) before calling `fit()` or `fit_dataset()`
+* Pass this instance as the value of the `early_stopping` parameter of the `fit()` and `fit_dataset()` methods
+
+For example:
+```python
+early_stopper = pytk.EarlyStopping(monitor='val_loss', patience=10, save_best_weights=True, verbose=False)
+model.fit(X_train, y_train, 
+          ....,  # other parameters...
+          early_stopping=early_stopper)
+
+# or, if using datasets
+model.fit_dataset(train_dataset,
+                  ....,  # other parameters...
+                  early_stopping=early_stopper)
+```
+
+You specify the metric that the class with minitor (typically `val_loss`) and for how many epochs it should wait (`patience`) before stopping training if the monitored metric does not improve. As a good practice, you should always ask this class to save the best weights (with `save_best_weights=True`). After training is stopped, the model's best weights are restored from this saved state. If you also want to see how the `EarlyStopping` class is monitoring your metric, set `verbose=True` - it is `False` by default.
+
+How this works: Suppose you monitor `val_loss` (with `monitor='val_loss'`) for `patience=5`, then the `EarlyStopping` class will keep a log of the `val_loss` across each epoch. `val_loss` is expected to keep decresing as epochs increase. But normally it goes up & down slightly. If it does not decrease for 5 epochs in a row (since `patience=5`), it indicates that the `val_loss` is not _improving_. So training is stopped at this point!
+
 

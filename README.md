@@ -7,6 +7,16 @@ Jump straight to the [step-by-step tutorial](Tutorial.md)
 
 Me? I _hate_ writing the same boilerplate code repeatedly. I'd rathen have my library handle the mundane tasks while I focus on the tasks that _really matter_ viz. designing my model architecture, preparing data for my model & tuning the hyper-parameters to get the best performance. Keras does a remarkable job of providing a clean & simple API to train, evaluate & test models. With the `Pytorch Toolkit` I aim to bring the ease that Keras provides to Pytorch. Most of the API is similar to the Keras API, so Keras users should find it very easy to understand.
 
+### Features of the `Pytorch Toolkit`
+* Keras-like API to train model and evaluate model performance (e.g. `fit()` and `evaluate()`) and make predictions (e.g. `predict()`)
+* Support for torchvision datasets - with `fit_dataset()`, `evaluate_dataset()` and `predict_dataset()` calls
+* Convenience class `PytkModule` from which to extend your model - this class provides the Keras-like API
+* Full support for using `nn.Sequential` API, via the `PytkModuleWrapper` class, which also provides the same functions listed above
+* Support for saving and loading model states with `save()` and `load()` methods
+* Support for a variety of metrics (like accuracy, f1-score, precision, recall), calculated for each training epoch
+* Keras-like progress display while model trains
+* Support for **Early Stopping** of training
+
 I must confess, I'm not good at coming up with snazzy names for the libraries I create. I tried several acronyms and finally settled on a rather unfancy name `Pytorch Toolkit` (or `PyTk`). If you can come up with a really cool name, please let me know!
 
 This Github repository includes the tooklit, along with several examples on how to use it. Also included is a [step-by-step tutorial](Tutorial.md) which gradually introduces you to the complete API included in the toolkit. All functions & classes are included in just 1 Python file (_ingeniously_ named `pytorch_toolkit.py` - I did warn you that I am not good at coming up with names, didn't I?). I have not yet created a module - maybe someday...

@@ -272,9 +272,10 @@ METRICS_MAP = {
 # based on Bjarten's implementation (@see: https://github.com/Bjarten/early-stopping-pytorch/blob/master/pytorchtools.py)
 # -------------------------------------------------------------------------------------
 class EarlyStopping:
-    """Early stops the training if validation loss doesn't improve after a given patience."""
+    """Early stops the training if monitored metric (usually validation loss) doesn't improve 
+       after a given patience (or no of epochs)."""
     def __init__(self, monitor='val_loss', min_delta=0, patience=5, mode='min', verbose=False,
-                 save_best_weights=False):
+                 save_best_weights=False, checkpoint_file_path='.'):
         """
         Args:
             monitor (str): which metric should be monitored (default: 'val_loss')
@@ -285,6 +286,8 @@ class EarlyStopping:
                 stopped increasing;
             verbose (bool): If True, prints a message for each validation loss improvement. (default: False)
             save_best_weights (bool): Save state with best weights so far (default: False)
+            checkpoint_file_path (string, optional): directory to which the checkpoint file must be saved
+               (optional, defaults to current directory)
         """
         self.monitor = monitor
         self.min_delta = min_delta
@@ -301,7 +304,8 @@ class EarlyStopping:
         self.best_score = np.Inf if self.monitor_op == np.less else -np.Inf
         self.counter = 0
         self.best_epoch = 0
-        self.checkpoint_file_path = os.path.join('.', 'model_states', 'checkpoint.pt')
+        assert os.path.exists(checkpoint_file_path), f"Error: {checkpoint_file_path} does not appear to be a valid path!"
+        self.checkpoint_file = os.path.join(checkpoint_file_path, 'checkpoint.pt')
         self.metrics_log = []
 
         self.early_stop = False
@@ -345,7 +349,7 @@ class EarlyStopping:
         mod = model
         if isinstance(model, PytkModuleWrapper):
             mod = model.model
-        torch.save(mod.state_dict(), self.checkpoint_file_path)
+        torch.save(mod.state_dict(), self.checkpoint_file)
 
 # -------------------------------------------------------------------------------------
 # helper functions for training model, evaluating performance & making predictions

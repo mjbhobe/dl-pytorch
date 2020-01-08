@@ -55,7 +55,7 @@ def load_data():
     """
     Load the data using datasets API. 
     We apply some random transforms to training datset as we load the data
-    We also split the test_dataset into cross-val/test datasets using 80:20 ration
+    We also split the test_dataset into cross-val/test datasets using 80:20 ratio
     """
     xforms = {
         'train' : [
@@ -167,7 +167,7 @@ def display_sample(sample_images, sample_labels, grid_shape=(8, 8),
 
 # some hyper-parameters
 IMAGE_HEIGHT, IMAGE_WIDTH, NUM_CHANNELS, NUM_CLASSES = 32, 32, 3, 10
-NUM_EPOCHS, BATCH_SIZE, LEARNING_RATE, L2_REG = 100, 128, 0.001, 0.0005
+NUM_EPOCHS, BATCH_SIZE, LEARNING_RATE, L2_REG = 50, 128, 0.001, 0.0005
 MODEL_SAVE_DIR = os.path.join('.', 'model_states')
 MODEL_SAVE_PATH = os.path.join(MODEL_SAVE_DIR, 'pyt_cifar10_cnn')
 
