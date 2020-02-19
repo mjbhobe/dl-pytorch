@@ -74,12 +74,13 @@ def main():
     print('Before training: ')
     print('   Weight: %.3f bias: %.3f' % (net.fc1.weight, net.fc1.bias))
     criterion = nn.MSELoss()
-    optimizer = torch.optim.SGD(net.parameters(), lr=0.001)
+    #optimizer = torch.optim.SGD(net.parameters(), lr=0.001)
+    optimizer = torch.optim.Adam(net.parameters(), lr=0.001)
     net.compile(loss=criterion, optimizer=optimizer)
     print(net)
 
     # train on the data
-    hist = net.fit(X, y, epochs=1000, batch_size=50) 
+    hist = net.fit(X, y, epochs=2000, batch_size=32)
     pytk.show_plots(hist)
 
     # print the results
@@ -105,7 +106,7 @@ if __name__ == '__main__':
 # Results:
 # Before training: 
 #    M = 2, C = 1
-# After training (1000 epochs)
-#    Weight: 1.986 bias: 0.997
-# R2 score: 0.974
+# After training (2000 epochs)
+#    Weight: 2.028 bias: 1.015
+# R2 score: 0.967
 

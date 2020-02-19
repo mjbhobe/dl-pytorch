@@ -8,7 +8,7 @@ data
 model_states
 
 # ignore __pycache__
-__pycache_
+__pycache__
 
 # ignore pyc files
 *.pyc

@@ -46,7 +46,7 @@ NUM_EPOCHS = 250
 BATCH_SIZE = 5
 LR = 0.01
 RUN_SKLEARN = True
-RUN_KERAS = False
+RUN_KERAS = True
 
 # ---------------------------------------------------------------------------
 # Example:1 - with synthesized data
@@ -102,7 +102,7 @@ def main():
 
     net = Net(1, 1)
     criterion = nn.MSELoss()
-    optimizer = torch.optim.SGD(net.parameters(), lr=LR, weight_decay=0.10)
+    optimizer = optim.SGD(net.parameters(), lr=LR, weight_decay=0.10)
     #scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=NUM_EPOCHS//5, gamma=0.1)
     net.compile(loss=criterion, optimizer=optimizer)
     print(net)
@@ -153,9 +153,10 @@ def main():
         ])
         opt = SGD(learning_rate=LR)
         kr_model.compile(loss='mse', optimizer=opt)
-        hist = kr_model.fit(X2, y2, epochs=NUM_EPOCHS, batch_size=BATCH_SIZE, verbose=0)
-        y_pred_k = kr_model.predict(X)
-        print('Keras model: r2_score = %.3f' % r2_score(y, y_pred_k))
+        hist = kr_model.fit(X_train, y_train, epochs=NUM_EPOCHS, 
+                            batch_size=BATCH_SIZE, verbose=0)
+        y_pred_k = kr_model.predict(X_test)
+        print('Keras model: r2_score = %.3f' % r2_score(y_test, y_pred_k))
 
 if __name__ == '__main__':
     main()

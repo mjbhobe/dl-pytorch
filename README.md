@@ -60,7 +60,7 @@ This tookkit was inspired by Keras' clean API to train, evaluate and test models
 
 The toolkit provides:
 * A custom class - `PytkModule` from which your custom models should derive
-* Keras-like API to train your models - `fit(...)`, `fit_dataset(...)` functions and a `show_plots(...)` fAnction to plot `loss` and `accuracy` metric across epochs, so you can see if your model is overfitting or underfitting.
+* Keras-like API to train your models - `fit(...)`, `fit_dataset(...)` functions and a `show_plots(...)` function to plot `loss` and `accuracy` metric across epochs, so you can see if your model is overfitting or underfitting.
 * Several pre-defined metrics, like Accuracy, F1-Score, MSE, MAE etc., which can be tracked during training.
 * Keras-like API to evaluate model's performance post training - `evaluate(...)` and `avaluate_dataset(...)` functions
 * Functions to save & load model's state - `pytk.load()` and `save(...)` functions.

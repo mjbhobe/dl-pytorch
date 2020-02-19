@@ -171,10 +171,10 @@ class MNISTConvNet(pytk.PytkModule):
         x = self.out(x)
         return x
 
-DO_TRAINING = False
+DO_TRAINING = True
 DO_PREDICTION = True
 SHOW_SAMPLE = True
-USE_CNN = False     # if False, will use an MLP
+USE_CNN = True     # if False, will use an MLP
 
 MODEL_SAVE_NAME = 'pyt_mnist_cnn' if USE_CNN else 'pyt_mnist_dnn'
 MODEL_SAVE_PATH = os.path.join('.', 'model_states', MODEL_SAVE_NAME)

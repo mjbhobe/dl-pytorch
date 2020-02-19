@@ -785,4 +785,217 @@ You specify the metric that the class with minitor (typically `val_loss`) and fo
 
 How this works: Suppose you monitor `val_loss` (with `monitor='val_loss'`) for `patience=5`, then the `EarlyStopping` class will keep a log of the `val_loss` across each epoch. `val_loss` is expected to keep decresing as epochs increase. But normally it goes up & down slightly. If it does not decrease for 5 epochs in a row (since `patience=5`), it indicates that the `val_loss` is not _improving_. So training is stopped at this point!
 
+## Using Transfer Learning for Image Classification
+Transfer learning involves using the weights & biases of a pre-trained model for your specific task. Some examples of pre-trained models are VGG16, ResNet etc. Pytorch ships with a lot or pretrained models in its `torchvision.models` package - for a complete list, see [this link](https://pytorch.org/docs/stable/torchvision/models.html).
+
+In this section I am going to show you how to use the VGG16 pre-trained model for an image classification task. I am going to use it on a [Kaggle Fruits360 Dataset](https://www.kaggle.com/moltean/fruits/version/2), which has fruit images for 120 classes.
+
+For the complete code see the Jupyter Notebook ???
+
+### Preparing the data
+Download the dataset from this link and unzip it to any folder (e.g. `~/tmp`). It creates a directory structure like shown below - there are 120 sub-directories each under the `Test` and `Training` folders; the image is showing only the partial set.
+
+![](images/fruits360.png)
+
+Such an organization presents the perfect scenario for using the `torchvision.datasets.ImageFolder` class for loading the images. `ImageFolder` is a dataset!!
+
+Here is the code I used to load the images:
+
+```python
+# define locations of the images (root folders)
+train_folder_root = '/tmp/fruits-360_dataset/fruits-360/Training'
+test_folder_root = '/tmp/fruits-360_dataset/fruits-360/Test'
+
+IMAGE_HEIGHT, IMAGE_WIDTH, NUM_CHANNELS = 100, 100, 3
+
+# transforms to apply
+simple_transforms = transforms.Compose([
+    transforms.Scale((IMAGE_HEIGHT, IMAGE_WIDTH)),
+    transforms.ToTensor(),
+    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+])
+
+from torchvision.datasets import ImageFolder
+
+# ImageFolder is a dataset - how convenient!! :)
+train_dataset = ImageFolder(train_folder_root, simple_transforms)
+eval_dataset = ImageFolder(test_folder_root, simple_transforms)
+
+# split eval_dataset into eval & test datasets 70:30
+num_eval_recs = int(0.70 * len(eval_dataset))
+num_test_recs = len(eval_dataset) - num_eval_recs
+
+eval_dataset, test_dataset = \
+    torch.utils.data.random_split(eval_dataset, 
+        [num_eval_recs, num_test_recs])
+
+print("No of training records: %d" % len(train_dataset))
+print("No of cross-val records: %d" % len(eval_dataset))
+print("No of test records: %d" % len(test_dataset))
+```
+
+### Using the pre-trained VGG16 model
+Following is the Pytorch code to use pre-trained instance of the VGG16 model (the very first call will download weights of the model).
+
+```python
+from torchvision import models
+vgg16_base = models.vgg16(pretrained=True)
+print(vgg16_base)
+```
+which will display
+```
+VGG(
+  (features): Sequential(
+    (0): Conv2d(3, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (1): ReLU(inplace=True)
+    (2): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (3): ReLU(inplace=True)
+    (4): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+    (5): Conv2d(64, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (6): ReLU(inplace=True)
+    (7): Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (8): ReLU(inplace=True)
+    (9): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+    (10): Conv2d(128, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (11): ReLU(inplace=True)
+    (12): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (13): ReLU(inplace=True)
+    (14): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (15): ReLU(inplace=True)
+    (16): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+    (17): Conv2d(256, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (18): ReLU(inplace=True)
+    (19): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (20): ReLU(inplace=True)
+    (21): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (22): ReLU(inplace=True)
+    (23): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+    (24): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (25): ReLU(inplace=True)
+    (26): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (27): ReLU(inplace=True)
+    (28): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (29): ReLU(inplace=True)
+    (30): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+  )
+  (avgpool): AdaptiveAvgPool2d(output_size=(7, 7))
+  (classifier): Sequential(
+    (0): Linear(in_features=25088, out_features=4096, bias=True)
+    (1): ReLU(inplace=True)
+    (2): Dropout(p=0.5, inplace=False)
+    (3): Linear(in_features=4096, out_features=4096, bias=True)
+    (4): ReLU(inplace=True)
+    (5): Dropout(p=0.5, inplace=False)
+    (6): Linear(in_features=4096, out_features=1000, bias=True)
+  )
+)
+```
+Notice that the model's architecture is divided into two parts - the feature detector (`features`) that has all the `Conv2d` layers and the classifier (`classifier`) that has all the `Linear` layers. Since the VGG16 model has been trained on a very huge images collection, we will typically like to keep the feature detector. Since our image dataset is much smaller, we would like to replace the classifier with a simpler/custom classifier of our own.
+
+This is easily done using the following code:
+
+```python
+# we don't want to retrain our model against our images, so first 'freeze'
+# all layers
+for param in vgg16_base.features.parameters():
+    param.requires_grad = False
+
+# define our custom classifier
+custom_classifier = nn.Sequential(
+    # Flatten(),
+    # nn.Dropout(0.30),
+    nn.Linear(512*7*7, 2048),
+    nn.ReLU(),
+    nn.Dropout(0.10),      
+    nn.Linear(2048, 1024),
+    nn.ReLU(),
+    nn.Dropout(0.10),        
+    nn.Linear(1024, 512),
+    nn.ReLU(),
+    nn.Dropout(0.10),         
+    nn.Linear(512, NUM_CLASSES)    
+)
+
+# replace vgg16_base's classifier with ours
+vgg16_base.classifier = custom_classifier
+
+# see what we got
+print(vgg16_base)
+```
+This shows the following output - notice that the `classifier` section is our custom classifier rather than the original VGG16 classifier
+
+```
+VGG(
+  (features): Sequential(
+    (0): Conv2d(3, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (1): ReLU(inplace=True)
+    (2): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (3): ReLU(inplace=True)
+    (4): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+    (5): Conv2d(64, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (6): ReLU(inplace=True)
+    (7): Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (8): ReLU(inplace=True)
+    (9): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+    (10): Conv2d(128, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (11): ReLU(inplace=True)
+    (12): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (13): ReLU(inplace=True)
+    (14): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (15): ReLU(inplace=True)
+    (16): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+    (17): Conv2d(256, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (18): ReLU(inplace=True)
+    (19): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (20): ReLU(inplace=True)
+    (21): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (22): ReLU(inplace=True)
+    (23): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+    (24): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (25): ReLU(inplace=True)
+    (26): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (27): ReLU(inplace=True)
+    (28): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (29): ReLU(inplace=True)
+    (30): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+  )
+  (avgpool): AdaptiveAvgPool2d(output_size=(7, 7))
+  (classifier): Sequential(
+    (0): Linear(in_features=25088, out_features=2048, bias=True)
+    (1): ReLU()
+    (2): Dropout(p=0.1, inplace=False)
+    (3): Linear(in_features=2048, out_features=1024, bias=True)
+    (4): ReLU()
+    (5): Dropout(p=0.1, inplace=False)
+    (6): Linear(in_features=1024, out_features=512, bias=True)
+    (7): ReLU()
+    (8): Dropout(p=0.1, inplace=False)
+    (9): Linear(in_features=512, out_features=120, bias=True)
+  )
+)
+```
+
+### Training the model
+So far whatever we have done is pure Pytorch (I mean, there is no `Pytk` _stuff_ added). Before we can train the model, let's add the `Pytk` _magic_ as follows:
+
+```python
+# wrap the model in an instance of PytkModuleWrapper
+model = pytk.PytkModuleWrapper(vgg16_base)
+
+LR_RATE, L2_REG = 0.001, 0.00002
+
+# assign our loss function, optimizer & metrics we want to track
+criterion = nn.CrossEntropyLoss()
+optimizer = optim.SGD(params=model.parameters(), lr=LR_RATE, momentum=0.0, 
+                      nesterov=False, weight_decay=L2_REG)
+model.compile(loss=criterion, optimizer=optimizer, metrics=['acc'])
+
+# finally fit the model - since ImageFolder is a dataset, we'll use fit_dataset
+NUM_EPOCHS, BATCH_SIZE = 50, 128
+
+hist = model.fit_dataset(train_dataset, validation_dataset=eval_dataset,
+                         epochs=NUM_EPOCHS, batch_size=BATCH_SIZE)
+```
+
+
 

@@ -109,7 +109,7 @@ def main():
 
     if DO_TRAINING:
         print('Building model...')
-        model = IrisNet(4, 16, 16, 3)
+        model = IrisNet(4, 16, 16, 4)
         # define the loss function & optimizer that model should
         loss_fn = nn.CrossEntropyLoss()
         optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=0.005)

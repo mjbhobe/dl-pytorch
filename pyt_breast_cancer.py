@@ -78,7 +78,7 @@ def load_data(test_split=0.20):
 
     # diagnosis is the target col - char
     wis_df['diagnosis'] = wis_df['diagnosis'].map({'M': 1, 'B': 0})
-    f_names = wis_df.columns[wis_df.columns != 'diagnosis']
+    #f_names = wis_df.columns[wis_df.columns != 'diagnosis']
     
     X = wis_df.drop(['diagnosis'], axis=1).values
     y = wis_df['diagnosis'].values
