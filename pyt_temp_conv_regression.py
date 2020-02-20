@@ -43,12 +43,12 @@ torch.manual_seed(seed);
 # ---------------------------------------------------------------------------
 def get_synthesized_data(low=-250.0, high=250, numelems=100000, std=None):
     torch.manual_seed(seed)
-    X = torch.linspace(low, high, numelems).reshape(-1, 1)
-    y = 1.8 * X + 32.0
+    C = torch.linspace(low, high, numelems).reshape(-1, 1)
+    F = 1.8 * C + 32.0
     if std is not None:
         noise = torch.randint(-(std-1), std, (numelems,1), dtype=torch.float32)
-        y = y + noise
-    return (X.cpu().numpy(), y.cpu().numpy())
+        F = F + noise
+    return (C.cpu().numpy(), F.cpu().numpy())
 
 # our regression model
 class Net(pytk.PytkModule):
@@ -62,14 +62,14 @@ class Net(pytk.PytkModule):
 
 def main():
     # generate data with noise
-    X, y = get_synthesized_data(-100.0, 100.0, std=35)
-    print(f"Generated data: X.shape - {X.shape} - y.shape {y.shape}") 
+    C, F = get_synthesized_data(-100.0, 100.0, std=35)
+    print(f"Generated data: C.shape - {C.shape} - F.shape {F.shape}")
 
     # display plot of generated data
     plt.figure(figsize=(8, 6))
-    numelems = X.shape[0]
+    numelems = C.shape[0]
     rand_indexes = np.random.randint(0, numelems, 500)
-    plt.scatter(X[rand_indexes].flatten(), y[rand_indexes].flatten(), s=30, c='steelblue')
+    plt.scatter(C[rand_indexes].flatten(), F[rand_indexes].flatten(), s=30, c='steelblue')
     plt.title(f'Temperature Data - Random sample of {len(rand_indexes)} values')
     plt.xlabel('Celsius')
     plt.ylabel('Fahrenheit')
@@ -86,7 +86,7 @@ def main():
     print(net)
 
     # train on the data
-    hist = net.fit(X, y, epochs=50, batch_size=64)
+    hist = net.fit(C, F, epochs=50, batch_size=64)
     pytk.show_plots(hist)
 
     # print the results
@@ -94,27 +94,26 @@ def main():
     W, b = net.fc1.weight.detach().numpy(), net.fc1.bias.detach().numpy()
     print(f'   Weight: {W} bias: {b}')
     # get predictions (need to pass Tensors!)
-    y_pred = net.predict(X)
+    F_pred = net.predict(C)
 
     # what is my r2_score?
-    print(f'R2 score: {r2_score(y, y_pred)}')  # got 0.974
+    print(f'R2 score: {r2_score(F, F_pred)}')  # got 0.974
 
     # display plot
     plt.figure(figsize=(8, 6))
-    numelems = X.shape[0]
+    numelems = C.shape[0]
     rand_indexes = np.random.randint(0, numelems, 500)
-    plt.scatter(X[rand_indexes].flatten(), y[rand_indexes].flatten(), s=40, c='steelblue')
-    plt.plot(X[rand_indexes].flatten(), y_pred[rand_indexes].flatten(), lw=2, color='firebrick')
-    plt.title(f'Predicted Line -> $y = {W} * X + {b}$')
+    plt.scatter(C[rand_indexes].flatten(), F[rand_indexes].flatten(), s=40, c='steelblue')
+    plt.plot(C[rand_indexes].flatten(), F_pred[rand_indexes].flatten(), lw=2, color='firebrick')
+    plt.title(f'Predicted Line -> $F = {W} * C + {b}$')
     plt.show()
 
 if __name__ == '__main__':
     main()
 
 # Results:
-# Before training: 
+# Before training:
 #    W = 1.8, b = 32.0
 # After training (2000 epochs)
-#    W = 1.805, b = 31.889
+#    W = 1.805, b = 31.883
 # R2 score: 0.9645
-
