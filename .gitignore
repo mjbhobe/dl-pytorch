@@ -4,6 +4,9 @@ data
 # ignore .vscode folder (Visual Studio code settings)
 .vscode
 
+# ignore Pycharm files
+.idea
+
 # ignore model_states folder (saves model states)
 model_states
 

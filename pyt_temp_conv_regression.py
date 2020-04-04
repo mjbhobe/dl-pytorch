@@ -38,11 +38,8 @@ random.seed(seed)
 np.random.seed(seed)
 torch.manual_seed(seed);
 
-# ---------------------------------------------------------------------------
-# Example:1 - with synthesized data
-# ---------------------------------------------------------------------------
-def get_synthesized_data(low=-250.0, high=250, numelems=100000, std=None):
-    torch.manual_seed(seed)
+def get_synthesized_data(low=-250.0, high=250.0, numelems=100000, std=None, random_seed=seed):
+    torch.manual_seed(random_seed)
     C = torch.linspace(low, high, numelems).reshape(-1, 1)
     F = 1.8 * C + 32.0
     if std is not None:
@@ -62,7 +59,7 @@ class Net(pytk.PytkModule):
 
 def main():
     # generate data with noise
-    C, F = get_synthesized_data(-100.0, 100.0, std=35)
+    C, F = get_synthesized_data(-250.0, 250.0, std=35)
     print(f"Generated data: C.shape - {C.shape} - F.shape {F.shape}")
 
     # display plot of generated data
@@ -92,12 +89,12 @@ def main():
     # print the results
     print('After training: ')
     W, b = net.fc1.weight.detach().numpy(), net.fc1.bias.detach().numpy()
-    print(f'   Weight: {W} bias: {b}')
+    print(f'   Weight: {W}, bias: {b}')
     # get predictions (need to pass Tensors!)
     F_pred = net.predict(C)
 
     # what is my r2_score?
-    print(f'R2 score: {r2_score(F, F_pred)}')  # got 0.974
+    print(f'R2 score: {r2_score(F, F_pred):.4f}')  # got 0.974
 
     # display plot
     plt.figure(figsize=(8, 6))
@@ -115,5 +112,5 @@ if __name__ == '__main__':
 # Before training:
 #    W = 1.8, b = 32.0
 # After training (2000 epochs)
-#    W = 1.805, b = 31.883
-# R2 score: 0.9645
+#    W = 1.7983, b = 31.883
+# R2 score: 0.99.41

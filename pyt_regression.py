@@ -42,7 +42,7 @@ torch.manual_seed(seed);
 # Example:1 - with synthesized data
 # ---------------------------------------------------------------------------
 def get_synthesized_data(m, c, numelems=100, std=10):
-    torch.manual_seed(71)
+    torch.manual_seed(seed)
     X = torch.linspace(1.0, 50.0, numelems).reshape(-1, 1)
     noise = torch.randint(-(std-1),std,(numelems,1), dtype=torch.float32)
     y = m * X + c + noise
@@ -50,7 +50,7 @@ def get_synthesized_data(m, c, numelems=100, std=10):
 
 # our regression model
 class Net(pytk.PytkModule):
-    def __init__(self, in_features, out_features):
+    def __init__(self, in_features=1, out_features=1):
         super(Net, self).__init__()
         self.fc1 = nn.Linear(in_features, out_features)
 
@@ -60,8 +60,8 @@ class Net(pytk.PytkModule):
 
 def main():
     # generate data with noise
-    M, C = 2, 1
-    X, y = get_synthesized_data(M, C, 75)
+    M, C = 1.8, 32.0
+    X, y = get_synthesized_data(M, C, numelems=500, std=25)
 
     # display plot of generated data
     plt.figure(figsize=(8, 6))
@@ -70,12 +70,12 @@ def main():
     plt.show()
 
     # build our network
-    net = Net(1, 1)
+    net = Net()
     print('Before training: ')
     print('   Weight: %.3f bias: %.3f' % (net.fc1.weight, net.fc1.bias))
     criterion = nn.MSELoss()
-    #optimizer = torch.optim.SGD(net.parameters(), lr=0.001)
-    optimizer = torch.optim.Adam(net.parameters(), lr=0.001)
+    #optimizer = optim.SGD(net.parameters(), lr=0.001)
+    optimizer = optim.Adam(net.parameters(), lr=0.001)
     net.compile(loss=criterion, optimizer=optimizer)
     print(net)
 
