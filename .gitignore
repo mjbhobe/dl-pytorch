@@ -7,6 +7,9 @@ data
 # ignore Pycharm files
 .idea
 
+# ignore IPython Notebook checkpoints
+.ipynb_checkpoints
+
 # ignore model_states folder (saves model states)
 model_states
 
