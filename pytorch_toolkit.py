@@ -459,7 +459,7 @@ def create_hist_and_metrics_ds__(metrics, include_val_metrics=True):
 
 def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_split=0.0, validation_dataset=None,
                 lr_scheduler=None, epochs=25, batch_size=64, metrics=None, shuffle=True,
-                num_workers=0, early_stopping=None):
+                num_workers=0, early_stopping=None, show_inc_progress=True):
     """
     Trains model (derived from nn.Module) across epochs using specified loss function,
     optimizer, validation dataset (if any), learning rate scheduler, epochs and batch size etc.
@@ -492,11 +492,13 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
             when metrics not None, in addition to loss all specified metrics are computed for training
             set (and validation set, if specified)
         - shuffle (boolean, default = True): determines if the training dataset shuould be shuffled between
-            epochs or not. 
+            epochs or not. Validation dataset, if provided, is never shuffled. 
         - num_workers (int, default=0): number of worker threads to use when loading datasets internally using 
             DataLoader objects.
         - early_stopping(EarlyStopping, default=None): instance of EarlyStopping class to be passed in if training
             has to be early-stopped based on parameters used to construct instance of EarlyStopping
+        - show_inc_progress (boolean, default=True): displays batch by batch progress as model trains + summary at 
+            end of epoch. If False, shows just end of epoch summary.
     @returns:
         - history: dictionary of the loss & accuracy metrics across epochs
             Metrics are saved by key name (see METRICS_MAP) 
@@ -516,10 +518,10 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
         check_attribs__(model, loss_fn, optimizer)
         if loss_fn is None: loss_fn = model.loss_fn
         if loss_fn is None:
-            raise ValueError("Loss function is not defined. Must pass as paf rameter or define in class")
+            raise ValueError("Loss function is not defined. Must be passed as a parameter or defined in class")
         if optimizer is None: optimizer = model.optimizer
         if optimizer is None:
-            raise ValueError("Optimizer is not defined. Must pass as parameter or define in class")
+            raise ValueError("Optimizer is not defined. Must be passed as a parameter or defined in class")
         if lr_scheduler is not None:
             assert isinstance(lr_scheduler, torch.optim.lr_scheduler._LRScheduler), \
                 "lr_scheduler: incorrect type. Expecting class derived from torch.optim._LRScheduler"
@@ -622,13 +624,19 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
                 samples += len(labels)
                 num_batches += 1
 
-                # display progress
-                metrics_str = get_metrics_str__(metrics_list, batch_metrics, validation_dataset=False)
-                print('\rEpoch (%*d/%*d): (%*d/%*d) -> %s' %
-                            (len_num_epochs, epoch+1, len_num_epochs, epochs,
-                             len_tot_samples, samples, len_tot_samples, tot_samples,
-                             metrics_str),
-                        end='', flush=True)
+                # display incremental progress
+                if show_inc_progress:
+                    metrics_str = get_metrics_str__(metrics_list, batch_metrics, validation_dataset=False)
+                    print('\rEpoch (%*d/%*d): (%*d/%*d) -> %s' %
+                                (len_num_epochs, epoch+1, len_num_epochs, epochs,
+                                 len_tot_samples, samples, len_tot_samples, tot_samples,
+                                 metrics_str),
+                            end='', flush=True)
+                else:
+                    print('\rEpoch (%*d/%*d): (%*d/%*d) -> ...' %
+                                (len_num_epochs, epoch + 1, len_num_epochs, epochs,
+                                 len_tot_samples, samples, len_tot_samples, tot_samples),
+                            end='', flush=True)
             else:
                 # compute average metrics across all batches of train_loader
                 for metric_name in metrics_list:
@@ -636,12 +644,13 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
                     history[metric_name].append(cum_metrics[metric_name])
 
                 # display average training metrics for this epoch
-                metrics_str = get_metrics_str__(metrics_list, cum_metrics, validation_dataset=False)
-                print('\rEpoch (%*d/%*d): (%*d/%*d) -> %s' %
-                        (len_num_epochs, epoch+1, len_num_epochs, epochs,
-                            len_tot_samples, samples, len_tot_samples, tot_samples,
-                            metrics_str),
-                    end='' if validation_dataset is not None else '\n', flush=True)
+                if ((show_inc_progress) or (validation_dataset is None)):
+                    metrics_str = get_metrics_str__(metrics_list, cum_metrics, validation_dataset=False)
+                    print('\rEpoch (%*d/%*d): (%*d/%*d) -> %s' %
+                            (len_num_epochs, epoch+1, len_num_epochs, epochs,
+                                len_tot_samples, samples, len_tot_samples, tot_samples,
+                                metrics_str),
+                        end='' if validation_dataset is not None else '\n', flush=True)
 
                 if validation_dataset is not None:
                     model.eval()  # mark model as evaluating - don't apply any dropouts
@@ -701,16 +710,19 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
             if (lr_scheduler is not None) and (epoch < epochs-1):
                 lr_scheduler.step()
                 step_lr = lr_scheduler.get_lr()
-                #print('   StepLR (log): curr_lr = {}, new_lr = {}'.format(curr_lr, step_lr))
-                if np.round(np.array(step_lr), 10) != np.round(np.array(curr_lr), 10):
-                    #print(f'type(step_lr) = {type(step_lr)} and type(curr_lr) = {type(curr_lr)}')
+                if show_inc_progress:
                     print('Stepping learning rate to {}'.format(step_lr))
-                    curr_lr = step_lr
+                #print('   StepLR (log): curr_lr = {}, new_lr = {}'.format(curr_lr, step_lr))
+                # if np.round(np.array(step_lr), 10) != np.round(np.array(curr_lr), 10):
+                #     #print(f'type(step_lr) = {type(step_lr)} and type(curr_lr) = {type(curr_lr)}')
+                #     print('Stepping learning rate to {}'.format(step_lr))
+                #     curr_lr = step_lr
 
         return history
     finally:
         model = model.cpu()
 
+"""
 def train_model_xy(model, X_train, y_train, loss_fn=None, optimizer=None, validation_split=0.0, validation_dataset=None,
                    lr_scheduler=None, epochs=25, batch_size=64, metrics=None, shuffle=True):
     raise NotImplementedError("train_model_xy should not be used!!")
@@ -898,6 +910,7 @@ def train_model_xy(model, X_train, y_train, loss_fn=None, optimizer=None, valida
         return history
     finally:
         model = model.cpu()
+"""
 
 def evaluate_model(model, dataset, loss_fn=None, batch_size=64, metrics=None, num_workers=0):
     """ evaluate's model performance against dataset provided
@@ -1267,6 +1280,7 @@ class XyDataset(Dataset):
         - xforms (default: None) - transforms to apply to X returned by __getitem__
     """
     def __init__(self, X, y, y_dtype=np.long, xforms=None):
+        raise NotImplementedError("XyDataset() should not be used!!")
         assert isinstance(X, np.ndarray), "X parameter should be an instance of Numpy array or list"
         assert isinstance(y, np.ndarray), "y parameter should be an instance of Numpy array"
 
@@ -1331,7 +1345,7 @@ class PytkModule(nn.Module):
 
     def fit_dataset(self, train_dataset, loss_fn=None, optimizer=None, validation_split=0.0,
                     validation_dataset=None, lr_scheduler=None, epochs=25, batch_size=64, metrics=None,
-                    shuffle=True, num_workers=0, early_stopping=None):
+                    shuffle=True, num_workers=0, early_stopping=None, show_inc_progress=True):
         """ 
         train model on instance of torch.utils.data.Dataset
         @params:
@@ -1366,6 +1380,8 @@ class PytkModule(nn.Module):
                NOTE: if validation_dataset is provided, each metric is also measured for the validaton dataset
             - num_workers: no of worker threads to use to load datasets
             - early_stopping: instance of EarlyStopping class if early stopping is to be used (default: None)
+            - show_inc_progress (boolean, default=True): if True, shows batch-by-batch progress of training + end of 
+                epoch summary. Else shows just end of epoch summary.
         @returns:
            - history object (which is a map of metrics measured across epochs).
              Each metric list is accessed as hist[metric_name] (e.g. hist['loss'] or hist['acc'])
@@ -1379,10 +1395,11 @@ class PytkModule(nn.Module):
                            validation_split = validation_split, validation_dataset = validation_dataset,
                            lr_scheduler = lr_scheduler, epochs = epochs, batch_size = batch_size,
                            metrics = p_metrics_list, shuffle = shuffle, num_workers = num_workers,
-                           early_stopping=early_stopping)
+                           early_stopping=early_stopping, show_inc_progress=show_inc_progress)
 
     def fit(self, X_train, y_train, loss_fn=None, optimizer=None, validation_split=0.0, validation_data=None,
-            lr_scheduler=None, epochs=25, batch_size=64, metrics=None, shuffle=True, num_workers=0, early_stopping=None):
+            lr_scheduler=None, epochs=25, batch_size=64, metrics=None, shuffle=True, num_workers=0,
+            early_stopping=None, show_inc_progress=True):
 
         assert ((X_train is not None) and (isinstance(X_train, np.ndarray))), \
             "Parameter error: X_train is None or is NOT an instance of np.ndarray"
@@ -1419,7 +1436,8 @@ class PytkModule(nn.Module):
                                 validation_split=validation_split, validation_dataset=validation_dataset,
                                 lr_scheduler=lr_scheduler,
                                 epochs=epochs, batch_size=batch_size, metrics=p_metrics_list,
-                                shuffle=shuffle, num_workers=num_workers, early_stopping=early_stopping)
+                                shuffle=shuffle, num_workers=num_workers, early_stopping=early_stopping,
+                                show_inc_progress=show_inc_progress)
 
     def evaluate_dataset(self, dataset, loss_fn=None, batch_size=64, metrics=None, num_workers=0):
         p_loss_fn = self.loss_fn if loss_fn is None else loss_fn
@@ -1496,7 +1514,7 @@ class PytkModuleWrapper():
 
     def fit_dataset(self, train_dataset, loss_fn=None, optimizer=None, validation_split=0.0,
                     validation_dataset=None, lr_scheduler=None, epochs=25, batch_size=64, metrics=None,
-                    shuffle=True, num_workers=0, early_stopping=None):
+                    shuffle=True, num_workers=0, early_stopping=None, show_inc_progress=True):
         p_loss_fn = self.loss_fn if loss_fn is None else loss_fn
         p_optimizer = self.optimizer if optimizer is None else optimizer
         p_metrics_list = self.metrics_list if metrics is None else metrics
@@ -1504,10 +1522,11 @@ class PytkModuleWrapper():
         return train_model(self.model, train_dataset, loss_fn=p_loss_fn,
             optimizer=p_optimizer, validation_split=validation_split, validation_dataset=validation_dataset,
             lr_scheduler=lr_scheduler, epochs=epochs, batch_size=batch_size, metrics=p_metrics_list,
-            shuffle=shuffle, num_workers=num_workers, early_stopping=early_stopping)
+            shuffle=shuffle, num_workers=num_workers, early_stopping=early_stopping, show_inc_progress=show_inc_progress)
 
     def fit(self, X_train, y_train, loss_fn=None, optimizer=None, validation_split=0.0, validation_data=None,
-            lr_scheduler=None, epochs=25, batch_size=64, metrics=None, shuffle=True, num_workers=0, early_stopping=None):
+            lr_scheduler=None, epochs=25, batch_size=64, metrics=None, shuffle=True, num_workers=0,
+            early_stopping=None, show_inc_progress=True):
 
         assert ((X_train is not None) and (isinstance(X_train, np.ndarray))), \
             "Parameter error: X_train is None or is NOT an instance of np.ndarray"
@@ -1544,7 +1563,8 @@ class PytkModuleWrapper():
         return self.fit_dataset(train_dataset, loss_fn=p_loss_fn, optimizer=p_optimizer,
                                 validation_split=validation_split, validation_dataset=validation_dataset,
                                 lr_scheduler=lr_scheduler, epochs=epochs, batch_size=batch_size, metrics=p_metrics_list,
-                                shuffle=shuffle, num_workers=num_workers, early_stopping=early_stopping)
+                                shuffle=shuffle, num_workers=num_workers, early_stopping=early_stopping,
+                                show_inc_progress=show_inc_progress)
 
     def evaluate_dataset(self, dataset, loss_fn=None, batch_size=64, metrics=None, num_workers=0):
         p_loss_fn = self.loss_fn if loss_fn is None else loss_fn

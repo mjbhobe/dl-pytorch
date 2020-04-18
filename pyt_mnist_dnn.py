@@ -174,7 +174,7 @@ class MNISTConvNet(pytk.PytkModule):
 DO_TRAINING = True
 DO_PREDICTION = True
 SHOW_SAMPLE = True
-USE_CNN = True     # if False, will use an MLP
+USE_CNN = False     # if False, will use an MLP
 
 MODEL_SAVE_NAME = 'pyt_mnist_cnn' if USE_CNN else 'pyt_mnist_dnn'
 MODEL_SAVE_PATH = os.path.join('.', 'model_states', MODEL_SAVE_NAME)
@@ -194,7 +194,7 @@ def main():
         display_sample(images, labels, grid_shape=(8, 8), plot_title='Sample Images')
 
     if DO_TRAINING:
-        print('Building model...')
+        print(f'Using {"CNN" if USE_CNN else "ANN"} model...')
         model = MNISTConvNet() if USE_CNN else MNISTNet()
         # define the loss function & optimizer that model should
         loss_fn = nn.CrossEntropyLoss()
@@ -207,7 +207,7 @@ def main():
         # train model
         print(f'Training {"CNN" if USE_CNN else "ANN"} model')
         hist = model.fit_dataset(train_dataset, validation_dataset=val_dataset, lr_scheduler=scheduler,
-                                 epochs=NUM_EPOCHS, batch_size=BATCH_SIZE)
+                                 epochs=NUM_EPOCHS, batch_size=BATCH_SIZE, show_inc_progress=False)
         pytk.show_plots(hist)
 
         # evaluate model performance on train/eval & test datasets
