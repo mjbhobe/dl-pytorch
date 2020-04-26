@@ -120,7 +120,7 @@ def main():
         print('Training model...')
         hist = model.fit(X_train, y_train, validation_data=(X_val, y_val), epochs=250, batch_size=BATCH_SIZE)
         # display plots of loss & accuracy against epochs
-        pytk.show_plots(hist)
+        pytk.show_plots(hist, metric='acc', plot_title='Training metrics')
 
         # evaluate model performance on train/eval & test datasets
         # Again, notice the Keras-like API to evaluate model performance

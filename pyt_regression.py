@@ -41,9 +41,9 @@ torch.manual_seed(seed);
 # ---------------------------------------------------------------------------
 # Example:1 - with synthesized data
 # ---------------------------------------------------------------------------
-def get_synthesized_data(m, c, numelems=100, std=10):
+def get_synthesized_data(m, c, min_val=1.0, max_val=50.0, numelems=100, std=10):
     torch.manual_seed(seed)
-    X = torch.linspace(1.0, 50.0, numelems).reshape(-1, 1)
+    X = torch.linspace(min_val, max_val, numelems).reshape(-1, 1)
     noise = torch.randint(-(std-1),std,(numelems,1), dtype=torch.float32)
     y = m * X + c + noise
     return (X.cpu().numpy(), y.cpu().numpy())
@@ -62,11 +62,16 @@ def main():
     # generate data with noise
     M, C = 1.8, 32.0
     X, y = get_synthesized_data(M, C, numelems=500, std=25)
+    print('Displaying data sample...')
+    print(f"X.shape = {X.shape}, y.shape = {y.shape}")
+    df = pd.DataFrame(X, columns=['Calsius'])
+    df['Farenheit'] = y
+    print(df.head(10))
 
     # display plot of generated data
     plt.figure(figsize=(8, 6))
     plt.scatter(X, y, s=40, c='steelblue')
-    plt.title('Original Data -> $y = %d * X + %d$' % (M, C))
+    plt.title(f'Original Data -> $y = {M:.3f} * X + {C:.3f}$')
     plt.show()
 
     # build our network
@@ -76,12 +81,12 @@ def main():
     criterion = nn.MSELoss()
     #optimizer = optim.SGD(net.parameters(), lr=0.001)
     optimizer = optim.Adam(net.parameters(), lr=0.001)
-    net.compile(loss=criterion, optimizer=optimizer)
+    net.compile(loss=criterion, optimizer=optimizer, metrics=['r2_score'])
     print(net)
 
     # train on the data
-    hist = net.fit(X, y, epochs=2000, batch_size=32)
-    pytk.show_plots(hist)
+    hist = net.fit(X, y, epochs=5000, batch_size=32)
+    pytk.show_plots(hist, metric='r2_score', plot_title="Performance Metrics")
 
     # print the results
     print('After training: ')

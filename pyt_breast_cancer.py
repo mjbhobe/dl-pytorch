@@ -146,7 +146,7 @@ def main():
         print('Training model...')
         # split training data into train/cross-val datasets in 80:20 ratio
         hist = model.fit(X_train, y_train, validation_split=0.20, epochs=NUM_EPOCHS, batch_size=BATCH_SIZE)
-        pytk.show_plots(hist)
+        pytk.show_plots(hist, metric='f1', plot_title="Performance Metrics")
 
         # evaluate model performance on train/eval & test datasets
         print('\nEvaluating model performance...')

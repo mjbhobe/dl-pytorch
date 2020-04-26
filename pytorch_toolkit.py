@@ -160,7 +160,7 @@ def precision(logits, labels):
     predicted_positives = torch.sum(torch.clamp(y_pred, 0, 1))
 
     prec = true_positives / (predicted_positives + epsilon())
-    return prec    
+    return prec.detach().numpy()
 
 def recall(logits, labels):
     """
@@ -186,7 +186,7 @@ def recall(logits, labels):
     all_positives = torch.sum(torch.clamp(y_true, 0, 1))
 
     rec = true_positives / (all_positives + epsilon())
-    return rec    
+    return rec.detach().numpy()    
 
 def f1_score2(logits, labels):
     """
@@ -201,7 +201,7 @@ def f1_score2(logits, labels):
     prec = precision(logits, labels)
     rec = recall(logits, labels)
     f1 = 2 * ((prec * rec) / (prec + rec + epsilon()))
-    return f1
+    return f1.detach().numpy()
 
 def roc_auc(logits, labels):
     """
@@ -215,7 +215,7 @@ def roc_auc(logits, labels):
     y_true = labels.cpu().numpy()
     y_pred = predicted.cpu().numpy()
     rcac = roc_auc_score(y_true, y_pred)
-    return rcac
+    return rcac.detach().numpy()
 
 def mse(predictions, actuals):
     """
@@ -227,7 +227,7 @@ def mse(predictions, actuals):
     """
     diff = actuals - predictions
     mse_err = torch.sum(diff * diff) / (diff.numel() + epsilon())
-    return mse_err
+    return mse_err.detach().numpy()
 
 def rmse(predictions, actuals):
     """
@@ -238,7 +238,7 @@ def rmse(predictions, actuals):
         computed rmse = sqrt(mse(predictions, actuals))
     """    
     rmse_err = torch.sqrt(mse(predictions, actuals))
-    return rmse_err
+    return rmse_err.detach().numpy()
 
 def mae(predictions, actuals):
     """
@@ -250,7 +250,17 @@ def mae(predictions, actuals):
     """    
     diff = actuals - prediction
     mae_err = torch.mean(torch.abs(diff))
-    return mae_err
+    return mae_err.detach().numpy()
+
+def r2_score(predictions, actuals):
+    """
+    computes the r2_score
+    @returns:
+        computed r2_score
+    """
+    SS_res = torch.sum(torch.pow(actuals - predictions,2))
+    SS_tot = torch.sum(torch.pow(actuals - torch.mean(actuals),2))
+    return (1 - SS_res/(SS_tot + epsilon())).detach().numpy()
 
 METRICS_MAP = {
     'acc': accuracy,
@@ -264,7 +274,8 @@ METRICS_MAP = {
     'roc_auc': roc_auc,
     'mse': mse,
     'rmse': rmse,
-    'mae': mae
+    'mae': mae,
+    'r2_score': r2_score
 }
 
 # -------------------------------------------------------------------------------------
@@ -1135,7 +1146,70 @@ def load_model(model_save_name, model_save_dir='./model_states'):
     print('Pytorch model loaded from %s' % model_save_path)
     return model
 
-def show_plots(history, plot_title=None, fig_size=None):
+def show_plots(history, metric=None, plot_title=None, fig_size=None):
+    
+    import seaborn as sns
+    
+    """ Useful function to view plot of loss values & 'metric' across the various epochs
+        Works with the history object returned by the fit() or fit_generator() call """
+    assert type(history) is dict
+    
+    # we must have at least loss in the history object
+    assert 'loss' in history.keys(), f"ERROR: expecting \'loss\' as one of the metrics in history object"
+    if metric is not None:
+        assert isinstance(metric, str), "ERROR: expecting a string value for the \'metric\' parameter"
+        assert metric in history.keys(), f"{metric} is not tracked in training history!"
+        
+    loss_metrics = ['loss']
+    if 'val_loss' in history.keys():
+        loss_metrics.append('val_loss')
+    # after above lines, loss_metrics = ['loss', 'val_loss']
+  
+    other_metrics = []
+    if metric is not None:
+        assert metric in METRICS_MAP.keys(), f"ERROR: {metric} is not a metric being tracked. Please check compile() function!"
+        other_metrics.append(metric)
+        if f"val_{metric}" in history.keys():
+            other_metrics.append(f"val_{metric}")
+    # if metric is not None (e.g. if metrics = 'accuracy'), then other_metrics = ['accuracy', 'val_accuracy']
+    
+    # display the plots
+    col_count = 1 if len(other_metrics) == 0 else 2
+    df = pd.DataFrame(history)
+    
+    with sns.axes_style("darkgrid"):
+        sns.set_context("notebook", font_scale=1.1)
+        sns.set_style({"font.sans-serif": ["Verdana", "Arial", "Calibri", "DejaVu Sans"]})
+
+        f, ax = plt.subplots(nrows=1, ncols=col_count, figsize=((16, 5) if fig_size is None else fig_size))
+        axs = ax[0] if col_count == 2 else ax
+        
+        # plot the losses
+        losses_df = df.loc[:,loss_metrics]
+        losses_df.plot(ax=axs)
+        #ax[0].set_ylim(0.0, 1.0)
+        axs.grid(True)
+        losses_title = 'Training \'loss\' vs Epochs' if len(loss_metrics) == 1 else 'Training & Validation \'loss\' vs Epochs'
+        axs.title.set_text(losses_title)
+        
+        # plot the metric, if specified
+        if metric is not None:
+            metrics_df = df.loc[:,other_metrics]
+            metrics_df.plot(ax=ax[1])
+            ax[1].set_ylim(0.0, 1.0)
+            ax[1].grid(True)
+            metrics_title = f'Training \'{other_metrics[0]}\' vs Epochs' if len(other_metrics) == 1 \
+                else f'Training & Validation \'{other_metrics[0]}\' vs Epochs'
+            ax[1].title.set_text(metrics_title)
+            
+        if plot_title is not None:
+            plt.suptitle(plot_title)
+    
+        plt.show()
+        plt.close()
+
+
+def show_plots2(history, plot_title=None, fig_size=None):
     """ Useful function to view plot of loss values & accuracies across the various epochs
         Works with the history object returned by the train_model(...) call """
     import matplotlib.pyplot as plt
@@ -1148,6 +1222,7 @@ def show_plots(history, plot_title=None, fig_size=None):
 
     # NOTE: the history object should always have loss (for training data), but MAY have
     # val_loss for validation data
+    assert 'loss' in history.keys(), f"ERROR: expecting \'loss\' as one of the metrics in history object"
     loss_vals = history['loss']
     val_loss_vals = history['val_loss'] if 'val_loss' in history.keys() else None
 

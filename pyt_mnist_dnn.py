@@ -208,7 +208,7 @@ def main():
         print(f'Training {"CNN" if USE_CNN else "ANN"} model')
         hist = model.fit_dataset(train_dataset, validation_dataset=val_dataset, lr_scheduler=scheduler,
                                  epochs=NUM_EPOCHS, batch_size=BATCH_SIZE, show_inc_progress=False)
-        pytk.show_plots(hist)
+        pytk.show_plots(hist, metric='acc', plot_title='Training metrics')
 
         # evaluate model performance on train/eval & test datasets
         print('Evaluating model performance...')

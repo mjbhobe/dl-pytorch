@@ -110,7 +110,7 @@ def main():
         # train model
         print('Training model...')
         hist = model.fit(X_train, y_train, validation_data=(X_val, y_val), epochs=NUM_EPOCHS, batch_size=BATCH_SIZE)
-        pytk.show_plots(hist)
+        pytk.show_plots(hist, metric='acc', plot_title='Training metrics')
 
         # evaluate model performance on train/eval & test datasets
         print('\nEvaluating model performance...')
