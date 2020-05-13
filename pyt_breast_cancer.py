@@ -106,12 +106,9 @@ class WBCNet(pytk.PytkModule):
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, inp):
-        x = self.fc1(inp)
-        x = self.relu1(x)
-        x = self.fc2(x)
-        x = self.relu2(x)
-        x = self.out(x)
-        x = self.sigmoid(x)
+        x = F.relu(self.fc1(inp))
+        x = F.relu(self.fc2(x))
+        x = F.sigmoid(self.out(x))
         return x
 
 DO_TRAINING = True
@@ -176,7 +173,6 @@ if __name__ == "__main__":
 # Results: 
 #   MLP with epochs=100, batch-size=16, LR=0.001
 #    Training  -> acc: 98.63, f1-score: 98.11
-#    Cross-val -> acc: 98.63, f1-score: 98.11
 #    Testing   -> acc: 99.22, f1-score: 99.06
 # --------------------------------------------------
 
