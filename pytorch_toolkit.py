@@ -22,13 +22,14 @@ import sys, os, random
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from sklearn.utils import shuffle
+#from sklearn.utils import shuffle
+from sklearn.metrics import roc_auc_score
 import itertools
 
 # torch imports
 import torch
 import torch.nn as nn
-from torch.autograd import Variable
+#from torch.autograd import Variable
 from torchsummary import summary
 from torch.utils.data.dataset import Dataset
  
@@ -100,7 +101,9 @@ def Flatten(x):
     return x.view(x.shape[0],-1)
 
 # --------------------------------------------------------------------------------------
-# Metrics
+# Metrics used during training of model
+# In this section, I provide code for typical metrics used during training
+# NOTE: In this version, there is no provision to add your own metric!
 # --------------------------------------------------------------------------------------
 def epsilon():
     return torch.tensor(1e-7)
@@ -212,8 +215,8 @@ def roc_auc(logits, labels):
         computed roc_auc score
     """
     _, predicted = torch.max(logits.data, 1)
-    y_true = labels.cpu().numpy()
-    y_pred = predicted.cpu().numpy()
+    y_true = labels.detach().numpy()
+    y_pred = predicted.detach().numpy()
     rcac = roc_auc_score(y_true, y_pred)
     return rcac.detach().numpy()
 
@@ -237,7 +240,7 @@ def rmse(predictions, actuals):
     @returns:
         computed rmse = sqrt(mse(predictions, actuals))
     """    
-    rmse_err = torch.sqrt(mse(predictions, actuals))
+    rmse_err = torch.sqrt(torch.tensor(mse(predictions, actuals), dtype=torch.float32))
     return rmse_err.detach().numpy()
 
 def mae(predictions, actuals):
@@ -248,7 +251,7 @@ def mae(predictions, actuals):
     @returns:
         computed mae = sum(abs(predictions - actuals)) / n
     """    
-    diff = actuals - prediction
+    diff = actuals - predictions
     mae_err = torch.mean(torch.abs(diff))
     return mae_err.detach().numpy()
 
@@ -272,6 +275,7 @@ METRICS_MAP = {
     'f1': f1_score2,  # f1_score2 to avoid conflict with scklern.metrics.f1_score
     'f1_score': f1_score2,
     'roc_auc': roc_auc,
+    # regression metrics
     'mse': mse,
     'rmse': rmse,
     'mae': mae,
@@ -470,7 +474,7 @@ def create_hist_and_metrics_ds__(metrics, include_val_metrics=True):
 
 def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_split=0.0, validation_dataset=None,
                 lr_scheduler=None, epochs=25, batch_size=64, metrics=None, shuffle=True,
-                num_workers=0, early_stopping=None, show_inc_progress=True):
+                num_workers=0, early_stopping=None, verbose=0):
     """
     Trains model (derived from nn.Module) across epochs using specified loss function,
     optimizer, validation dataset (if any), learning rate scheduler, epochs and batch size etc.
@@ -508,8 +512,10 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
             DataLoader objects.
         - early_stopping(EarlyStopping, default=None): instance of EarlyStopping class to be passed in if training
             has to be early-stopped based on parameters used to construct instance of EarlyStopping
-        - show_inc_progress (boolean, default=True): displays batch by batch progress as model trains + summary at 
-            end of epoch. If False, shows just end of epoch summary.
+        - verbose (0, 1 or 2, default=0): sets the verbosity level for reporting progress during training
+            verbose=0 - very verbose output, displays batch wise metrics
+            verbose=1 - medium verbose output, displays metrics at end of epoch, but shows incrimenting counter of batches
+            verbose=2 - last verbose output, does NOT display any output until the training dataset (and validation dataset, if any) completes
     @returns:
         - history: dictionary of the loss & accuracy metrics across epochs
             Metrics are saved by key name (see METRICS_MAP) 
@@ -636,14 +642,16 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
                 num_batches += 1
 
                 # display incremental progress
-                if show_inc_progress:
+                if (verbose == 0):
+                    # display metrics at completion of each batch (default)
                     metrics_str = get_metrics_str__(metrics_list, batch_metrics, validation_dataset=False)
                     print('\rEpoch (%*d/%*d): (%*d/%*d) -> %s' %
                                 (len_num_epochs, epoch+1, len_num_epochs, epochs,
                                  len_tot_samples, samples, len_tot_samples, tot_samples,
                                  metrics_str),
                             end='', flush=True)
-                else:
+                elif (verbose == 1):
+                    # display updating counter only - no incremental metrics
                     print('\rEpoch (%*d/%*d): (%*d/%*d) -> ...' %
                                 (len_num_epochs, epoch + 1, len_num_epochs, epochs,
                                  len_tot_samples, samples, len_tot_samples, tot_samples),
@@ -655,13 +663,13 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
                     history[metric_name].append(cum_metrics[metric_name])
 
                 # display average training metrics for this epoch
-                if ((show_inc_progress) or (validation_dataset is None)):
+                if ((verbose in [0,1]) or (validation_dataset is None)):
                     metrics_str = get_metrics_str__(metrics_list, cum_metrics, validation_dataset=False)
                     print('\rEpoch (%*d/%*d): (%*d/%*d) -> %s' %
-                            (len_num_epochs, epoch+1, len_num_epochs, epochs,
-                                len_tot_samples, samples, len_tot_samples, tot_samples,
-                                metrics_str),
-                        end='' if validation_dataset is not None else '\n', flush=True)
+                                (len_num_epochs, epoch+1, len_num_epochs, epochs,
+                                 len_tot_samples, samples, len_tot_samples, tot_samples,
+                                 metrics_str),
+                            end='' if validation_dataset is not None else '\n', flush=True)
 
                 if validation_dataset is not None:
                     model.eval()  # mark model as evaluating - don't apply any dropouts
@@ -721,7 +729,7 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
             if (lr_scheduler is not None) and (epoch < epochs-1):
                 lr_scheduler.step()
                 step_lr = lr_scheduler.get_lr()
-                if show_inc_progress:
+                if (verbose == 0):
                     print('Stepping learning rate to {}'.format(step_lr))
                 #print('   StepLR (log): curr_lr = {}, new_lr = {}'.format(curr_lr, step_lr))
                 # if np.round(np.array(step_lr), 10) != np.round(np.array(curr_lr), 10):
@@ -732,196 +740,6 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
         return history
     finally:
         model = model.cpu()
-
-"""
-def train_model_xy(model, X_train, y_train, loss_fn=None, optimizer=None, validation_split=0.0, validation_dataset=None,
-                   lr_scheduler=None, epochs=25, batch_size=64, metrics=None, shuffle=True):
-    raise NotImplementedError("train_model_xy should not be used!!")
-    try:
-        # checks for parameters
-        assert isinstance(model, nn.Module), "train_model() works with instances of nn.Module only!"
-        assert isinstance(X_train, np.ndarray), \
-            "X_train must be an instance of Numpy array"
-        assert isinstance(y_train, np.ndarray), \
-            "y_train must be an instance of Numpy array or torch.Tensor"
-        if validation_dataset is not None:
-            assert isinstance(validation_dataset, tuple) and (len(validation_dataset) == 2), "validation_dataset must be a 2 element tuple"
-            assert (isinstance(validation_dataset[0], np.ndarray) and isinstance(validation_dataset[1], np.ndarray)), \
-                "validation_dataset must hold only Numpy arrays"
-        check_attribs__(model, loss_fn, optimizer)
-        if loss_fn is None: loss_fn = model.loss_fn
-        if loss_fn is None:
-            raise ValueError("Loss function is not defined. Must pass as parameter or define in class")
-        if optimizer is None: optimizer = model.optimizer
-        if optimizer is None:
-            raise ValueError("Optimizer is not defined. Must pass as parameter or define in class")
-        if metrics is None: metrics = model.metrics_list
-        if lr_scheduler is not None:
-            assert isinstance(lr_scheduler, torch.optim.lr_scheduler._LRScheduler), \
-                "lr_scheduler: incorrect type. Expecting class derived from torch.optim._LRScheduler"
-
-        # train on GPU if available
-        gpu_available = torch.cuda.is_available()
-
-        print('Training on %s...' % ('GPU' if gpu_available else 'CPU'))
-        model = model.cuda() if gpu_available else model.cpu()
-        X_val, y_val = None, None
-
-        if validation_dataset is not None:
-            X_val, y_val = validation_dataset[0], validation_dataset[1]
-            print('Training on %d samples, cross-validating on %d samples' %
-                    (X_train.shape[0], X_val.shape[0]))
-        else:
-            print('Training on %d samples' % X_train.shape[0])
-
-        tot_samples = X_train.shape[0]
-        len_tot_samples = len(str(tot_samples))
-
-        # create data structurs to hold batch metrics, epoch metrics etc.
-        history, batch_metrics, cum_metrics = \
-            create_hist_and_metrics_ds__(metrics, validation_dataset is not None)
-
-        metrics_list = ['loss']
-        if metrics is not None:
-            metrics_list = metrics_list + metrics
-
-        len_num_epochs = len(str(epochs))
-
-        if lr_scheduler is not None:
-            print('Using learning rate {}'.format(lr_scheduler.get_lr()))
-
-        num_batches = tot_samples // batch_size
-        num_batches += 1 if tot_samples % batch_size > 0 else 0
-
-        for epoch in range(epochs):
-            model.train()  # model is training, so batch normalization & dropouts can be applied
-            samples = 0
-
-            if shuffle:
-                (X_train, y_train) = shuffle(X_train, y_train)
-
-            # zero out batch & cum metrics for next epoch
-            for metric_name in metrics_list:
-                batch_metrics[metric_name] = 0.0
-                cum_metrics[metric_name] = 0.0
-                if validation_dataset is not None:
-                    batch_metrics['val_%s' % metric_name] = 0.0
-                    cum_metrics['val_%s' % metric_name] = 0.0
-
-            # iterate over the training dataset
-            for i in range(num_batches):
-                start = i * batch_size
-                end = start + batch_size
-                # grab the next batch of data
-                X_batch = X_train[start:end, :]
-                y_batch = y_train[start:end]
-                data = Variable(torch.FloatTensor(X_batch))
-                if (y_batch.dtype == np.int) or (y_batch.dtype == np.long):
-                    labels = Variable(torch.LongTensor(y_batch))
-                else:
-                    labels = Variable(torch.FloatTensor(y_batch))
-
-                # move to GPU if available
-                data = data.cuda() if gpu_available else data.cpu()
-                labels = labels.cuda() if gpu_available else labels.cpu()
-
-                # clear accummulated gradients
-                optimizer.zero_grad()
-                # make a forward pass
-                logits = model(data)
-                # apply loss function
-                loss_tensor = loss_fn(logits, labels)
-                # compute gradients
-                loss_tensor.backward()
-                # update weights
-                optimizer.step()
-                batch_loss = loss_tensor.item()
-
-                # compute metrics for batch + accumulate metrics across batches
-                batch_metrics['loss'] = batch_loss
-                if metrics is not None:
-                    compute_metrics__(logits, labels, metrics, batch_metrics, validation_dataset=False)
-                # same as cum_netrics[metric_name] += batch_metric[metric_name] across all metrics
-                cum_metrics = accumulate_metrics__(metrics_list, cum_metrics, batch_metrics, validation_dataset=False)
-
-                samples += len(labels)
-
-                # display progress
-                metrics_str = get_metrics_str__(metrics_list, batch_metrics, validation_dataset=False)
-                print('\rEpoch (%*d/%*d): (%*d/%*d) -> %s' %
-                            (len_num_epochs, epoch+1, len_num_epochs, epochs,
-                             len_tot_samples, samples, len_tot_samples, tot_samples,
-                             metrics_str),
-                        end='', flush=True)
-            else:
-                # compute average metrics across all batches of train_loader
-                for metric_name in metrics_list:
-                    cum_metrics[metric_name] = cum_metrics[metric_name] / num_batches
-                    history[metric_name].append(cum_metrics[metric_name])
-
-                # display average training metrics for this epoch
-                metrics_str = get_metrics_str__(metrics_list, cum_metrics, validation_dataset=False)
-                print('\rEpoch (%*d/%*d): (%*d/%*d) -> %s' %
-                        (len_num_epochs, epoch+1, len_num_epochs, epochs,
-                            len_tot_samples, samples, len_tot_samples, tot_samples,
-                            metrics_str),
-                    end='' if validation_dataset is not None else '\n', flush=True)
-
-                if validation_dataset is not None:
-                    model.eval()  # mark model as evaluating - don't apply any dropouts
-                    with torch.no_grad():
-                        # run through the validation dataset
-                        num_val_batches = 0
-
-                        for batch_i in range(0, X_val.shape[0], batch_size):
-                            # grab the next batch of data
-                            X_val_batch = X_val[batch_i:batch_i + batch_size,:]
-                            y_val_batch = y_val[batch_i:batch_i + batch_size]
-                            val_data = Variable(torch.FloatTensor(X_val_batch))
-                            if (y_val_batch.dtype == np.int) or (y_val_batch.dtype == np.long):
-                                val_labels = Variable(torch.LongTensor(y_val_batch))
-                            else:
-                                val_labels = Variable(torch.FloatTensor(y_val_batch))
-
-                            val_data = val_data.cuda() if gpu_available else val_data.cpu()
-                            val_labels = val_labels.cuda() if gpu_available else val_labels.cpu()
-
-                            # forward pass
-                            val_logits = model(val_data)
-                            # apply loss function
-                            loss_tensor = loss_fn(val_logits, val_labels)
-                            batch_loss = loss_tensor.item()
-
-                            # calculate all metrics for validation dataset batch
-                            batch_metrics['val_loss'] = batch_loss
-                            if metrics is not None:
-                                compute_metrics__(val_logits, val_labels, metrics, batch_metrics, validation_dataset=True)
-                            # same as cum_metrics[val_metric_name] += batch_metrics[val_metric_name] for all metrics
-                            cum_metrics = accumulate_metrics__(metrics_list, cum_metrics, batch_metrics, validation_dataset=True)
-
-                            num_val_batches += 1
-                        else:
-                            # average metrics across all val-dataset batches
-                            for metric_name in metrics_list:
-                                cum_metrics['val_%s' % metric_name] = cum_metrics['val_%s' % metric_name] / num_val_batches
-                                history['val_%s' % metric_name].append(cum_metrics['val_%s' % metric_name])
-
-                            # display train + val set metrics    
-                            metrics_str = get_metrics_str__(metrics_list, cum_metrics, validation_dataset=True)
-                            print('\rEpoch (%*d/%*d): (%*d/%*d) -> %s' %
-                                        (len_num_epochs, epoch+1, len_num_epochs, epochs,
-                                         len_tot_samples, samples, len_tot_samples, tot_samples,
-                                         metrics_str),
-                                    flush=True)
-            
-            # step the learning rate scheduler at end of epoch
-            if lr_scheduler is not None:
-                lr_scheduler.step()
-                print('Stepping learning rate to {}'.format(lr_scheduler.get_lr()))
-        return history
-    finally:
-        model = model.cpu()
-"""
 
 def evaluate_model(model, dataset, loss_fn=None, batch_size=64, metrics=None, num_workers=0):
     """ evaluate's model performance against dataset provided
@@ -1163,7 +981,7 @@ def show_plots(history, metric=None, plot_title=None, fig_size=None):
     loss_metrics = ['loss']
     if 'val_loss' in history.keys():
         loss_metrics.append('val_loss')
-    # after above lines, loss_metrics = ['loss', 'val_loss']
+    # after above lines, loss_metrics = ['loss'] OR ['loss', 'val_loss']
   
     other_metrics = []
     if metric is not None:
@@ -1171,7 +989,9 @@ def show_plots(history, metric=None, plot_title=None, fig_size=None):
         other_metrics.append(metric)
         if f"val_{metric}" in history.keys():
             other_metrics.append(f"val_{metric}")
-    # if metric is not None (e.g. if metrics = 'accuracy'), then other_metrics = ['accuracy', 'val_accuracy']
+    # After above lines, other_metrics = [] OR
+    #   if metric is not None (e.g. if metrics = 'accuracy'), 
+    #       then other_metrics = ['accuracy'] OR ['accuracy', 'val_accuracy']
     
     # display the plots
     col_count = 1 if len(other_metrics) == 0 else 2
@@ -1212,6 +1032,9 @@ def show_plots(history, metric=None, plot_title=None, fig_size=None):
 def show_plots2(history, plot_title=None, fig_size=None):
     """ Useful function to view plot of loss values & accuracies across the various epochs
         Works with the history object returned by the train_model(...) call """
+
+    raise NotImplementedError("show_plots2() should not be used! Use show_plots() instead.")
+
     import matplotlib.pyplot as plt
     import seaborn as sns
 
@@ -1420,7 +1243,7 @@ class PytkModule(nn.Module):
 
     def fit_dataset(self, train_dataset, loss_fn=None, optimizer=None, validation_split=0.0,
                     validation_dataset=None, lr_scheduler=None, epochs=25, batch_size=64, metrics=None,
-                    shuffle=True, num_workers=0, early_stopping=None, show_inc_progress=True):
+                    shuffle=True, num_workers=0, early_stopping=None, verbose=0):
         """ 
         train model on instance of torch.utils.data.Dataset
         @params:
@@ -1455,8 +1278,10 @@ class PytkModule(nn.Module):
                NOTE: if validation_dataset is provided, each metric is also measured for the validaton dataset
             - num_workers: no of worker threads to use to load datasets
             - early_stopping: instance of EarlyStopping class if early stopping is to be used (default: None)
-            - show_inc_progress (boolean, default=True): if True, shows batch-by-batch progress of training + end of 
-                epoch summary. Else shows just end of epoch summary.
+            - verbose (integer = 0,1 or 2, default=0): sets verbosity level of progress reported during training
+                verbose=0: max verbose output, displays metrics batchwise
+                verbose=1: medium verbosity, displays batch progress, but metrics only at end of epoch
+                vervose=2: least verbose, no output is displayed until epoch completes.
         @returns:
            - history object (which is a map of metrics measured across epochs).
              Each metric list is accessed as hist[metric_name] (e.g. hist['loss'] or hist['acc'])
@@ -1470,11 +1295,11 @@ class PytkModule(nn.Module):
                            validation_split = validation_split, validation_dataset = validation_dataset,
                            lr_scheduler = lr_scheduler, epochs = epochs, batch_size = batch_size,
                            metrics = p_metrics_list, shuffle = shuffle, num_workers = num_workers,
-                           early_stopping=early_stopping, show_inc_progress=show_inc_progress)
+                           early_stopping=early_stopping, verbose=verbose)
 
     def fit(self, X_train, y_train, loss_fn=None, optimizer=None, validation_split=0.0, validation_data=None,
             lr_scheduler=None, epochs=25, batch_size=64, metrics=None, shuffle=True, num_workers=0,
-            early_stopping=None, show_inc_progress=True):
+            early_stopping=None, verbose=0):
 
         assert ((X_train is not None) and (isinstance(X_train, np.ndarray))), \
             "Parameter error: X_train is None or is NOT an instance of np.ndarray"
@@ -1512,7 +1337,7 @@ class PytkModule(nn.Module):
                                 lr_scheduler=lr_scheduler,
                                 epochs=epochs, batch_size=batch_size, metrics=p_metrics_list,
                                 shuffle=shuffle, num_workers=num_workers, early_stopping=early_stopping,
-                                show_inc_progress=show_inc_progress)
+                                verbose=verbose)
 
     def evaluate_dataset(self, dataset, loss_fn=None, batch_size=64, metrics=None, num_workers=0):
         p_loss_fn = self.loss_fn if loss_fn is None else loss_fn
@@ -1589,7 +1414,7 @@ class PytkModuleWrapper():
 
     def fit_dataset(self, train_dataset, loss_fn=None, optimizer=None, validation_split=0.0,
                     validation_dataset=None, lr_scheduler=None, epochs=25, batch_size=64, metrics=None,
-                    shuffle=True, num_workers=0, early_stopping=None, show_inc_progress=True):
+                    shuffle=True, num_workers=0, early_stopping=None, verbose=0):
         p_loss_fn = self.loss_fn if loss_fn is None else loss_fn
         p_optimizer = self.optimizer if optimizer is None else optimizer
         p_metrics_list = self.metrics_list if metrics is None else metrics
@@ -1597,11 +1422,11 @@ class PytkModuleWrapper():
         return train_model(self.model, train_dataset, loss_fn=p_loss_fn,
             optimizer=p_optimizer, validation_split=validation_split, validation_dataset=validation_dataset,
             lr_scheduler=lr_scheduler, epochs=epochs, batch_size=batch_size, metrics=p_metrics_list,
-            shuffle=shuffle, num_workers=num_workers, early_stopping=early_stopping, show_inc_progress=show_inc_progress)
+            shuffle=shuffle, num_workers=num_workers, early_stopping=early_stopping, verbose=verbose)
 
     def fit(self, X_train, y_train, loss_fn=None, optimizer=None, validation_split=0.0, validation_data=None,
             lr_scheduler=None, epochs=25, batch_size=64, metrics=None, shuffle=True, num_workers=0,
-            early_stopping=None, show_inc_progress=True):
+            early_stopping=None, verbose=0):
 
         assert ((X_train is not None) and (isinstance(X_train, np.ndarray))), \
             "Parameter error: X_train is None or is NOT an instance of np.ndarray"
@@ -1639,7 +1464,7 @@ class PytkModuleWrapper():
                                 validation_split=validation_split, validation_dataset=validation_dataset,
                                 lr_scheduler=lr_scheduler, epochs=epochs, batch_size=batch_size, metrics=p_metrics_list,
                                 shuffle=shuffle, num_workers=num_workers, early_stopping=early_stopping,
-                                show_inc_progress=show_inc_progress)
+                                verbose=verbose)
 
     def evaluate_dataset(self, dataset, loss_fn=None, batch_size=64, metrics=None, num_workers=0):
         p_loss_fn = self.loss_fn if loss_fn is None else loss_fn
