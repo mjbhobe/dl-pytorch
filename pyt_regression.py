@@ -81,7 +81,7 @@ def main():
     criterion = nn.MSELoss()
     #optimizer = optim.SGD(net.parameters(), lr=0.001)
     optimizer = optim.Adam(net.parameters(), lr=0.001)
-    net.compile(loss=criterion, optimizer=optimizer, metrics=['r2_score'])
+    net.compile(loss=criterion, optimizer=optimizer, metrics=['mse', 'rmse', 'mae', 'r2_score'])
     print(net)
 
     # train on the data
@@ -110,8 +110,8 @@ if __name__ == '__main__':
 
 # Results:
 # Before training: 
-#    M = 2, C = 1
+#    M = 1.8, C = 32.0 
 # After training (2000 epochs)
-#    Weight: 2.028 bias: 1.015
-# R2 score: 0.967
+#    M = 1.828 , C = 31.304 
+# R2 score: 0.765
 

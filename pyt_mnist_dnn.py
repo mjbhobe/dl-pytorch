@@ -174,7 +174,7 @@ class MNISTConvNet(pytk.PytkModule):
 DO_TRAINING = True
 DO_PREDICTION = True
 SHOW_SAMPLE = True
-USE_CNN = False     # if False, will use an MLP
+USE_CNN = True     # if False, will use an MLP
 
 MODEL_SAVE_NAME = 'pyt_mnist_cnn' if USE_CNN else 'pyt_mnist_dnn'
 MODEL_SAVE_PATH = os.path.join('.', 'model_states', MODEL_SAVE_NAME)
@@ -207,7 +207,7 @@ def main():
         # train model
         print(f'Training {"CNN" if USE_CNN else "ANN"} model')
         hist = model.fit_dataset(train_dataset, validation_dataset=val_dataset, lr_scheduler=scheduler,
-                                 epochs=NUM_EPOCHS, batch_size=BATCH_SIZE, show_inc_progress=False)
+                                 epochs=NUM_EPOCHS, batch_size=BATCH_SIZE, verbose=1)
         pytk.show_plots(hist, metric='acc', plot_title='Training metrics')
 
         # evaluate model performance on train/eval & test datasets
@@ -251,7 +251,7 @@ if __name__ == "__main__":
 # Results: 
 #   MLP with epochs=25, batch-size=32, LR=0.01
 #       Training  -> acc: 99.88%
-#       Cross-val -> acc: 98.45$
+#       Cross-val -> acc: 98.45%
 #       Testing   -> acc: 97.90%
 #   CNN with epochs=25, batch-size=32, LR=0.01
 #       Training  -> acc: 99.89%

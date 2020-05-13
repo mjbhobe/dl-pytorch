@@ -154,7 +154,7 @@ if __name__ == "__main__":
 # Results: 
 #   MLP with epochs=250, batch-size=32, LR=0.001
 #       Training  -> acc: 99.22%
-#       Cross-val -> acc: 100%$
+#       Cross-val -> acc: 100%
 #       Testing   -> acc: 100%
 # --------------------------------------------------
 

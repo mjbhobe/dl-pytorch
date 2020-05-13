@@ -172,6 +172,13 @@ def main():
 if __name__ == "__main__":
     main()
 
+# --------------------------------------------------
+# Results: 
+#   MLP with epochs=100, batch-size=16, LR=0.001
+#    Training  -> acc: 98.63, f1-score: 98.11
+#    Cross-val -> acc: 98.63, f1-score: 98.11
+#    Testing   -> acc: 99.22, f1-score: 99.06
+# --------------------------------------------------
 
 
 
