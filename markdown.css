@@ -1,0 +1,30 @@
+/* markdown.css: my custom markdown CSS file 
+@see: https://stackoverflow.com/questions/32410064/how-can-i-use-an-online-style-css-on-the-visual-studio-code-markdown-preview
+*/
+
+body {
+    font-family: Roboto, Arial, Verdana, -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', 'Ubuntu', 'Droid Sans', sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+/* code listings */
+code {
+    font-family: Consolas, "Source Code Pro Medium", 'SF Mono', Hack, monospace, 'Droid Sans Fallback';
+    font-size: 14px;
+}
+
+pre * {
+    font-family: Consolas, "Source Code Pro Medium", 'SF Mono', Hack, monospace, 'Droid Sans Fallback';
+    font-size: 14px;
+    line-height: 20px;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5 {
+    color: cornflowerblue;
+    font-family: Arvo, Roboto, Arial Calibri, Helvetica, sans-serif;
+}

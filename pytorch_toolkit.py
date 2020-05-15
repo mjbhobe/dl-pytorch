@@ -1029,89 +1029,89 @@ def show_plots(history, metric=None, plot_title=None, fig_size=None):
         plt.close()
 
 
-def show_plots2(history, plot_title=None, fig_size=None):
-    """ Useful function to view plot of loss values & accuracies across the various epochs
-        Works with the history object returned by the train_model(...) call """
+# def show_plots2(history, plot_title=None, fig_size=None):
+#     """ Useful function to view plot of loss values & accuracies across the various epochs
+#         Works with the history object returned by the train_model(...) call """
 
-    raise NotImplementedError("show_plots2() should not be used! Use show_plots() instead.")
+#     raise NotImplementedError("show_plots2() should not be used! Use show_plots() instead.")
 
-    import matplotlib.pyplot as plt
-    import seaborn as sns
+#     import matplotlib.pyplot as plt
+#     import seaborn as sns
 
-    plt.style.use('seaborn')
-    sns.set_style('darkgrid')
+#     plt.style.use('seaborn')
+#     sns.set_style('darkgrid')
 
-    assert type(history) is dict
+#     assert type(history) is dict
 
-    # NOTE: the history object should always have loss (for training data), but MAY have
-    # val_loss for validation data
-    assert 'loss' in history.keys(), f"ERROR: expecting \'loss\' as one of the metrics in history object"
-    loss_vals = history['loss']
-    val_loss_vals = history['val_loss'] if 'val_loss' in history.keys() else None
+#     # NOTE: the history object should always have loss (for training data), but MAY have
+#     # val_loss for validation data
+#     assert 'loss' in history.keys(), f"ERROR: expecting \'loss\' as one of the metrics in history object"
+#     loss_vals = history['loss']
+#     val_loss_vals = history['val_loss'] if 'val_loss' in history.keys() else None
 
-    # accuracy is an optional metric chosen by user
-    acc_vals = history['acc'] if 'acc' in history.keys() else None
-    if acc_vals is None:
-        # try 'accuracy' key, could be using Tensorflow 2.0 backend!
-        acc_vals = history['accuracy'] if 'acc' in history.keys() else None
+#     # accuracy is an optional metric chosen by user
+#     acc_vals = history['acc'] if 'acc' in history.keys() else None
+#     if acc_vals is None:
+#         # try 'accuracy' key, could be using Tensorflow 2.0 backend!
+#         acc_vals = history['accuracy'] if 'acc' in history.keys() else None
 
-    val_acc_vals = history['val_acc'] if 'val_acc' in history.keys() else None
-    if val_acc_vals is None:
-        # try 'val_accuracy' key, could be using Tensorflow 2.0 backend!
-        val_acc_vals = history['val_accuracy'] if 'val_accuracy' in history.keys() else None
+#     val_acc_vals = history['val_acc'] if 'val_acc' in history.keys() else None
+#     if val_acc_vals is None:
+#         # try 'val_accuracy' key, could be using Tensorflow 2.0 backend!
+#         val_acc_vals = history['val_accuracy'] if 'val_accuracy' in history.keys() else None
 
-    epochs = range(1, len(history['loss']) + 1)
+#     epochs = range(1, len(history['loss']) + 1)
 
-    col_count = 1 if ((acc_vals is None) and (val_acc_vals is None)) else 2
+#     col_count = 1 if ((acc_vals is None) and (val_acc_vals is None)) else 2
 
-    with sns.axes_style("darkgrid"):
-        sns.set_context("notebook", font_scale=1.1)
-        sns.set_style({"font.sans-serif": ["Verdana", "Arial", "Calibri", "DejaVu Sans"]})
+#     with sns.axes_style("darkgrid"):
+#         sns.set_context("notebook", font_scale=1.1)
+#         sns.set_style({"font.sans-serif": ["Verdana", "Arial", "Calibri", "DejaVu Sans"]})
 
-        f, ax = plt.subplots(nrows=1, ncols=col_count, figsize=((16, 5) if fig_size is None else fig_size))
+#         f, ax = plt.subplots(nrows=1, ncols=col_count, figsize=((16, 5) if fig_size is None else fig_size))
 
-        axs = ax[0] if col_count == 2 else ax
+#         axs = ax[0] if col_count == 2 else ax
 
-        # plot losses on ax[0]
-        axs.plot(epochs, loss_vals, label='Training Loss')
-        if val_loss_vals is not None:
-            axs.plot(epochs, val_loss_vals, label='Validation Loss')
-            axs.set_title('Training & Validation Loss')
-            axs.legend(loc='best')
-        else:
-            axs.set_title('Training Loss')
+#         # plot losses on ax[0]
+#         axs.plot(epochs, loss_vals, label='Training Loss')
+#         if val_loss_vals is not None:
+#             axs.plot(epochs, val_loss_vals, label='Validation Loss')
+#             axs.set_title('Training & Validation Loss')
+#             axs.legend(loc='best')
+#         else:
+#             axs.set_title('Training Loss')
 
-        axs.set_xlabel('Epochs')
-        axs.set_ylabel('Loss')
-        axs.grid(True)
+#         axs.set_xlabel('Epochs')
+#         axs.set_ylabel('Loss')
+#         axs.grid(True)
 
-        # plot accuracies, if exist
-        if col_count == 2:
-            ax[1].plot(epochs, acc_vals, label='Training Accuracy')
-            if val_acc_vals is not None:
-                #ax[1].plot(epochs, val_acc_vals, color='firebrick', marker='*', label='Validation Accuracy')
-                ax[1].plot(epochs, val_acc_vals, label='Validation Accuracy')
-                ax[1].set_title('Training & Validation Accuracy')
-                ax[1].legend(loc='best')
-            else:
-                ax[1].set_title('Training Accuracy')
+#         # plot accuracies, if exist
+#         if col_count == 2:
+#             ax[1].plot(epochs, acc_vals, label='Training Accuracy')
+#             if val_acc_vals is not None:
+#                 #ax[1].plot(epochs, val_acc_vals, color='firebrick', marker='*', label='Validation Accuracy')
+#                 ax[1].plot(epochs, val_acc_vals, label='Validation Accuracy')
+#                 ax[1].set_title('Training & Validation Accuracy')
+#                 ax[1].legend(loc='best')
+#             else:
+#                 ax[1].set_title('Training Accuracy')
 
-            ax[1].set_xlabel('Epochs')
-            ax[1].set_ylabel('Accuracy')
-            ax[1].grid(True)
+#             ax[1].set_xlabel('Epochs')
+#             ax[1].set_ylabel('Accuracy')
+#             ax[1].grid(True)
 
-        if plot_title is not None:
-            plt.suptitle(plot_title)
+#         if plot_title is not None:
+#             plt.suptitle(plot_title)
 
-        plt.show()
-        plt.close()
+#         plt.show()
+#         plt.close()
 
-    # delete locals from heap before exiting (to save some memory!)
-    del loss_vals, epochs, acc_vals
-    if val_loss_vals is not None:
-        del val_loss_vals
-    if val_acc_vals is not None:
-        del val_acc_vals
+#     # delete locals from heap before exiting (to save some memory!)
+#     del loss_vals, epochs, acc_vals
+#     if val_loss_vals is not None:
+#         del val_loss_vals
+#     if val_acc_vals is not None:
+#         del val_acc_vals
 
 def plot_confusion_matrix(cm, classes, normalize=False, title='Confusion matrix', cmap=plt.cm.Blues):
     """
@@ -1141,64 +1141,64 @@ def plot_confusion_matrix(cm, classes, normalize=False, title='Confusion matrix'
 # Utility classes
 # --------------------------------------------------------------------------------------------
 
-class PandasDataset(Dataset):
-    """ Dataset class from a pandas Dataframe """
-    def __init__(self, df, target_col_name, target_col_type=np.int):
-        """ 
-        @params:
-            - df: pandas dataframe from which Dataset is to be created
-            - target_col_name: column name of Pandas dataframe to use as target/label
-            - target_col_type (optional, default: np.int): datatype of target/label column 
-        """
-        raise NotImplementedError("PandasDataset() should not be used!!")
-        assert isinstance(df, pd.DataFrame), "df parameter should be an instance of pd.DataFrame"
-        assert isinstance(target_col_name, str), "target_col_name parameter should be a string"
+# class PandasDataset(Dataset):
+#     """ Dataset class from a pandas Dataframe """
+#     def __init__(self, df, target_col_name, target_col_type=np.int):
+#         """ 
+#         @params:
+#             - df: pandas dataframe from which Dataset is to be created
+#             - target_col_name: column name of Pandas dataframe to use as target/label
+#             - target_col_type (optional, default: np.int): datatype of target/label column 
+#         """
+#         raise NotImplementedError("PandasDataset() should not be used!!")
+#         assert isinstance(df, pd.DataFrame), "df parameter should be an instance of pd.DataFrame"
+#         assert isinstance(target_col_name, str), "target_col_name parameter should be a string"
 
-        self.df = df
-        assert target_col_name in self.df.columns, "%s - not a valid column name" % target_col_name
-        self.target_col_name = target_col_name
-        self.target_col_type = target_col_type
+#         self.df = df
+#         assert target_col_name in self.df.columns, "%s - not a valid column name" % target_col_name
+#         self.target_col_name = target_col_name
+#         self.target_col_type = target_col_type
         
-    def __len__(self):
-        return self.df.shape[0]
+#     def __len__(self):
+#         return self.df.shape[0]
 
-    def __getitem__(self, index):
-        row = self.df.iloc[index]
-        ## NOTE: set data.type = np.float32 & label to np.int, else I get wierd errors!
-        data = row[self.df.columns != self.target_col_name].values.astype(np.float32)
-        label = row[self.target_col_name].astype(self.target_col_type)
-        return (data, label)
+#     def __getitem__(self, index):
+#         row = self.df.iloc[index]
+#         ## NOTE: set data.type = np.float32 & label to np.int, else I get wierd errors!
+#         data = row[self.df.columns != self.target_col_name].values.astype(np.float32)
+#         label = row[self.target_col_name].astype(self.target_col_type)
+#         return (data, label)
 
-class XyDataset(Dataset):
-    """ Dataset class from a Numpy arrays 
-    @params:
-        - X: numpy array for the features (m rows X n feature cols Numpy array)
-        - y: numpy array for labels/targets (m rows X 1 array OR a flattened array of m values)
-        - y_dtype: which datatype to cast y to (could be float if you choose, normally long)
-        - xforms (default: None) - transforms to apply to X returned by __getitem__
-    """
-    def __init__(self, X, y, y_dtype=np.long, xforms=None):
-        raise NotImplementedError("XyDataset() should not be used!!")
-        assert isinstance(X, np.ndarray), "X parameter should be an instance of Numpy array or list"
-        assert isinstance(y, np.ndarray), "y parameter should be an instance of Numpy array"
+# class XyDataset(Dataset):
+#     """ Dataset class from a Numpy arrays 
+#     @params:
+#         - X: numpy array for the features (m rows X n feature cols Numpy array)
+#         - y: numpy array for labels/targets (m rows X 1 array OR a flattened array of m values)
+#         - y_dtype: which datatype to cast y to (could be float if you choose, normally long)
+#         - xforms (default: None) - transforms to apply to X returned by __getitem__
+#     """
+#     def __init__(self, X, y, y_dtype=np.long, xforms=None):
+#         raise NotImplementedError("XyDataset() should not be used!!")
+#         assert isinstance(X, np.ndarray), "X parameter should be an instance of Numpy array or list"
+#         assert isinstance(y, np.ndarray), "y parameter should be an instance of Numpy array"
 
-        self.X = X
-        self.y = y
-        self.y_dtype = y_dtype
-        self.transforms = xforms
+#         self.X = X
+#         self.y = y
+#         self.y_dtype = y_dtype
+#         self.transforms = xforms
         
-    def __len__(self):
-        return self.X.shape[0]
+#     def __len__(self):
+#         return self.X.shape[0]
 
-    def __getitem__(self, index):
-        ## NOTE: set data.type = np.float32 & label to np.int, else I get wierd errors!
-        data = self.X[index].astype(np.float32)
-        #print(f'XyDataset [log]: data.shape = {data.shape}')
-        if self.transforms is not None:
-            # apply the transforms
-            data = self.transforms(data)
-        label = self.y[index].astype(self.y_dtype)
-        return (data, label)
+#     def __getitem__(self, index):
+#         ## NOTE: set data.type = np.float32 & label to np.int, else I get wierd errors!
+#         data = self.X[index].astype(np.float32)
+#         #print(f'XyDataset [log]: data.shape = {data.shape}')
+#         if self.transforms is not None:
+#             # apply the transforms
+#             data = self.transforms(data)
+#         label = self.y[index].astype(self.y_dtype)
+#         return (data, label)
 
 class PytkModule(nn.Module):
     """
