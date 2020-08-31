@@ -22,6 +22,7 @@ import sys, os, random
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import seaborn as sns
 #from sklearn.utils import shuffle
 from sklearn.metrics import roc_auc_score
 import itertools
@@ -39,12 +40,19 @@ seed = 123
 random.seed(seed)
 os.environ['PYTHONHASHSEED'] = str(seed)
 np.random.seed(seed)
-torch.manual_seed(seed)
-torch.cuda.manual_seed(seed)
-torch.cuda.manual_seed_all(seed)
-torch.backends.cudnn.deterministic = True
-torch.backends.cudnn.benchmark = False
-torch.backends.cudnn.enabled = False
+torch.manual_seed(seed);
+
+if torch.cuda.is_available():
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    #torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = True
+    #torch.backends.cudnn.enabled = False
+
+# library tweaks
+np.set_printoptions(precision=6, linewidth=1024, suppress=True)
+plt.style.use('seaborn')
+sns.set(style='whitegrid', font_scale=1.1, palette='muted')
 
 # -----------------------------------------------------------------------------
 # helper function to create various layers of model
@@ -426,7 +434,8 @@ def accumulate_metrics__(metrics, cum_metrics, batch_metrics, validation_dataset
             cum_metrics['loss'] += batch_metrics['loss']
     return cum_metrics
 
-def get_metrics_str__(metrics_list, batch_or_cum_metrics, validation_dataset=False):
+def get_metrics_str__(metrics_list, batch_or_cum_metrics, validation_dataset=False,
+                      lr_scheduler=None, optimizer=None):
     """ internal helper functions: formats metrics for printing to console """
     metrics_str = ''
 
@@ -441,7 +450,28 @@ def get_metrics_str__(metrics_list, batch_or_cum_metrics, validation_dataset=Fal
         for i, metric in enumerate(metrics_list):
             metrics_str += ' - val_%s: %.4f' % (metrics_list[i], batch_or_cum_metrics['val_%s' % metric])
 
+    # if lr_scheduler is not None:
+    #     lr_rates_s = lr_scheduler.get_lr()
+    #     lr_rates_s = ['%.8f' % lrate for lrate in lr_rates_s]
+    #     metrics_str += ' - lr: %s' % lr_rates_s
+
+    # if (optimizer is not None) and (not validation_dataset):
+    #     lr_rates_o = []
+    #     for g in optimizer.param_groups:
+    #         lr_rates_o.append(g['lr'])
+    #     lr_rates_o = ['%.8f' % lrr for lrr in lr_rates_o]
+    #     metrics_str += ' - lr: %s' % lr_rates_o
+
     return metrics_str
+
+def get_lrates(optimizer, format_str='%.8f'):
+    """given the optimizer, returns the current learning rates as a string
+       (to be used to report metrics per epoch only!) """
+    lr_rates_o = []
+    for g in optimizer.param_groups:
+        lr_rates_o.append(g['lr'])
+    lr_rates_o = [format_str % lrr for lrr in lr_rates_o]
+    return ' - lr: %s' % lr_rates_o
 
 def create_hist_and_metrics_ds__(metrics, include_val_metrics=True):
     """ internal helper functions - create data structures to log epoch metrics, 
@@ -474,7 +504,7 @@ def create_hist_and_metrics_ds__(metrics, include_val_metrics=True):
 
 def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_split=0.0, validation_dataset=None,
                 lr_scheduler=None, epochs=25, batch_size=64, metrics=None, shuffle=True,
-                num_workers=0, early_stopping=None, verbose=0):
+                num_workers=0, early_stopping=None, verbose=0, report_interval=1):
     """
     Trains model (derived from nn.Module) across epochs using specified loss function,
     optimizer, validation dataset (if any), learning rate scheduler, epochs and batch size etc.
@@ -500,7 +530,7 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
             in the torch.optim.lr_scheduler package
         - epochs (int): number of epochs for which the model should be trained (optional, default=25)
         - batch_size (int): batch size to split the training & cross-validation datasets during 
-          training (optional, default=32)
+          training (optional, default=64). If batch_size = -1, entire dataset size is used as batch size.
         - metrics (list of strings): metrics to compute (optional, default=None)
             pass a list of strings from one or more of the following ['acc','prec','rec','f1']
             when metrics = None, only loss is computed for training set (and validation set, if any)
@@ -515,7 +545,9 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
         - verbose (0, 1 or 2, default=0): sets the verbosity level for reporting progress during training
             verbose=0 - very verbose output, displays batch wise metrics
             verbose=1 - medium verbose output, displays metrics at end of epoch, but shows incrimenting counter of batches
-            verbose=2 - last verbose output, does NOT display any output until the training dataset (and validation dataset, if any) completes
+            verbose=2 - least verbose output, does NOT display any output until the training dataset (and validation dataset, if any) completes
+        - report_interval (value >= 1 & < num_epochs): interval at which training progress gets updated (e.g. if report_interval=100, 
+            training progress is printed every 100th epoch.) Default = 1, meaning status reported at end of each epoch.
     @returns:
         - history: dictionary of the loss & accuracy metrics across epochs
             Metrics are saved by key name (see METRICS_MAP) 
@@ -548,13 +580,18 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
                 "early_stopping: incorrect type. Expecting instance of EarlyStopping class"
             early_stopping_metric = early_stopping.monitor
 
+        report_interval = 1 if report_interval < 1 else report_interval
+        report_interval = 1 if report_interval >= epochs else report_interval
+
         # if validation_split is provided by user, then split train_dataset
         if (validation_split > 0.0) and (validation_dataset is None):
-            # NOTE: validation_dataset supercedes validation_split, use validation_split only if validation_dataset is None
+            # NOTE: validation_dataset supercedes validation_split, use validation_split only 
+            # if validation_dataset is None
             num_recs = len(train_dataset)
             train_count = int((1.0 - validation_split) * num_recs)
             val_count = num_recs - train_count
-            train_dataset, validation_dataset = torch.utils.data.random_split(train_dataset, [train_count, val_count])
+            train_dataset, validation_dataset = \
+                torch.utils.data.random_split(train_dataset, [train_count, val_count])
             assert (train_dataset is not None) and (len(train_dataset) == train_count), \
                 "Something is wrong with validation_split - getting incorrect train_dataset counts!!"
             assert (validation_dataset is not None) and (len(validation_dataset) == val_count), \
@@ -571,6 +608,9 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
                     (len(train_dataset), len(validation_dataset)))
         else:
             print('Training on %d samples' % len(train_dataset))
+        
+        if report_interval != 1:
+            print(f"NOTE: training progress will be reported after every {report_interval} epochs")
 
         tot_samples = len(train_dataset)
         len_tot_samples = len(str(tot_samples))
@@ -594,13 +634,17 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
 
         curr_lr = None
 
-        if lr_scheduler is not None:
-            curr_lr = lr_scheduler.get_lr()
-            print('Using learning rate {}'.format(curr_lr))
+        # if lr_scheduler is not None:
+        #     curr_lr = lr_scheduler.get_lr()
+        #     print('Using learning rate {}'.format(curr_lr))
+
+        # if batch_size == -1, then use entire training dataset as batch (not recommended
+        # unless len(training_dataset) is reasonably small)
+        train_batch_size = batch_size if batch_size != -1 else len(train_dataset)
 
         for epoch in range(epochs):
-            model.train()  # model is training, so batch normalization & dropouts can be applied
-            train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size,
+            model.train()  # 'flag model as training', so batch normalization & dropouts can be applied
+            train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=train_batch_size,
                                                        shuffle=shuffle, num_workers=num_workers)
             num_batches = 0
             samples = 0
@@ -612,6 +656,9 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
                 if validation_dataset is not None:
                     batch_metrics['val_%s' % metric_name] = 0.0
                     cum_metrics['val_%s' % metric_name] = 0.0
+
+            # learning rates used by the optimizer (as a string)
+            learning_rates = ''
 
             # iterate over the training dataset
             for batch_no, (data, labels) in enumerate(train_loader):
@@ -634,6 +681,7 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
                 # compute metrics for batch + accumulate metrics across batches
                 batch_metrics['loss'] = batch_loss
                 if metrics is not None:
+                    # compute metrics for training dataset only!
                     compute_metrics__(logits, labels, metrics, batch_metrics, validation_dataset=False)
                 # same as cum_netrics[metric_name] += batch_metric[metric_name] across all metrics
                 cum_metrics = accumulate_metrics__(metrics_list, cum_metrics, batch_metrics, validation_dataset=False)
@@ -642,20 +690,26 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
                 num_batches += 1
 
                 # display incremental progress
+                learning_rates = get_lrates(optimizer)
+
                 if (verbose == 0):
-                    # display metrics at completion of each batch (default)
-                    metrics_str = get_metrics_str__(metrics_list, batch_metrics, validation_dataset=False)
-                    print('\rEpoch (%*d/%*d): (%*d/%*d) -> %s' %
-                                (len_num_epochs, epoch+1, len_num_epochs, epochs,
-                                 len_tot_samples, samples, len_tot_samples, tot_samples,
-                                 metrics_str),
-                            end='', flush=True)
+                    if (epoch == 0) or ((epoch+1) % report_interval == 0):
+                        # display metrics at completion of each batch (default)
+                        metrics_str = get_metrics_str__(metrics_list, batch_metrics, validation_dataset=False,
+                                                        lr_scheduler=lr_scheduler, optimizer=optimizer)
+                        metrics_str += learning_rates
+                        print('\rEpoch (%*d/%*d): (%*d/%*d) -> %s' %
+                                    (len_num_epochs, epoch+1, len_num_epochs, epochs,
+                                    len_tot_samples, samples, len_tot_samples, tot_samples,
+                                    metrics_str),
+                                end='', flush=True)
                 elif (verbose == 1):
-                    # display updating counter only - no incremental metrics
-                    print('\rEpoch (%*d/%*d): (%*d/%*d) -> ...' %
-                                (len_num_epochs, epoch + 1, len_num_epochs, epochs,
-                                 len_tot_samples, samples, len_tot_samples, tot_samples),
-                            end='', flush=True)
+                    if (epoch == 0) or ((epoch+1) % report_interval == 0):
+                        # display updating counter only - no incremental metrics
+                        print('\rEpoch (%*d/%*d): (%*d/%*d) -> ...' %
+                                    (len_num_epochs, epoch + 1, len_num_epochs, epochs,
+                                    len_tot_samples, samples, len_tot_samples, tot_samples),
+                                end='', flush=True)
             else:
                 # compute average metrics across all batches of train_loader
                 for metric_name in metrics_list:
@@ -663,19 +717,24 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
                     history[metric_name].append(cum_metrics[metric_name])
 
                 # display average training metrics for this epoch
+                # learning_rates = get_lrates(optimizer)
                 if ((verbose in [0,1]) or (validation_dataset is None)):
-                    metrics_str = get_metrics_str__(metrics_list, cum_metrics, validation_dataset=False)
-                    print('\rEpoch (%*d/%*d): (%*d/%*d) -> %s' %
-                                (len_num_epochs, epoch+1, len_num_epochs, epochs,
-                                 len_tot_samples, samples, len_tot_samples, tot_samples,
-                                 metrics_str),
-                            end='' if validation_dataset is not None else '\n', flush=True)
+                    if (epoch == 0) or ((epoch+1) % report_interval == 0):
+                        metrics_str = get_metrics_str__(metrics_list, cum_metrics, validation_dataset=False,
+                                                        lr_scheduler=lr_scheduler, optimizer=optimizer)
+                        metrics_str += learning_rates
+                        print('\rEpoch (%*d/%*d): (%*d/%*d) -> %s' %
+                                    (len_num_epochs, epoch+1, len_num_epochs, epochs,
+                                    len_tot_samples, samples, len_tot_samples, tot_samples,
+                                    metrics_str),
+                                end='' if validation_dataset is not None else '\n', flush=True)
 
                 if validation_dataset is not None:
+                    val_batch_size = batch_size if batch_size != -1 else len(validation_dataset)
                     model.eval()  # mark model as evaluating - don't apply any dropouts
                     with torch.no_grad():
                         # run through the validation dataset
-                        val_loader = torch.utils.data.DataLoader(validation_dataset, batch_size=batch_size,
+                        val_loader = torch.utils.data.DataLoader(validation_dataset, batch_size=val_batch_size,
                                                                  shuffle=False, num_workers=num_workers)
                         num_val_batches = 0
 
@@ -704,13 +763,17 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
                                 cum_metrics['val_%s' % metric_name] = cum_metrics['val_%s' % metric_name] / num_val_batches
                                 history['val_%s' % metric_name].append(cum_metrics['val_%s' % metric_name])
 
-                            # display train + val set metrics    
-                            metrics_str = get_metrics_str__(metrics_list, cum_metrics, validation_dataset=True)
-                            print('\rEpoch (%*d/%*d): (%*d/%*d) -> %s' %
-                                        (len_num_epochs, epoch+1, len_num_epochs, epochs,
-                                         len_tot_samples, samples, len_tot_samples, tot_samples,
-                                         metrics_str),
-                                    flush=True)
+                            if (epoch == 0) or ((epoch+1) % report_interval == 0):
+                                # display train + val set metrics    
+                                metrics_str = get_metrics_str__(metrics_list, cum_metrics, validation_dataset=True, 
+                                                                lr_scheduler=lr_scheduler, optimizer=optimizer)
+                                #learning_rates = get_lrates(optimizer)
+                                metrics_str += learning_rates
+                                print('\rEpoch (%*d/%*d): (%*d/%*d) -> %s' %
+                                            (len_num_epochs, epoch+1, len_num_epochs, epochs,
+                                            len_tot_samples, samples, len_tot_samples, tot_samples,
+                                            metrics_str),
+                                        flush=True)
             
             # check for early stopping
             if early_stopping is not None:
@@ -728,9 +791,10 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
             # step the learning rate scheduler at end of epoch
             if (lr_scheduler is not None) and (epoch < epochs-1):
                 lr_scheduler.step()
-                step_lr = lr_scheduler.get_lr()
-                if (verbose == 0):
-                    print('Stepping learning rate to {}'.format(step_lr))
+                # step_lr = lr_scheduler.get_lr()
+                # if (verbose == 0):
+                #     print('Stepping learning rate to {}'.format(step_lr))
+
                 #print('   StepLR (log): curr_lr = {}, new_lr = {}'.format(curr_lr, step_lr))
                 # if np.round(np.array(step_lr), 10) != np.round(np.array(curr_lr), 10):
                 #     #print(f'type(step_lr) = {type(step_lr)} and type(curr_lr) = {type(curr_lr)}')
@@ -966,8 +1030,6 @@ def load_model(model_save_name, model_save_dir='./model_states'):
 
 def show_plots(history, metric=None, plot_title=None, fig_size=None):
     
-    import seaborn as sns
-    
     """ Useful function to view plot of loss values & 'metric' across the various epochs
         Works with the history object returned by the fit() or fit_generator() call """
     assert type(history) is dict
@@ -998,8 +1060,8 @@ def show_plots(history, metric=None, plot_title=None, fig_size=None):
     df = pd.DataFrame(history)
     
     with sns.axes_style("darkgrid"):
-        sns.set_context("notebook", font_scale=1.1)
-        sns.set_style({"font.sans-serif": ["Verdana", "Arial", "Calibri", "DejaVu Sans"]})
+        sns.set_context("notebook", font_scale=1.3)
+        sns.set_style({"font.sans-serif": ["SF UI Text", "Verdana", "Arial", "Calibri", "DejaVu Sans"]})
 
         f, ax = plt.subplots(nrows=1, ncols=col_count, figsize=((16, 5) if fig_size is None else fig_size))
         axs = ax[0] if col_count == 2 else ax
@@ -1113,29 +1175,50 @@ def show_plots(history, metric=None, plot_title=None, fig_size=None):
 #     if val_acc_vals is not None:
 #         del val_acc_vals
 
-def plot_confusion_matrix(cm, classes, normalize=False, title='Confusion matrix', cmap=plt.cm.Blues):
-    """
-    This function prints and plots the confusion matrix.
-    Normalization can be applied by setting `normalize=True`.
-    """
-    plt.imshow(cm, interpolation='nearest', cmap=cmap)
-    plt.title(title)
-    plt.colorbar()
-    tick_marks = np.arange(len(classes))
-    plt.xticks(tick_marks, classes, rotation=45)
-    plt.yticks(tick_marks, classes)
+# def plot_confusion_matrix(cm, classes, normalize=False, title='Confusion matrix', cmap=plt.cm.Blues):
+#     """
+#     This function prints and plots the confusion matrix.
+#     Normalization can be applied by setting `normalize=True`.
+#     """
+#     plt.imshow(cm, interpolation='nearest', cmap=cmap)
+#     plt.title(title)
+#     plt.colorbar()
+#     tick_marks = np.arange(len(classes))
+#     plt.xticks(tick_marks, classes, rotation=45)
+#     plt.yticks(tick_marks, classes)
 
-    if normalize:
-        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+#     if normalize:
+#         cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
 
-    thresh = cm.max() / 2.
-    for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
-        plt.text(j, i, cm[i, j], horizontalalignment="center",
-            color="white" if cm[i, j] > thresh else "black")
+#     thresh = cm.max() / 2.
+#     for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+#         plt.text(j, i, cm[i, j], horizontalalignment="center",
+#             color="white" if cm[i, j] > thresh else "black")
 
-    plt.tight_layout()
-    plt.ylabel('True label')
-    plt.xlabel('Predicted label')
+#     plt.tight_layout()
+#     plt.ylabel('True label')
+#     plt.xlabel('Predicted label')
+#     plt.show()
+#     plt.close()
+
+def plot_confusion_matrix(cm, class_names=None, title="Confusion Matrix", cmap=plt.cm.Blues):
+    class_names = ['0', '1'] if class_names is None else class_names
+    df = pd.DataFrame(cm, index=class_names, columns=class_names)
+
+    with sns.axes_style("darkgrid"):
+        sns.set_context("notebook", font_scale=1.1)
+        sns.set_style({"font.sans-serif": ["SF UI Text", "Verdana", "Arial", "Calibri", "DejaVu Sans"]})
+        hmap = sns.heatmap(df, annot=True, fmt="d", cmap=cmap)
+        hmap.yaxis.set_ticklabels(hmap.yaxis.get_ticklabels(), rotation=0, ha='right')
+        hmap.xaxis.set_ticklabels(hmap.xaxis.get_ticklabels(), rotation=30, ha='right')
+
+        plt.ylabel('True label')
+        plt.xlabel('Predicted label')
+        plt.title(title)
+        
+    plt.show()
+    plt.close()
+
 
 # --------------------------------------------------------------------------------------------
 # Utility classes
@@ -1243,7 +1326,7 @@ class PytkModule(nn.Module):
 
     def fit_dataset(self, train_dataset, loss_fn=None, optimizer=None, validation_split=0.0,
                     validation_dataset=None, lr_scheduler=None, epochs=25, batch_size=64, metrics=None,
-                    shuffle=True, num_workers=0, early_stopping=None, verbose=0):
+                    shuffle=True, num_workers=0, early_stopping=None, verbose=0, report_interval=1):
         """ 
         train model on instance of torch.utils.data.Dataset
         @params:
@@ -1282,6 +1365,7 @@ class PytkModule(nn.Module):
                 verbose=0: max verbose output, displays metrics batchwise
                 verbose=1: medium verbosity, displays batch progress, but metrics only at end of epoch
                 vervose=2: least verbose, no output is displayed until epoch completes.
+            - report_interval (default=1): interval at which training progress is reported.
         @returns:
            - history object (which is a map of metrics measured across epochs).
              Each metric list is accessed as hist[metric_name] (e.g. hist['loss'] or hist['acc'])
@@ -1295,11 +1379,11 @@ class PytkModule(nn.Module):
                            validation_split = validation_split, validation_dataset = validation_dataset,
                            lr_scheduler = lr_scheduler, epochs = epochs, batch_size = batch_size,
                            metrics = p_metrics_list, shuffle = shuffle, num_workers = num_workers,
-                           early_stopping=early_stopping, verbose=verbose)
+                           early_stopping=early_stopping, verbose=verbose, report_interval=report_interval)
 
     def fit(self, X_train, y_train, loss_fn=None, optimizer=None, validation_split=0.0, validation_data=None,
             lr_scheduler=None, epochs=25, batch_size=64, metrics=None, shuffle=True, num_workers=0,
-            early_stopping=None, verbose=0):
+            early_stopping=None, verbose=0, report_interval=1):
 
         assert ((X_train is not None) and (isinstance(X_train, np.ndarray))), \
             "Parameter error: X_train is None or is NOT an instance of np.ndarray"
@@ -1337,7 +1421,7 @@ class PytkModule(nn.Module):
                                 lr_scheduler=lr_scheduler,
                                 epochs=epochs, batch_size=batch_size, metrics=p_metrics_list,
                                 shuffle=shuffle, num_workers=num_workers, early_stopping=early_stopping,
-                                verbose=verbose)
+                                verbose=verbose, report_interval=report_interval)
 
     def evaluate_dataset(self, dataset, loss_fn=None, batch_size=64, metrics=None, num_workers=0):
         p_loss_fn = self.loss_fn if loss_fn is None else loss_fn
@@ -1414,19 +1498,19 @@ class PytkModuleWrapper():
 
     def fit_dataset(self, train_dataset, loss_fn=None, optimizer=None, validation_split=0.0,
                     validation_dataset=None, lr_scheduler=None, epochs=25, batch_size=64, metrics=None,
-                    shuffle=True, num_workers=0, early_stopping=None, verbose=0):
+                    shuffle=True, num_workers=0, early_stopping=None, verbose=0, report_interval=1):
         p_loss_fn = self.loss_fn if loss_fn is None else loss_fn
         p_optimizer = self.optimizer if optimizer is None else optimizer
         p_metrics_list = self.metrics_list if metrics is None else metrics
 
-        return train_model(self.model, train_dataset, loss_fn=p_loss_fn,
-            optimizer=p_optimizer, validation_split=validation_split, validation_dataset=validation_dataset,
-            lr_scheduler=lr_scheduler, epochs=epochs, batch_size=batch_size, metrics=p_metrics_list,
-            shuffle=shuffle, num_workers=num_workers, early_stopping=early_stopping, verbose=verbose)
+        return train_model(self.model, train_dataset, loss_fn=p_loss_fn, optimizer=p_optimizer,
+            validation_split=validation_split, validation_dataset=validation_dataset, lr_scheduler=lr_scheduler,
+            epochs=epochs, batch_size=batch_size, metrics=p_metrics_list, shuffle=shuffle, num_workers=num_workers,
+            early_stopping=early_stopping, verbose=verbose, report_interval=report_interval)
 
     def fit(self, X_train, y_train, loss_fn=None, optimizer=None, validation_split=0.0, validation_data=None,
             lr_scheduler=None, epochs=25, batch_size=64, metrics=None, shuffle=True, num_workers=0,
-            early_stopping=None, verbose=0):
+            early_stopping=None, verbose=0, report_interval=1):
 
         assert ((X_train is not None) and (isinstance(X_train, np.ndarray))), \
             "Parameter error: X_train is None or is NOT an instance of np.ndarray"
@@ -1464,7 +1548,7 @@ class PytkModuleWrapper():
                                 validation_split=validation_split, validation_dataset=validation_dataset,
                                 lr_scheduler=lr_scheduler, epochs=epochs, batch_size=batch_size, metrics=p_metrics_list,
                                 shuffle=shuffle, num_workers=num_workers, early_stopping=early_stopping,
-                                verbose=verbose)
+                                verbose=verbose, report_interval=report_interval)
 
     def evaluate_dataset(self, dataset, loss_fn=None, batch_size=64, metrics=None, num_workers=0):
         p_loss_fn = self.loss_fn if loss_fn is None else loss_fn
@@ -1503,7 +1587,7 @@ class PytkModuleWrapper():
     def save(self, model_save_name, model_save_dir='./model_states'):
         save_model(self.model, model_save_name, model_save_dir)
 
-    # NOTE: load() is not implemented    def summary(self, input_shape):
+    # NOTE: load() is not implemented    
 
     def summary(self, input_shape):
         if torch.cuda.is_available():

@@ -43,14 +43,16 @@ torch.cuda.manual_seed(seed)
 torch.cuda.manual_seed_all(seed)
 torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
-torch.backends.cudnn.enabled = False
+#torch.backends.cudnn.enabled = False
 
 def load_data():
     """
     load the data using datasets API. We also split the test_dataset into 
     cross-val/test datasets using 80:20 ration
     """
-    transformations = transforms.Compose([transforms.ToTensor(),])
+    transformations = transforms.Compose([
+        transforms.ToTensor(),
+    ])
 
     train_dataset = datasets.MNIST(root='./data', train=True, download=True,
                                    transform=transformations)
@@ -58,7 +60,6 @@ def load_data():
     print("No of training records: %d" % len(train_dataset))
 
     test_dataset = datasets.MNIST('./data', train=False, download=True,
-    
                                   transform=transformations)
     print("No of test records: %d" % len(test_dataset))
 

@@ -1,8 +1,11 @@
-# ignore data folder
+# ignore data folder (saves Pytorch datasets, which can always be re-downloaded)
 data
 
 # ignore .vscode folder (Visual Studio code settings)
 .vscode
+
+# ignore my kaggle.json file
+kaggle.json
 
 # ignore Pycharm files
 .idea
