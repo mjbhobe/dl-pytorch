@@ -1,6 +1,8 @@
 # Pytorch Toolkit - Tutorial
 Thank you for your interest in the `Pytorch Toolkit`. I wrote this as a set of utility functions & classes that will ease the process of training, evaluating & running predictions from a model. As a developer, I would rather spend my time productively concentrating on the core tasks of ML - viz. preparing data, designing/re-using appropriate model architecture and tuning the hyperparameters to get the best performance from the model. Keras does a great job of hiding boilerplate code for training the model, evaluating performance and running predictions. I aim to bring the ease that Keras provides to Pytorch via the `Pytorch Toolkit`. Most of the API is similar to the Keras API, so Keras users should find it very easy to understand.
 
+I am **releasing this code as-is with no warranties of any kind under the MIT license**. Please feel free to use this in your projects, should you find it useful. Should you use it, please give me a mention :).
+
 |**NOTE**|
 |:---|
 |<font color='firebrick'>This tutorial is **work-in-progress** and is expected to change to some extend, especially if I enhance the `Pytorch Toolkit` with more functions. Do keep checking back for changes - I don't expect the API to change drastically henceforth</font>|
@@ -20,9 +22,9 @@ Often data & labels are available in Numpy arrays. This is true especially for s
 
 |**Tip**|
 |:---|
-|<font color='green'>This scenario will most probably apply to cases your data is available in columnar format.</font>|
+|<font color='green'>This scenario will most probably apply to cases when your data is available in columnar format.</font>|
 
-We'll start with one such example, specifically a _binary classification problem_ of classifying the Wisconsin Breast Cancer dataset. I'll be downloading the data from the [UCI Repository link](https://archive.ics.uci.edu/ml/datasets/Breast+Cancer+Wisconsin+(Diagnostic)), but you can load it from the `scikit-learn datasets` module as well.
+We'll start with one such example, specifically a _binary classification problem_ on the Wisconsin Breast Cancer dataset. I'll be downloading the data from the [UCI Repository link](https://archive.ics.uci.edu/ml/datasets/Breast+Cancer+Wisconsin+(Diagnostic)), but you can load it from the `scikit-learn datasets` module as well.
 
 For complete code listing see [Wisconsin Breast Cancer](pyt_breast_cancer.py) code file.
 
@@ -57,7 +59,7 @@ y = df['diagnosis'].values
 
 # split into train/test sets
 X_train, X_test, y_train, y_test = \
-    train_test_split(X, y, test_size=test_split, random_state=seed)
+    train_test_split(X, y, test_size=0.20, random_state=42)
 
 # scale data using Standard scaling
 ss = StandardScaler()
@@ -66,7 +68,7 @@ X_test = ss.transform(X_test)
 ```
 
 ### Creating our model
-You would normally create your Pytorch model by deriving your class from `nn.Module`, somewhat as follows:
+You would normally create your Pytorch model by deriving your model from the `torch.nn.Module` base class, somewhat as follows:
 
 ```python
 import torch
@@ -77,12 +79,8 @@ class WBCNet(nn.Module):
     def __init__(self, inp_size, hidden1, hidden2, num_classes):
         super(WBCNet, self).__init__()
         self.fc1 = nn.Linear(inp_size, hidden1)
-        self.relu1 = nn.ReLU()
         self.fc2 = nn.Linear(hidden1, hidden2)
-        self.relu2 = nn.ReLU()
         self.out = nn.Linear(hidden2, num_classes)
-        self.sigmoid = nn.Sigmoid()
-
 
     def forward(self, inp):
         x = F.relu(self.fc1(inp))
@@ -94,7 +92,7 @@ class WBCNet(nn.Module):
 model = WBCNet(32, 32, 10)
 ```
 
-With the `Pytorch Toolkit` the **only change** you make is to the base class from which you derive the module. I provide a class called `PytkModule`, which derives from `nn.Module`. This class provides additional functions to help with model training, evaluation and testing. Of course, you will also have to `import pytorch_toolkit` to make this happen.
+With the `Pytorch Toolkit` the **only change** you make is to the base class from which you derive the module. I provide a class called `PytkModule`, which _derives_ from `nn.Module`. This class provides additional functions to help with model training, evaluation and testing. Of course, you will also have to `import pytorch_toolkit` to make this happen. **I assume you have saved the `pytorch_toolkit.py` file to some folder in `sys.path` or in the _current_ folder**
 
 Here is how you'll define your Module when using the Pytorch Toolkit:
 
@@ -111,25 +109,22 @@ class WBCNet(pytk.PytkModule):
     def __init__(self, inp_size, hidden1, hidden2, num_classes):
         super(WBCNet, self).__init__()
         self.fc1 = nn.Linear(inp_size, hidden1)
-        self.relu1 = nn.ReLU()
         self.fc2 = nn.Linear(hidden1, hidden2)
-        self.relu2 = nn.ReLU()
         self.out = nn.Linear(hidden2, num_classes)
-        self.sigmoid = nn.Sigmoid()
 
     def forward(self, inp):
         x = F.relu(self.fc1(inp))
         x = F.relu(self.fc2(x))
         x = F.sigmoid(self.out(x))
-        return xx
+        return x
 
 # instantiate the model
 model = WBCNet(32, 32, 10)
 ```
 
-Notice that **the only change you made was the base class from which your model is derived!**. You code the constructor `__init__(...)` and the `forward(...)` method _exactly the same way as before_! 
+Notice that **the only change you made was the base class from which your model is derived!**. You constructor `__init__(...)` and the `forward(...)` method _are exactly the same as before_! 
 
-Before you can start training the module, you'll need to specify the `loss` function, the `optimizer` and `metrics` to track during the training epochs (Yes! The `Pytorch Toolkit` provides several common metrics that you can use out-of the box - like Accuracy, F1-Score, MSE, MAE etc., which you can use). 
+Before you can start training the module, you'll need to specify the `loss` function, the `optimizer` and `metrics` to track during the training epochs (Yes! The `Pytorch Toolkit` provides several common metrics that you can use out-of the box - like `Accuracy`, `F1-Score`, `MSE`, `MAE` etc., which you can use). 
 
 |**NOTE**|
 |:---|
@@ -219,7 +214,7 @@ Epoch (100/100): (364/364) -> loss: 0.0489 - acc: 0.9891 - val_loss: 0.0971 - va
 ```
 Notice that metrics are now being tracked for the `training` dataset _as well as_ the `cross-validation` dataset (metrics for the cross-validation datasets are marked with `val_`, e.g. `val_loss` is loss for the validation dataset)
 
-### Using a _decicated_ validation dataset
+### Using a _dedicated_ validation dataset
 Sometimes a separate validation dataset is available (e.g. in separate Numpy arrays - let's say we call these `X_val` and `y_val` for the data and labels respectively). To use these, make the following change to the `fit(...)` call, as shown below:
 
 ```python
@@ -327,10 +322,10 @@ model.save('./model_states/wbc.pt')
 `save()` takes a path to file where the model state is saved - if the directory leading up to the path does not exist, it is created the very first time `save()` is called. You need not specify the `.pt` extension is optional - it will be tagged on to file name. **The `.pt` file is a binary file, which only Pytorch API can comprehend.**
 
 ### Loading model's state from disk
-The `Pytorch Toolkit` provides a **stand alone** `load()` function to load the model's state from disk - I could have coded this as a static function of the PytModule class, but I chose to code a stand-alone function instead. Here is how you use it.
+The `Pytorch Toolkit` provides a **stand alone** `load_model()` function to load the model's state from disk - I could have coded this as a static function of the PytModule class, but I chose to code a stand-alone function instead. Here is how you use it.
 
 ```python
-# NOTE: load() is a stand-alone function and not a class member function!
+# NOTE: load_model() is a stand-alone function and not a class member function!
 model = pytk.load_model('./model_states/wbc.pt')
 ```
 This call will load the model's structure as well as the weights & biases of the various layers of the model. It is ready-to-go! 
@@ -370,7 +365,7 @@ For generating class predictions, you would use a call as follows:
 y_pred = np.argmax(model.predict(X_test), axis=1)
 ```
 
-* For M rows in the test dataset, this will return a 1 dimensional Numpy array with M, with each element taking a value between 0 & N-1, where N is the number of classes.
+* For M rows in the test dataset, this will return a 1 dimensional Numpy array with M elements, with each element taking a value between 0 & N-1, where N is the number of classes.
 * Without this call you will get a Numpy array of shape (M, N), with each row consisting of N values of probabilities of each class.
 
 ## Training with Pytorch Datasets & Transforms

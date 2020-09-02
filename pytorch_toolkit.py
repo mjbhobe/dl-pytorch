@@ -5,15 +5,16 @@ pytorch_toolkit.py:
     This module provides a Keras-like API to preclude the need to write boiler-plate code when
     training your Pytorch models. Convenience functions and classes that wrap those functions
     have been provided to ease the process of training, evaluating & testing your models.
+    NOTE: these are utility classes/functions to ease the process to training/evaluating & testing ONLY!
 
 @author: Manish Bhobe
-This code is shared with MIT license as-is. Fell free to use it, extend it, but please give me 
-some credit as the original author of this code :).
+This code is shared with MIT license as-is. Feel free to use it, extend it, but please give me 
+some credit as the original author of this code :) & don't hold me responsible if your project blows up!! ;)
 
 Usage:
   - Copy this file into a directory in sys.path
   - import the file into your code - I use this syntax
-       import pyt_helper_funcs as pyt
+       import pytorch_toolkit as pytk
 """
 import warnings
 warnings.filterwarnings('ignore')
@@ -23,14 +24,12 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-#from sklearn.utils import shuffle
 from sklearn.metrics import roc_auc_score
 import itertools
 
 # torch imports
 import torch
 import torch.nn as nn
-#from torch.autograd import Variable
 from torchsummary import summary
 from torch.utils.data.dataset import Dataset
  
@@ -45,9 +44,7 @@ torch.manual_seed(seed);
 if torch.cuda.is_available():
     torch.cuda.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
-    #torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = True
-    #torch.backends.cudnn.enabled = False
 
 # library tweaks
 np.set_printoptions(precision=6, linewidth=1024, suppress=True)
@@ -434,8 +431,7 @@ def accumulate_metrics__(metrics, cum_metrics, batch_metrics, validation_dataset
             cum_metrics['loss'] += batch_metrics['loss']
     return cum_metrics
 
-def get_metrics_str__(metrics_list, batch_or_cum_metrics, validation_dataset=False,
-                      lr_scheduler=None, optimizer=None):
+def get_metrics_str__(metrics_list, batch_or_cum_metrics, validation_dataset=False):
     """ internal helper functions: formats metrics for printing to console """
     metrics_str = ''
 
@@ -450,21 +446,9 @@ def get_metrics_str__(metrics_list, batch_or_cum_metrics, validation_dataset=Fal
         for i, metric in enumerate(metrics_list):
             metrics_str += ' - val_%s: %.4f' % (metrics_list[i], batch_or_cum_metrics['val_%s' % metric])
 
-    # if lr_scheduler is not None:
-    #     lr_rates_s = lr_scheduler.get_lr()
-    #     lr_rates_s = ['%.8f' % lrate for lrate in lr_rates_s]
-    #     metrics_str += ' - lr: %s' % lr_rates_s
-
-    # if (optimizer is not None) and (not validation_dataset):
-    #     lr_rates_o = []
-    #     for g in optimizer.param_groups:
-    #         lr_rates_o.append(g['lr'])
-    #     lr_rates_o = ['%.8f' % lrr for lrr in lr_rates_o]
-    #     metrics_str += ' - lr: %s' % lr_rates_o
-
     return metrics_str
 
-def get_lrates(optimizer, format_str='%.8f'):
+def get_lrates__(optimizer, format_str='%.8f'):
     """given the optimizer, returns the current learning rates as a string
        (to be used to report metrics per epoch only!) """
     lr_rates_o = []
@@ -634,10 +618,6 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
 
         curr_lr = None
 
-        # if lr_scheduler is not None:
-        #     curr_lr = lr_scheduler.get_lr()
-        #     print('Using learning rate {}'.format(curr_lr))
-
         # if batch_size == -1, then use entire training dataset as batch (not recommended
         # unless len(training_dataset) is reasonably small)
         train_batch_size = batch_size if batch_size != -1 else len(train_dataset)
@@ -690,13 +670,12 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
                 num_batches += 1
 
                 # display incremental progress
-                learning_rates = get_lrates(optimizer)
+                learning_rates = get_lrates__(optimizer)
 
                 if (verbose == 0):
                     if (epoch == 0) or ((epoch+1) % report_interval == 0):
                         # display metrics at completion of each batch (default)
-                        metrics_str = get_metrics_str__(metrics_list, batch_metrics, validation_dataset=False,
-                                                        lr_scheduler=lr_scheduler, optimizer=optimizer)
+                        metrics_str = get_metrics_str__(metrics_list, batch_metrics, validation_dataset=False)
                         metrics_str += learning_rates
                         print('\rEpoch (%*d/%*d): (%*d/%*d) -> %s' %
                                     (len_num_epochs, epoch+1, len_num_epochs, epochs,
@@ -717,11 +696,10 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
                     history[metric_name].append(cum_metrics[metric_name])
 
                 # display average training metrics for this epoch
-                # learning_rates = get_lrates(optimizer)
+                # learning_rates = get_lrates__(optimizer)
                 if ((verbose in [0,1]) or (validation_dataset is None)):
                     if (epoch == 0) or ((epoch+1) % report_interval == 0):
-                        metrics_str = get_metrics_str__(metrics_list, cum_metrics, validation_dataset=False,
-                                                        lr_scheduler=lr_scheduler, optimizer=optimizer)
+                        metrics_str = get_metrics_str__(metrics_list, cum_metrics, validation_dataset=False)
                         metrics_str += learning_rates
                         print('\rEpoch (%*d/%*d): (%*d/%*d) -> %s' %
                                     (len_num_epochs, epoch+1, len_num_epochs, epochs,
@@ -765,9 +743,8 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
 
                             if (epoch == 0) or ((epoch+1) % report_interval == 0):
                                 # display train + val set metrics    
-                                metrics_str = get_metrics_str__(metrics_list, cum_metrics, validation_dataset=True, 
-                                                                lr_scheduler=lr_scheduler, optimizer=optimizer)
-                                #learning_rates = get_lrates(optimizer)
+                                metrics_str = get_metrics_str__(metrics_list, cum_metrics, validation_dataset=True) 
+                                #learning_rates = get_lrates__(optimizer)
                                 metrics_str += learning_rates
                                 print('\rEpoch (%*d/%*d): (%*d/%*d) -> %s' %
                                             (len_num_epochs, epoch+1, len_num_epochs, epochs,
@@ -791,15 +768,6 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
             # step the learning rate scheduler at end of epoch
             if (lr_scheduler is not None) and (epoch < epochs-1):
                 lr_scheduler.step()
-                # step_lr = lr_scheduler.get_lr()
-                # if (verbose == 0):
-                #     print('Stepping learning rate to {}'.format(step_lr))
-
-                #print('   StepLR (log): curr_lr = {}, new_lr = {}'.format(curr_lr, step_lr))
-                # if np.round(np.array(step_lr), 10) != np.round(np.array(curr_lr), 10):
-                #     #print(f'type(step_lr) = {type(step_lr)} and type(curr_lr) = {type(curr_lr)}')
-                #     print('Stepping learning rate to {}'.format(step_lr))
-                #     curr_lr = step_lr
 
         return history
     finally:
@@ -939,7 +907,8 @@ def predict(model, data):
         - model: instance of model derived from nn.Model (or instance of pyt.PytModel or pyt.PytSequential)
         - data: Numpy array of values on which predictions should be run
     @returns:
-        - Numpy array of class predictions
+        - Numpy array of class predictions (probabilities)
+        NOTE: to convert to classes use np.max(...,axis=1) after this call.
     """
     try:
         assert isinstance(model, nn.Module), \
@@ -959,9 +928,6 @@ def predict(model, data):
             data = data.cuda() if gpu_available else data.cpu()
             # forward pass
             logits = model(data)
-            # take max for each row along columns to get class predictions
-            #vals, preds = torch.max(logits.data, 1) #torch.max(logits, 1)
-            #preds = np.array(preds.cpu().numpy())
             preds = np.array(logits.cpu().numpy())
         return preds
     finally:
@@ -1090,118 +1056,15 @@ def show_plots(history, metric=None, plot_title=None, fig_size=None):
         plt.show()
         plt.close()
 
-
-# def show_plots2(history, plot_title=None, fig_size=None):
-#     """ Useful function to view plot of loss values & accuracies across the various epochs
-#         Works with the history object returned by the train_model(...) call """
-
-#     raise NotImplementedError("show_plots2() should not be used! Use show_plots() instead.")
-
-#     import matplotlib.pyplot as plt
-#     import seaborn as sns
-
-#     plt.style.use('seaborn')
-#     sns.set_style('darkgrid')
-
-#     assert type(history) is dict
-
-#     # NOTE: the history object should always have loss (for training data), but MAY have
-#     # val_loss for validation data
-#     assert 'loss' in history.keys(), f"ERROR: expecting \'loss\' as one of the metrics in history object"
-#     loss_vals = history['loss']
-#     val_loss_vals = history['val_loss'] if 'val_loss' in history.keys() else None
-
-#     # accuracy is an optional metric chosen by user
-#     acc_vals = history['acc'] if 'acc' in history.keys() else None
-#     if acc_vals is None:
-#         # try 'accuracy' key, could be using Tensorflow 2.0 backend!
-#         acc_vals = history['accuracy'] if 'acc' in history.keys() else None
-
-#     val_acc_vals = history['val_acc'] if 'val_acc' in history.keys() else None
-#     if val_acc_vals is None:
-#         # try 'val_accuracy' key, could be using Tensorflow 2.0 backend!
-#         val_acc_vals = history['val_accuracy'] if 'val_accuracy' in history.keys() else None
-
-#     epochs = range(1, len(history['loss']) + 1)
-
-#     col_count = 1 if ((acc_vals is None) and (val_acc_vals is None)) else 2
-
-#     with sns.axes_style("darkgrid"):
-#         sns.set_context("notebook", font_scale=1.1)
-#         sns.set_style({"font.sans-serif": ["Verdana", "Arial", "Calibri", "DejaVu Sans"]})
-
-#         f, ax = plt.subplots(nrows=1, ncols=col_count, figsize=((16, 5) if fig_size is None else fig_size))
-
-#         axs = ax[0] if col_count == 2 else ax
-
-#         # plot losses on ax[0]
-#         axs.plot(epochs, loss_vals, label='Training Loss')
-#         if val_loss_vals is not None:
-#             axs.plot(epochs, val_loss_vals, label='Validation Loss')
-#             axs.set_title('Training & Validation Loss')
-#             axs.legend(loc='best')
-#         else:
-#             axs.set_title('Training Loss')
-
-#         axs.set_xlabel('Epochs')
-#         axs.set_ylabel('Loss')
-#         axs.grid(True)
-
-#         # plot accuracies, if exist
-#         if col_count == 2:
-#             ax[1].plot(epochs, acc_vals, label='Training Accuracy')
-#             if val_acc_vals is not None:
-#                 #ax[1].plot(epochs, val_acc_vals, color='firebrick', marker='*', label='Validation Accuracy')
-#                 ax[1].plot(epochs, val_acc_vals, label='Validation Accuracy')
-#                 ax[1].set_title('Training & Validation Accuracy')
-#                 ax[1].legend(loc='best')
-#             else:
-#                 ax[1].set_title('Training Accuracy')
-
-#             ax[1].set_xlabel('Epochs')
-#             ax[1].set_ylabel('Accuracy')
-#             ax[1].grid(True)
-
-#         if plot_title is not None:
-#             plt.suptitle(plot_title)
-
-#         plt.show()
-#         plt.close()
-
-#     # delete locals from heap before exiting (to save some memory!)
-#     del loss_vals, epochs, acc_vals
-#     if val_loss_vals is not None:
-#         del val_loss_vals
-#     if val_acc_vals is not None:
-#         del val_acc_vals
-
-# def plot_confusion_matrix(cm, classes, normalize=False, title='Confusion matrix', cmap=plt.cm.Blues):
-#     """
-#     This function prints and plots the confusion matrix.
-#     Normalization can be applied by setting `normalize=True`.
-#     """
-#     plt.imshow(cm, interpolation='nearest', cmap=cmap)
-#     plt.title(title)
-#     plt.colorbar()
-#     tick_marks = np.arange(len(classes))
-#     plt.xticks(tick_marks, classes, rotation=45)
-#     plt.yticks(tick_marks, classes)
-
-#     if normalize:
-#         cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
-
-#     thresh = cm.max() / 2.
-#     for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
-#         plt.text(j, i, cm[i, j], horizontalalignment="center",
-#             color="white" if cm[i, j] > thresh else "black")
-
-#     plt.tight_layout()
-#     plt.ylabel('True label')
-#     plt.xlabel('Predicted label')
-#     plt.show()
-#     plt.close()
-
 def plot_confusion_matrix(cm, class_names=None, title="Confusion Matrix", cmap=plt.cm.Blues):
+    """ graphical plot of the confusion matrix 
+    @params:
+        cm - the confusion matrix (value returned by the sklearn.metrics.confusion_matrix(...) call)
+        class_names (list) - names (text) of classes you want to use (list of strings)
+        title (string, default='Confusion Matrix') - title of the plot
+        cmap (matplotlib supported palette, default=plt.cm.Blues) - color palette you want to use
+    """
+
     class_names = ['0', '1'] if class_names is None else class_names
     df = pd.DataFrame(cm, index=class_names, columns=class_names)
 
@@ -1219,69 +1082,9 @@ def plot_confusion_matrix(cm, class_names=None, title="Confusion Matrix", cmap=p
     plt.show()
     plt.close()
 
-
 # --------------------------------------------------------------------------------------------
 # Utility classes
 # --------------------------------------------------------------------------------------------
-
-# class PandasDataset(Dataset):
-#     """ Dataset class from a pandas Dataframe """
-#     def __init__(self, df, target_col_name, target_col_type=np.int):
-#         """ 
-#         @params:
-#             - df: pandas dataframe from which Dataset is to be created
-#             - target_col_name: column name of Pandas dataframe to use as target/label
-#             - target_col_type (optional, default: np.int): datatype of target/label column 
-#         """
-#         raise NotImplementedError("PandasDataset() should not be used!!")
-#         assert isinstance(df, pd.DataFrame), "df parameter should be an instance of pd.DataFrame"
-#         assert isinstance(target_col_name, str), "target_col_name parameter should be a string"
-
-#         self.df = df
-#         assert target_col_name in self.df.columns, "%s - not a valid column name" % target_col_name
-#         self.target_col_name = target_col_name
-#         self.target_col_type = target_col_type
-        
-#     def __len__(self):
-#         return self.df.shape[0]
-
-#     def __getitem__(self, index):
-#         row = self.df.iloc[index]
-#         ## NOTE: set data.type = np.float32 & label to np.int, else I get wierd errors!
-#         data = row[self.df.columns != self.target_col_name].values.astype(np.float32)
-#         label = row[self.target_col_name].astype(self.target_col_type)
-#         return (data, label)
-
-# class XyDataset(Dataset):
-#     """ Dataset class from a Numpy arrays 
-#     @params:
-#         - X: numpy array for the features (m rows X n feature cols Numpy array)
-#         - y: numpy array for labels/targets (m rows X 1 array OR a flattened array of m values)
-#         - y_dtype: which datatype to cast y to (could be float if you choose, normally long)
-#         - xforms (default: None) - transforms to apply to X returned by __getitem__
-#     """
-#     def __init__(self, X, y, y_dtype=np.long, xforms=None):
-#         raise NotImplementedError("XyDataset() should not be used!!")
-#         assert isinstance(X, np.ndarray), "X parameter should be an instance of Numpy array or list"
-#         assert isinstance(y, np.ndarray), "y parameter should be an instance of Numpy array"
-
-#         self.X = X
-#         self.y = y
-#         self.y_dtype = y_dtype
-#         self.transforms = xforms
-        
-#     def __len__(self):
-#         return self.X.shape[0]
-
-#     def __getitem__(self, index):
-#         ## NOTE: set data.type = np.float32 & label to np.int, else I get wierd errors!
-#         data = self.X[index].astype(np.float32)
-#         #print(f'XyDataset [log]: data.shape = {data.shape}')
-#         if self.transforms is not None:
-#             # apply the transforms
-#             data = self.transforms(data)
-#         label = self.y[index].astype(self.y_dtype)
-#         return (data, label)
 
 class PytkModule(nn.Module):
     """
