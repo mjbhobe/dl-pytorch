@@ -99,11 +99,8 @@ class WBCNet(pytk.PytkModule):
     def __init__(self, inp_size, hidden1, hidden2, num_classes):
         super(WBCNet, self).__init__()
         self.fc1 = nn.Linear(inp_size, hidden1)
-        self.relu1 = nn.ReLU()
         self.fc2 = nn.Linear(hidden1, hidden2)
-        self.relu2 = nn.ReLU()
         self.out = nn.Linear(hidden2, num_classes)
-        self.sigmoid = nn.Sigmoid()
 
     def forward(self, inp):
         x = F.relu(self.fc1(inp))

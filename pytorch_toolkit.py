@@ -254,7 +254,7 @@ def mae(predictions, actuals):
         - predictions: predictions computed from call to model.forward(...) (Tensor)
         - actuals: actual values (labels) (Tensor)
     @returns:
-        computed mae = sum(abs(predictions - actuals)) / n
+        computed mae = sum(abs(predictions - actuals)) / actuals.size(0)
     """    
     diff = actuals - predictions
     mae_err = torch.mean(torch.abs(diff))
@@ -881,7 +881,8 @@ def predict_dataset(model, dataset, batch_size=64, num_workers=0):
         gpu_available = torch.cuda.is_available()
         model = model.cuda() if gpu_available else model.cpu()
 
-        loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
+        loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, 
+                shuffle=False, num_workers=num_workers)
 
         preds, actuals = [], []
 

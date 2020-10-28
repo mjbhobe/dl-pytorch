@@ -79,15 +79,12 @@ class IrisNet(pytk.PytkModule):
     def __init__(self, inp_size, hidden1, hidden2, num_classes):
         super(IrisNet, self).__init__()
         self.fc1 = nn.Linear(inp_size, hidden1)
-        self.relu1 = nn.ReLU()
         self.fc2 = nn.Linear(hidden1, hidden2)
-        self.relu2 = nn.ReLU()
         self.out = nn.Linear(hidden2, num_classes)
-        self.dropout = nn.Dropout(0.01)
 
     def forward(self, x):
-        x = self.relu1(self.fc1(x))
-        x = self.relu2(self.fc2(x))
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
         # NOTE: nn.CrossEntropyLoss() includes a logsoftmax call, which applies a softmax
         # function to outputs. So, don't apply one yourself!
         # x = F.softmax(self.out(x), dim=1)  # -- don't do this!

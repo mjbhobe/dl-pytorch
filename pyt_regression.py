@@ -85,7 +85,7 @@ def main():
     print(net)
 
     # train on the data
-    hist = net.fit(X, y, epochs=5000, batch_size=32)
+    hist = net.fit(X, y, epochs=5000, batch_size=32, report_interval=100)
     pytk.show_plots(hist, metric='r2_score', plot_title="Performance Metrics")
 
     # print the results
@@ -96,7 +96,8 @@ def main():
     y_pred = net.predict(X)
 
     # what is my r2_score?
-    print('R2 score: %.3f' % r2_score(y, y_pred)) # got 0.974
+    print('R2 score (sklearn): %.3f' % r2_score(y, y_pred))
+    print('R2 score (pytk): %.3f' % pytk.r2_score(torch.Tensor(y_pred), torch.Tensor(y))) 
 
     # display plot
     plt.figure(figsize=(8, 6))

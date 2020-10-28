@@ -73,13 +73,11 @@ class WineNet(pytk.PytkModule):
     def __init__(self, inp_size, hidden1, num_classes):
         super(WineNet, self).__init__()
         self.fc1 = pytk.Linear(inp_size, hidden1)
-        self.relu1 = nn.ReLU()
         self.out = pytk.Linear(hidden1, num_classes)
-        self.dropout = nn.Dropout(0.20)
 
     def forward(self, x):
-        x = self.relu1(self.fc1(x))
-        x = self.dropout(x)
+        x = F.relu(self.fc1(x))
+        x = F.dropout(x, p=0.1)
         # NOTE: nn.CrossEntropyLoss() includes a logsoftmax call, which applies a softmax
         # function to outputs. So, don't apply one yourself!
         # x = F.softmax(self.out(x), dim=1)  # -- don't do this!
@@ -104,6 +102,7 @@ def main():
         criterion = nn.CrossEntropyLoss()
         optimizer = torch.optim.SGD(model.parameters(), lr=LEARNING_RATE, nesterov=True,
                                     momentum=0.9, dampening=0, weight_decay=L2_REG)
+        optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
         model.compile(loss=criterion, optimizer=optimizer, metrics=['acc'])
         print(model)
 
@@ -152,7 +151,7 @@ if __name__ == "__main__":
 # Results: 
 #   MLP with epochs=75, batch-size=16, LR=0.001
 #       Training  -> acc: 97.10%
-#       Cross-val -> acc: 100%$
+#       Cross-val -> acc: 100%
 #       Testing   -> acc: 100%
 # --------------------------------------------------
 
