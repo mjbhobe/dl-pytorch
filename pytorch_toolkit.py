@@ -948,31 +948,49 @@ def save_model(model, model_save_name, model_save_dir=os.path.join('.','model_st
         model_save_name = model_save_name + '.pt'
 
     # model_save_name could be just a file name or complete path
-    if (len(os.path.dirname(model_save_name)) == 0):
-        # only file name specified e.g. pyt_model.pt. We'll use model_save_dir to save
-        if not os.path.exists(model_save_dir):
-            # check if save_dir exists, else create it
-            try:
-                os.mkdir(model_save_dir)
-            except OSError as err:
-                print("Unable to create folder {} to save Keras model. Can't continue!".format(model_save_dir))
-                raise err
-        model_save_path = os.path.join(model_save_dir, model_save_name)
-    else:
-        # user passed in complete path e.g. './save_states/kr_model.h5'
-        model_save_path = model_save_name
+    if not (len(os.path.dirname(model_save_name)) == 0):
+        # model_save_name is a complete path (e.g. ./model_save_dir/model_name.pt
+        model_save_dir, model_save_name = os.path.split(model_save_name)  # extract dir & file name
+
+    # create model_save_dir if it does not exist
+    if not os.path.exists(model_save_dir):
+        try:
+            os.mkdir(model_save_dir)
+        except OSError as err:
+            print(f"FATAL ERROR: Unable to create folder {model_save_path} to save Pytorch model!")
+            raise err
+
+    model_save_path = os.path.join(model_save_dir, model_save_name)
+
+        # # only file name specified e.g. pyt_model.pt. We'll use model_save_dir to save
+        # if not os.path.exists(model_save_dir):
+        #     # check if save_dir exists, else create it
+        #     try:
+        #         os.mkdir(model_save_dir)
+        #     except OSError as err:
+        #         print("Unable to create folder {} to save Pytorch model. Can't continue!".format(model_save_dir))
+        #         raise err
+        # model_save_path = os.path.join(model_save_dir, model_save_name)
+    # else:
+    #     # user passed in complete path e.g. './save_states/kr_model.h5'
+    #     if not os.path.exists(model_save_dir):
+    #         try:
+    #             os.mkdir(model_save_dir)
+    #         except OSError as err:
+    #             print("Unable to create folder {} to save Pytorch model. Can't continue!".format(model_save_dir))
+    #             raise err
+
+    #     model_save_path = model_save_name
 
     torch.save(model, model_save_path)
-    print('Pytorch model saved to %s' % model_save_path)
+    print(f'Pytorch model saved to {model_save_path}')
 
 def load_model(model_save_name, model_save_dir='./model_states'):
     """ loads model from disk and create a complete instance from saved state
     @params:
         - model_save_name: name of file or complete path of file to save model to 
-          (NOTE: this file is overwritten without warning!)
-        - model_save_dir (optional, defaul='./model_states'): folder to save Pytorch model to
-           used only if model_save_name is just a name of file
-           ignored if model_save_name is complete path to a file
+        - model_save_dir (optional, defaul='./model_states'): folder to load the Pytorch model from
+           used only if model_save_name is just a name of file; ignored if model_save_name is complete path to a file
     @returns:
         - 'ready-to-go' instance of model restored from saved state
     """
