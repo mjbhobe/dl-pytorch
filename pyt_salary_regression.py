@@ -30,9 +30,7 @@ sns.set_context('notebook',font_scale=1.10)
 import torch
 print('Using Pytorch version: ', torch.__version__)
 import torch.nn as nn
-import torch.nn.functional as F
 from torch import optim
-from torchsummary import summary
 
 # My helper functions for training/evaluating etc.
 import pytorch_toolkit as pytk
@@ -100,7 +98,7 @@ def main():
     plt.title('Original Data')
     plt.show()
 
-    net = Net(1, 1)
+    net = Net(X_train.shape[1], 1)
     criterion = nn.MSELoss()
     optimizer = optim.SGD(net.parameters(), lr=LR, weight_decay=0.10)
     #scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=NUM_EPOCHS//5, gamma=0.1)

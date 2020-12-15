@@ -40,11 +40,12 @@ random.seed(seed)
 os.environ['PYTHONHASHSEED'] = str(seed)
 np.random.seed(seed)
 torch.manual_seed(seed)
-torch.cuda.manual_seed(seed)
-torch.cuda.manual_seed_all(seed)
-torch.backends.cudnn.deterministic = True
-torch.backends.cudnn.benchmark = False
-torch.backends.cudnn.enabled = False
+if torch.cuda.is_available():
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    torch.backends.cudnn.enabled = False
 
 
 def load_data(val_split=0.20, test_split=0.20):
@@ -115,7 +116,8 @@ def main():
 
         # train model - here is the magic, notice the Keras-like fit(...) call
         print('Training model...')
-        hist = model.fit(X_train, y_train, validation_data=(X_val, y_val), epochs=250, batch_size=BATCH_SIZE)
+        hist = model.fit(X_train, y_train, validation_data=(X_val, y_val), epochs=250,
+                         batch_size=BATCH_SIZE, verbose=0)
         # display plots of loss & accuracy against epochs
         pytk.show_plots(hist, metric='acc', plot_title='Training metrics')
 

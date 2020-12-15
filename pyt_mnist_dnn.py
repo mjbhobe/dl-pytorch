@@ -39,11 +39,12 @@ random.seed(seed)
 os.environ['PYTHONHASHSEED'] = str(seed)
 np.random.seed(seed)
 torch.manual_seed(seed)
-torch.cuda.manual_seed(seed)
-torch.cuda.manual_seed_all(seed)
-torch.backends.cudnn.deterministic = True
-torch.backends.cudnn.benchmark = False
-#torch.backends.cudnn.enabled = False
+if torch.cuda.is_available():
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    torch.backends.cudnn.enabled = False
 
 def load_data():
     """
@@ -82,7 +83,7 @@ def display_sample(sample_images, sample_labels, grid_shape=(10, 10), plot_title
 
     with sns.axes_style("whitegrid"):
         sns.set_context("notebook", font_scale=0.90)
-        sns.set_style({"font.sans-serif": ["Verdana", "Arial", "Calibri", "DejaVu Sans"]})
+        sns.set_style({"font.sans-serif": ["SF UI Text", "Verdana", "Arial", "DejaVu Sans", "sans"]})
 
         f, ax = plt.subplots(num_rows, num_cols, figsize=(14, 10),
             gridspec_kw={"wspace": 0.02, "hspace": 0.25}, squeeze=True)
@@ -175,7 +176,7 @@ class MNISTConvNet(pytk.PytkModule):
 DO_TRAINING = True
 DO_PREDICTION = True
 SHOW_SAMPLE = True
-USE_CNN = False     # if False, will use an MLP
+USE_CNN = True     # if False, will use an MLP
 
 MODEL_SAVE_NAME = 'pyt_mnist_cnn' if USE_CNN else 'pyt_mnist_dnn'
 MODEL_SAVE_PATH = os.path.join('.', 'model_states', MODEL_SAVE_NAME)
