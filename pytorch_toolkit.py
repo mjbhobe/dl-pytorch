@@ -107,6 +107,22 @@ def Flatten(x):
     """
     return x.view(x.shape[0],-1)
 
+def getConv2dFlattenShape(image_height, image_width, conv2d_layer, pool=2):
+    kernel_size = conv2d_layer.kernel_size
+    stride = conv2d_layer.stride
+    padding = conv2d_layer.padding
+    dilation = conv2d_layer.dilation
+
+    # calculate the output shape for Flatten layer
+    # Andrew Ng's formula without dilation -> out = (f + 2p - (k-1))/s + 1
+    # with dilation out = ((f + 2p - d * ((k-1) - 1)) / s)  + 1
+    out_height = np.floor((image_height + 2 * padding[0] - dilation[0] * (kernel_size[0]-1)-1)/stride[0] + 1)
+    out_width = np.floor((image_width + 2 * padding[1] - dilation[1] * (kernel_size[1]-1)-1) / stride[1] + 1)
+    if pool:
+        out_height /= pool
+        out_width /= pool
+    return int(out_height), int(out_width)
+
 # --------------------------------------------------------------------------------------
 # Metrics used during training of model
 # In this section, I provide code for typical metrics used during training
@@ -560,8 +576,11 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
             # still not assigned??
             raise ValueError("Optimizer is not defined. Must be passed as a parameter or defined in class")
         if lr_scheduler is not None:
-            assert isinstance(lr_scheduler, torch.optim.lr_scheduler._LRScheduler), \
-                "lr_scheduler: incorrect type. Expecting class derived from torch.optim._LRScheduler"
+            # NOTE:  ReduceLROnPlateau is NOT derived from _LRScheduler, but from object, which
+            # is odd as all other schedulers derive from _LRScheduler
+            assert (isinstance(lr_scheduler, torch.optim.lr_scheduler._LRScheduler) or \
+                    isinstance(lr_scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau)), \
+                "lr_scheduler: incorrect type. Expecting class derived from torch.optim._LRScheduler or ReduceLROnPlateau"
         early_stopping_metric = None
         if early_stopping is not None:
             assert isinstance(early_stopping, EarlyStopping), \
@@ -776,7 +795,12 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
                 
             # step the learning rate scheduler at end of epoch
             if (lr_scheduler is not None) and (epoch < epochs-1):
-                lr_scheduler.step()
+                # have to go to these hoops as ReduceLROnPlateau requires a metric for step()
+                if isinstance(lr_scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
+                    lr_metric = cum_metrics['val_loss'] if validation_dataset is not None else cum_metrics['loss']
+                    lr_scheduler.step(lr_metric)
+                else:
+                    lr_scheduler.step()
 
         return history
     finally:
