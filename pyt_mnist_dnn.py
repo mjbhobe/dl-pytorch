@@ -39,12 +39,21 @@ random.seed(seed)
 os.environ['PYTHONHASHSEED'] = str(seed)
 np.random.seed(seed)
 torch.manual_seed(seed)
+<<<<<<< HEAD
 torch.cuda.manual_seed(seed)
 torch.cuda.manual_seed_all(seed)
 torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 # torch.backends.cudnn.enabled = False
 
+=======
+if torch.cuda.is_available():
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    torch.backends.cudnn.enabled = False
+>>>>>>> 18efd420ec32025d2e92229e87a70b0f79b2315a
 
 def load_data():
     """
@@ -83,7 +92,7 @@ def display_sample(sample_images, sample_labels, grid_shape=(10, 10), plot_title
 
     with sns.axes_style("whitegrid"):
         sns.set_context("notebook", font_scale=0.90)
-        sns.set_style({"font.sans-serif": ["Verdana", "Arial", "Calibri", "DejaVu Sans"]})
+        sns.set_style({"font.sans-serif": ["SF UI Text", "Verdana", "Arial", "DejaVu Sans", "sans"]})
 
         f, ax = plt.subplots(num_rows, num_cols, figsize=(14, 10),
             gridspec_kw={"wspace": 0.02, "hspace": 0.25}, squeeze=True)

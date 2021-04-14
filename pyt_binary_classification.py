@@ -83,6 +83,7 @@ def get_data(test_split=0.20, shuffle_it=True, balance=False, sampling_strategy=
 
     # display plot of target
     sns.countplot(df.RainTomorrow)
+    plt.title("RainTomorrow: existing counts")
     plt.show()
 
     X = df.drop(['RainTomorrow'], axis=1).values
@@ -100,6 +101,7 @@ def get_data(test_split=0.20, shuffle_it=True, balance=False, sampling_strategy=
 
     # display plot of target
     sns.countplot(y)
+    plt.title("RainTomorrow: after re-balancing")
     plt.show()
 
     X_train, X_test, y_train, y_test = \
@@ -123,6 +125,8 @@ def get_data(test_split=0.20, shuffle_it=True, balance=False, sampling_strategy=
 
     y_train = y_train.astype('float32')
     y_test = y_test.astype('float32')
+    y_train = y_train[:, np.newaxis]
+    y_test = y_test[:, np.newaxis]
 
     return (X_train, y_train), (X_test, y_test)
 
@@ -181,7 +185,7 @@ def main():
         hist = model.fit(X_train, y_train, validation_split=0.2, epochs=NUM_EPOCHS,
                          batch_size=2048,
                          lr_scheduler=scheduler,
-                         report_interval=50, verbose=1)
+                         report_interval=50, verbose=2)
         pytk.show_plots(hist, metric='accuracy')
 
         model.save(MODEL_SAVE_PATH)
@@ -205,7 +209,7 @@ def main():
     if DO_PREDICTION:
         # run predictions
         y_pred = (model.predict(X_test) >= 0.5).astype('int32').ravel()
-        y_test = y_test.astype('int32')
+        y_test = y_test.astype('int32').reshape(-1)
         print(classification_report(y_test, y_pred))
         pytk.plot_confusion_matrix(confusion_matrix(y_test, y_pred), ["No Rain", "Rain"],
                                    title="Rain Prediction for Tomorrow")

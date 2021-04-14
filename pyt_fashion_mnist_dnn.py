@@ -39,11 +39,12 @@ random.seed(seed)
 os.environ['PYTHONHASHSEED'] = str(seed)
 np.random.seed(seed)
 torch.manual_seed(seed)
-torch.cuda.manual_seed(seed)
-torch.cuda.manual_seed_all(seed)
-torch.backends.cudnn.deterministic = True
-torch.backends.cudnn.benchmark = False
-#torch.backends.cudnn.enabled = False
+if torch.cuda.is_available():
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    #torch.backends.cudnn.enabled = False
 
 def load_data():
     """
@@ -193,12 +194,20 @@ class FMNISTConvNet(pytk.PytkModule):
 DO_TRAINING = True
 DO_PREDICTION = True
 SHOW_SAMPLE = True
+<<<<<<< HEAD
 USE_CNN = True     # if False, will use an F
+=======
+USE_CNN = True     # if False, will use an Feed Forward (MLP) model
+>>>>>>> 18efd420ec32025d2e92229e87a70b0f79b2315a
 
 MODEL_SAVE_NAME = 'pyt_mnist_cnn' if USE_CNN else 'pyt_mnist_dnn'
 MODEL_SAVE_PATH = os.path.join('.', 'model_states', MODEL_SAVE_NAME)
 
+<<<<<<< HEAD
 NUM_EPOCHS, BATCH_SIZE, LEARNING_RATE, L2_REG = (25 if USE_CNN else 50), 64, 0.001, 0.0005
+=======
+NUM_EPOCHS, BATCH_SIZE, LEARNING_RATE, L2_REG = (25 if USE_CNN else 50), 32, 0.001, 0.0005
+>>>>>>> 18efd420ec32025d2e92229e87a70b0f79b2315a
 
 def main():
     print('Loading datasets...')
@@ -267,8 +276,9 @@ def main():
 if __name__ == "__main__":
     main()
 
-# --------------------------------------------------
+# ---------------------------------------------------------
 # Results: 
+<<<<<<< HEAD
 #   MLP with epochs=50, batch-size=32, LR=0.01
 #       Training  -> acc: 90.42%
 #       Cross-val -> acc: 87.78%
@@ -279,3 +289,19 @@ if __name__ == "__main__":
 #       Testing   -> acc: 92.82%
 # Clearly the CNN performs better than the MLP
 # --------------------------------------------------
+=======
+#   MLP with epochs=50, batch-size=32, LR=0.001
+#       Training  -> acc: 90.16%
+#       Cross-val -> acc: 87.48%
+#       Testing   -> acc: 87.84%
+#     Conclusion: some overfitting & low accuracies.
+#   CNN with epochs=25, batch-size=32, LR=0.001
+#       Training  -> acc: 94.32%
+#       Cross-val -> acc: 91.59%
+#       Testing   -> acc: 91.02%
+#     Conclusion: better than MLP, but overfitting.
+# Clearly the CNN performs better than the MLP. We could
+# reduce overfitting using regularization & (perhaps)
+# improve performance using a deeper CNN
+# --------------------------------------------------------
+>>>>>>> 18efd420ec32025d2e92229e87a70b0f79b2315a

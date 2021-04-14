@@ -39,17 +39,17 @@ random.seed(seed)
 os.environ['PYTHONHASHSEED'] = str(seed)
 np.random.seed(seed)
 torch.manual_seed(seed)
-torch.cuda.manual_seed(seed)
-torch.cuda.manual_seed_all(seed)
-torch.backends.cudnn.deterministic = True
-torch.backends.cudnn.benchmark = False
-torch.backends.cudnn.enabled = False
+if torch.cuda.is_available():
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    torch.backends.cudnn.enabled = False
 
 data_file_path = './data/wisconsin_breast_cancer.csv'
 
 def download_data_file():
     url = 'https://archive.ics.uci.edu/ml/machine-learning-databases/breast-cancer-wisconsin/wdbc.data'
-
 
     df_cols = [
         "id","diagnosis","radius_mean","texture_mean","perimeter_mean","area_mean",
@@ -91,6 +91,8 @@ def load_data(test_split=0.20):
     ss = StandardScaler()
     X_train = ss.fit_transform(X_train)
     X_test = ss.transform(X_test)
+    y_train = y_train[:, np.newaxis]
+    y_test = y_test[:, np.newaxis]
 
     # expand dims for y
     y_train = np.expand_dims(y_train, axis=1)
@@ -135,8 +137,8 @@ def main():
         model = WBCNet(NUM_FEATURES, 30, 30, NUM_CLASSES)
         # define the loss function & optimizer that model should
         loss_fn = nn.BCELoss() #nn.CrossEntropyLoss()
-        optimizer = torch.optim.SGD(model.parameters(), lr=LEARNING_RATE, nesterov=True, weight_decay=0.005,
-                                    momentum=0.9, dampening=0) 
+        optimizer = torch.optim.SGD(model.parameters(), lr=LEARNING_RATE, nesterov=True,
+                                    weight_decay=0.005, momentum=0.9, dampening=0)
         model.compile(loss=loss_fn, optimizer=optimizer, metrics=['acc','f1'])
         print(model)
 
@@ -163,9 +165,15 @@ def main():
         
         y_pred = np.round(model.predict(X_test)).reshape(-1)
         # display output
+<<<<<<< HEAD
         print('Sample labels: ', y_test.flatten())
         print('Sample predictions: ', y_pred)
         print('We got %d/%d correct!' % ((y_test.flatten() == y_pred).sum(), len(y_test.flatten())))
+=======
+        print('Sample labels: ', y_test.reshape(-1))
+        print('Sample predictions: ', y_pred)
+        print('We got %d/%d correct!' % ((y_test.reshape(-1) == y_pred).sum(), len(y_test)))
+>>>>>>> 18efd420ec32025d2e92229e87a70b0f79b2315a
 
 if __name__ == "__main__":
     main()
