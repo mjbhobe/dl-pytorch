@@ -92,6 +92,10 @@ def load_data(test_split=0.20):
     X_train = ss.fit_transform(X_train)
     X_test = ss.transform(X_test)
 
+    # expand dims for y
+    y_train = np.expand_dims(y_train, axis=1)
+    y_test = np.expand_dims(y_test, axis=1)
+
     return (X_train, y_train), (X_test, y_test)
 
 # our ANN
@@ -123,8 +127,8 @@ LEARNING_RATE = 0.001
 def main():
 
     (X_train, y_train), (X_test, y_test) = load_data()
-    print(X_train.shape, y_train.shape, X_test.shape, y_test.shape)
     y_train, y_test = y_train.astype(np.float), y_test.astype(np.float)
+    print(X_train.shape, y_train.shape, X_test.shape, y_test.shape)
 
     if DO_TRAINING:
         print('Building model...')
@@ -159,9 +163,9 @@ def main():
         
         y_pred = np.round(model.predict(X_test)).reshape(-1)
         # display output
-        print('Sample labels: ', y_test)
+        print('Sample labels: ', y_test.flatten())
         print('Sample predictions: ', y_pred)
-        print('We got %d/%d correct!' % ((y_test == y_pred).sum(), len(y_test)))
+        print('We got %d/%d correct!' % ((y_test.flatten() == y_pred).sum(), len(y_test.flatten())))
 
 if __name__ == "__main__":
     main()
