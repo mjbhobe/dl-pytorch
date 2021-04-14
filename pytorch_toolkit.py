@@ -1,6 +1,6 @@
 # encoding='utf-8'
 """
-pytorch_toolkit.py: 
+pytorch_toolkit.py:
     Functions, Classes and Metrics to ease the process of training, evaluating and testing models.
     This module provides a Keras-like API to preclude the need to write boiler-plate code when
     training your Pytorch models. Convenience functions and classes that wrap those functions
@@ -8,7 +8,7 @@ pytorch_toolkit.py:
     NOTE: these are utility classes/functions to ease the process to training/evaluating & testing ONLY!
 
 @author: Manish Bhobe
-This code is shared with MIT license as-is. Feel free to use it, extend it, but please give me 
+This code is shared with MIT license as-is. Feel free to use it, extend it, but please give me
 some credit as the original author of this code :) & don't hold me responsible if your project blows up!! ;)
 
 Usage:
@@ -116,6 +116,7 @@ def Flatten(x):
     """
     return x.view(x.shape[0], -1)
 
+
 def getConv2dFlattenShape(image_height, image_width, conv2d_layer, pool=2):
     kernel_size = conv2d_layer.kernel_size
     stride = conv2d_layer.stride
@@ -125,8 +126,10 @@ def getConv2dFlattenShape(image_height, image_width, conv2d_layer, pool=2):
     # calculate the output shape for Flatten layer
     # Andrew Ng's formula without dilation -> out = (f + 2p - (k-1))/s + 1
     # with dilation out = ((f + 2p - d * ((k-1) - 1)) / s)  + 1
-    out_height = np.floor((image_height + 2 * padding[0] - dilation[0] * (kernel_size[0]-1)-1)/stride[0] + 1)
-    out_width = np.floor((image_width + 2 * padding[1] - dilation[1] * (kernel_size[1]-1)-1) / stride[1] + 1)
+    out_height = np.floor(
+        (image_height + 2 * padding[0] - dilation[0] * (kernel_size[0] - 1) - 1) / stride[0] + 1)
+    out_width = np.floor(
+        (image_width + 2 * padding[1] - dilation[1] * (kernel_size[1] - 1) - 1) / stride[1] + 1)
     if pool:
         out_height /= pool
         out_width /= pool
@@ -334,7 +337,7 @@ METRICS_MAP = {
 
 
 class EarlyStopping:
-    """Early stops the training if monitored metric (usually validation loss) doesn't improve 
+    """Early stops the training if monitored metric (usually validation loss) doesn't improve
        after a given patience (or no of epochs)."""
 
     def __init__(self, monitor='val_loss', min_delta=0, patience=5, mode='min', verbose=False,
@@ -344,8 +347,8 @@ class EarlyStopping:
             monitor (str): which metric should be monitored (default: 'val_loss')
             min_delta (float): Minimum change in the monitored quantity to qualify as an improvement. (default: 0)
             patience (int): How many epochs to wait until after last validation loss improvement. (default: 5)
-            mode (str): one of {'min','max'} (default='min') In 'min' mode, training will stop when the quantity 
-                monitored has stopped decreasing; in 'max' mode it will stop when the quantity monitored has 
+            mode (str): one of {'min','max'} (default='min') In 'min' mode, training will stop when the quantity
+                monitored has stopped decreasing; in 'max' mode it will stop when the quantity monitored has
                 stopped increasing;
             verbose (bool): If True, prints a message for each validation loss improvement. (default: False)
             save_best_weights (bool): Save state with best weights so far (default: False)
@@ -380,7 +383,7 @@ class EarlyStopping:
         # if not (isinstance(model, PytModule) or isinstance(model, PytkModuleWrapper)):
         #     raise TypeError("model should be derived from PytModule or PytkModuleWrapper")
 
-        #self.is_wrapped = isinstance(model, PytkModuleWrapper)
+        # self.is_wrapped = isinstance(model, PytkModuleWrapper)
 
         if self.monitor_op(curr_metric_val - self.min_delta, self.best_score):
             if self.save_best_weights:
@@ -516,7 +519,7 @@ def get_lrates__(optimizer, format_str='%.8f'):
 
 
 def create_hist_and_metrics_ds__(metrics, include_val_metrics=True):
-    """ internal helper functions - create data structures to log epoch metrics, 
+    """ internal helper functions - create data structures to log epoch metrics,
         batch metrics & cumulative betch metrics """
     history = {'loss': []}
     batch_metrics = {'loss': 0.0}
@@ -559,20 +562,20 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
             defined as an instance of a loss function
         - optimizer: Pytorch optimizer to use during training (instance of any optimizer
           from the torch.optim package)
-            if optimizer == None, then model must define an attribute self.optimizer, which is 
+            if optimizer == None, then model must define an attribute self.optimizer, which is
             an instance of any optimizer defined in the torch.optim package
-        - validation_split: Float between 0 and 1. Fraction of the training data to be used as validation data. 
-           The model will set apart this fraction of the training data, will not train on it, and will 
+        - validation_split: Float between 0 and 1. Fraction of the training data to be used as validation data.
+           The model will set apart this fraction of the training data, will not train on it, and will
            evaluate the loss and any model metrics on this data at the end of each epoch.
         - validation_dataset: cross-validation dataset to use during training (optional, default=None)
-            if validation_dataset is not None, then model is cross trained on test dataset & 
+            if validation_dataset is not None, then model is cross trained on test dataset &
             cross-validation dataset (good practice to always use a cross-validation dataset!)
             (NOTE: validation_dataset will supercede validation_split if both specified)
         - lr_scheduler: learning rate scheduler to use during training (optional, default=None)
             if specified, should be one of the learning rate schedulers (e.g. StepLR) defined
             in the torch.optim.lr_scheduler package
         - epochs (int): number of epochs for which the model should be trained (optional, default=25)
-        - batch_size (int): batch size to split the training & cross-validation datasets during 
+        - batch_size (int): batch size to split the training & cross-validation datasets during
           training (optional, default=64). If batch_size = -1, entire dataset size is used as batch size.
         - metrics (list of strings): metrics to compute (optional, default=None)
             pass a list of strings from one or more of the following ['acc','prec','rec','f1']
@@ -580,8 +583,8 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
             when metrics not None, in addition to loss all specified metrics are computed for training
             set (and validation set, if specified)
         - shuffle (boolean, default = True): determines if the training dataset shuould be shuffled between
-            epochs or not. Validation dataset, if provided, is never shuffled. 
-        - num_workers (int, default=0): number of worker threads to use when loading datasets internally using 
+            epochs or not. Validation dataset, if provided, is never shuffled.
+        - num_workers (int, default=0): number of worker threads to use when loading datasets internally using
             DataLoader objects.
         - early_stopping(EarlyStopping, default=None): instance of EarlyStopping class to be passed in if training
             has to be early-stopped based on parameters used to construct instance of EarlyStopping
@@ -589,11 +592,11 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
             verbose=2 - very verbose output, displays batch wise metrics
             verbose=1 - medium verbose output, displays metrics at end of epoch, but shows incrimenting counter of batches
             verbose=0 - least verbose output, does NOT display any output until the training dataset (and validation dataset, if any) completes
-        - report_interval (value >= 1 & < num_epochs): interval at which training progress gets updated (e.g. if report_interval=100, 
+        - report_interval (value >= 1 & < num_epochs): interval at which training progress gets updated (e.g. if report_interval=100,
             training progress is printed every 100th epoch.) Default = 1, meaning status reported at end of each epoch.
     @returns:
         - history: dictionary of the loss & accuracy metrics across epochs
-            Metrics are saved by key name (see METRICS_MAP) 
+            Metrics are saved by key name (see METRICS_MAP)
             Metrics (across epochs) are accessed by key (e.g. hist['loss'] accesses training loss
             and hist['val_acc'] accesses validation accuracy
             Validation metrics are available ONLY if validation set is provided during training
@@ -611,7 +614,6 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
                 "validation_dataset must be a subclass of torch.utils.data.Dataset"
         check_attribs__(model, loss_fn, optimizer)
         if loss_fn is None:
-<<<<<<< HEAD
             loss_fn = model.loss_fn
         if loss_fn is None:
             raise ValueError(
@@ -621,18 +623,10 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
         if optimizer is None:
             raise ValueError(
                 "Optimizer is not defined. Must be passed as a parameter or defined in class")
-=======
-            # still not assigned??
-            raise ValueError("Loss function is not defined. Must be passed as a parameter or defined in class")
-        if optimizer is None: optimizer = model.optimizer
-        if optimizer is None:
-            # still not assigned??
-            raise ValueError("Optimizer is not defined. Must be passed as a parameter or defined in class")
->>>>>>> 18efd420ec32025d2e92229e87a70b0f79b2315a
         if lr_scheduler is not None:
             # NOTE:  ReduceLROnPlateau is NOT derived from _LRScheduler, but from object, which
             # is odd as all other schedulers derive from _LRScheduler
-            assert (isinstance(lr_scheduler, torch.optim.lr_scheduler._LRScheduler) or \
+            assert (isinstance(lr_scheduler, torch.optim.lr_scheduler._LRScheduler) or
                     isinstance(lr_scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau)), \
                 "lr_scheduler: incorrect type. Expecting class derived from torch.optim._LRScheduler or ReduceLROnPlateau"
         early_stopping_metric = None
@@ -641,7 +635,7 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
                 "early_stopping: incorrect type. Expecting instance of EarlyStopping class"
             early_stopping_metric = early_stopping.monitor
 
-        if verbose not in [0,1,2]:
+        if verbose not in [0, 1, 2]:
             verbose = 2  # most verbose
 
         report_interval = 1 if report_interval < 1 else report_interval
@@ -745,8 +739,9 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
                 # compute metrics for batch + accumulate metrics across batches
                 batch_metrics['loss'] = batch_loss
                 if metrics is not None:
+
                     # compute metrics for training dataset only!
-<<<<<<< HEAD
+<< << << < HEAD
                     compute_metrics__(logits, labels, metrics,
                                       batch_metrics, validation_dataset=False)
                 # same as cum_netrics[metric_name] += batch_metric[metric_name] across all metrics
@@ -764,13 +759,8 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
                 # display incremental progress
                 learning_rates = get_lrates__(optimizer)
 
-<<<<<<< HEAD
                 if (verbose == 0):
                     if (epoch == 0) or ((epoch + 1) % report_interval == 0):
-=======
-                if (verbose == 2):
-                    if (epoch == 0) or ((epoch+1) % report_interval == 0):
->>>>>>> 18efd420ec32025d2e92229e87a70b0f79b2315a
                         # display metrics at completion of each batch (default)
                         metrics_str = get_metrics_str__(
                             metrics_list, batch_metrics, validation_dataset=False)
@@ -824,7 +814,7 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
                         num_val_batches = 0
 
                         for val_data, val_labels in val_loader:
-                            #val_data, val_labels = val_data.to(device), val_labels.to(device)
+                            # val_data, val_labels = val_data.to(device), val_labels.to(device)
                             val_data = val_data.cuda() if gpu_available else val_data.cpu()
                             val_labels = val_labels.cuda() if gpu_available else val_labels.cpu()
 
@@ -866,7 +856,7 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
                                 # display train + val set metrics only if verbose =1 or 2 and at reporting interval epoch
                                 metrics_str = get_metrics_str__(metrics_list, cum_metrics, validation_dataset=True) 
 >>>>>>> 18efd420ec32025d2e92229e87a70b0f79b2315a
-                                #learning_rates = get_lrates__(optimizer)
+                                # learning_rates = get_lrates__(optimizer)
                                 metrics_str += learning_rates
                                 print('\rEpoch (%*d/%*d): (%*d/%*d) -> %s' %
                                       (len_num_epochs, epoch + 1, len_num_epochs, epochs,
@@ -1066,7 +1056,7 @@ def predict(model, data):
         with torch.no_grad():
             model.eval()
             if isinstance(data, np.ndarray):
-                #data = data.astype(np.float32)
+                # data = data.astype(np.float32)
                 data = torch.tensor(data, dtype=torch.float32)
             data = data.cuda() if gpu_available else data.cpu()
             # forward pass
@@ -1221,7 +1211,7 @@ def show_plots(history, metric=None, plot_title=None, fig_size=None):
         # plot the losses
         losses_df = df.loc[:, loss_metrics]
         losses_df.plot(ax=axs)
-        #ax[0].set_ylim(0.0, 1.0)
+        # ax[0].set_ylim(0.0, 1.0)
         axs.grid(True)
         losses_title = 'Training \'loss\' vs Epochs' if len(
             loss_metrics) == 1 else 'Training & Validation \'loss\' vs Epochs'
@@ -1231,7 +1221,7 @@ def show_plots(history, metric=None, plot_title=None, fig_size=None):
         if metric is not None:
             metrics_df = df.loc[:, other_metrics]
             metrics_df.plot(ax=ax[1])
-            #ax[1].set_ylim(0.0, 1.0)
+            # ax[1].set_ylim(0.0, 1.0)
             ax[1].grid(True)
             metrics_title = f'Training \'{other_metrics[0]}\' vs Epochs' if len(other_metrics) == 1 \
                 else f'Training & Validation \'{other_metrics[0]}\' vs Epochs'
@@ -1408,7 +1398,7 @@ class PytkModule(nn.Module):
             else:
                 y_val_dtype = np.float32
 <<<<<<< HEAD
-            #validation_dataset = XyDataset(validation_data[0], validation_data[1], y_val_dtype)
+            # validation_dataset = XyDataset(validation_data[0], validation_data[1], y_val_dtype)
             torch_X_val = torch.from_numpy(
                 validation_data[0]).type(torch.FloatTensor)
             torch_y_val = torch.from_numpy(validation_data[1]).type(
@@ -1532,7 +1522,7 @@ class PytkModuleWrapper():
         else:
             y_dtype = np.float32
 
-        #train_dataset = XyDataset(X_train, y_train, y_dtype)
+        # train_dataset = XyDataset(X_train, y_train, y_dtype)
         torch_X_train = torch.from_numpy(X_train).type(torch.FloatTensor)
         torch_y_train = torch.from_numpy(y_train).type(
             torch.LongTensor if y_dtype == np.long else torch.FloatTensor)
@@ -1550,7 +1540,7 @@ class PytkModuleWrapper():
                 y_val_dtype = np.long
             else:
                 y_val_dtype = np.float32
-            #validation_dataset = XyDataset(validation_data[0], validation_data[1], y_val_dtype)
+            # validation_dataset = XyDataset(validation_data[0], validation_data[1], y_val_dtype)
             torch_X_val = torch.from_numpy(
                 validation_data[0]).type(torch.FloatTensor)
             torch_y_val = torch.from_numpy(validation_data[1]).type(
