@@ -34,7 +34,6 @@ import torch
 import torch.nn as nn
 from torchsummary import summary
 from torch.utils.data.dataset import Dataset
-
 # to ensure that you get consistent results across runs & machines
 # @see: https://discuss.pytorch.org/t/reproducibility-over-different-machines/63047
 seed = 123
@@ -390,7 +389,6 @@ class EarlyStopping:
         #     raise TypeError("model should be derived from PytModule or PytkModuleWrapper")
 
         #self.is_wrapped = isinstance(model, PytkModuleWrapper)
-
         if self.monitor_op(curr_metric_val - self.min_delta, self.best_score):
             if self.save_best_weights:
                 # save model state for restore later
@@ -1225,7 +1223,6 @@ def plot_confusion_matrix(cm, class_names=None, title="Confusion Matrix", cmap=p
         plt.ylabel('True label')
         plt.xlabel('Predicted label')
         plt.title(title)
-
     plt.show()
     plt.close()
 
@@ -1242,7 +1239,6 @@ class PytkModule(nn.Module):
         - As usual, you must override the constructor and the forward() method in your derived class.
         - You may provide a compile() function to set loss, optimizer and metrics at one location, else
           you will have to provide these as parameters to the fit(), evaluate() calls
-
     This class provides the following convenience methods that call functions defined above
     You call this class's functions with the same parameters, except model, which is passed as 'self'
        - compile(loss, optimizer, metrics=None) - keras compile() like function. Sets the loss function,
@@ -1510,7 +1506,6 @@ class PytkModuleWrapper():
         p_loss_fn = self.loss_fn if loss_fn is None else loss_fn
         p_optimizer = self.optimizer if optimizer is None else optimizer
         p_metrics_list = self.metrics_list if metrics is None else metrics
-
         return self.fit_dataset(train_dataset, loss_fn=p_loss_fn, optimizer=p_optimizer,
                                 validation_split=validation_split, validation_dataset=validation_dataset,
                                 lr_scheduler=lr_scheduler, epochs=epochs, batch_size=batch_size, metrics=p_metrics_list,
