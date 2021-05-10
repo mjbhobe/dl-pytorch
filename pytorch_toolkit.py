@@ -1,6 +1,6 @@
 # encoding='utf-8'
 """
-pytorch_toolkit.py:
+pytorch_toolkit.py: 
     Functions, Classes and Metrics to ease the process of training, evaluating and testing models.
     This module provides a Keras-like API to preclude the need to write boiler-plate code when
     training your Pytorch models. Convenience functions and classes that wrap those functions
@@ -8,7 +8,7 @@ pytorch_toolkit.py:
     NOTE: these are utility classes/functions to ease the process to training/evaluating & testing ONLY!
 
 @author: Manish Bhobe
-This code is shared with MIT license as-is. Feel free to use it, extend it, but please give me
+This code is shared with MIT license as-is. Feel free to use it, extend it, but please give me 
 some credit as the original author of this code :) & don't hold me responsible if your project blows up!! ;)
 
 Usage:
@@ -124,13 +124,13 @@ def getConv2dFlattenShape(image_height, image_width, conv2d_layer, pool=2):
     dilation = conv2d_layer.dilation
 
     # calculate the output shape for Flatten layer
-    # Andrew Ng's formula without dilation -> out = (f + 2p - (k-1))/s + 1
+    # Andrew Ng's formula without dilation -> out = (f + 2p - (k-1))/s) + 1
     # with dilation out = ((f + 2p - d * ((k-1) - 1)) / s)  + 1
     out_height = np.floor(
         (image_height + 2 * padding[0] - dilation[0] * (kernel_size[0] - 1) - 1) / stride[0] + 1)
     out_width = np.floor(
         (image_width + 2 * padding[1] - dilation[1] * (kernel_size[1] - 1) - 1) / stride[1] + 1)
-    if pool:
+    if pool > 0:
         out_height /= pool
         out_width /= pool
     return int(out_height), int(out_width)
@@ -158,7 +158,9 @@ def accuracy(logits, labels):
     """
     if logits.size()[1] == 1:
         # binary classification case (just 2 classes)
-        predicted = torch.round(logits.data).reshape(-1)
+        #predicted = torch.round(logits.data).reshape(-1)
+        # any value > 0.5 -> 1 else 0
+        predicted = logits.ge(0.5).view(-1)
     else:
         vals, predicted = torch.max(logits.data, 1)
 
@@ -189,7 +191,9 @@ def precision(logits, labels):
     """
     if logits.size()[1] == 1:
         # binary classification case (just 2 classes)
-        predicted = torch.round(logits.data).reshape(-1)
+        #predicted = torch.round(logits.data).reshape(-1)
+        # any value > 0.5 -> 1 else 0
+        predicted = logits.ge(0.5).view(-1)
     else:
         vals, predicted = torch.max(logits.data, 1)
 
@@ -216,7 +220,9 @@ def recall(logits, labels):
     """
     if logits.size()[1] == 1:
         # binary classification case (just 2 classes)
-        predicted = torch.round(logits.data).reshape(-1)
+        #predicted = torch.round(logits.data).reshape(-1)
+        # any value > 0.5 -> 1 else 0
+        predicted = logits.ge(0.5).view(-1)
     else:
         vals, predicted = torch.max(logits.data, 1)
 
@@ -331,13 +337,13 @@ METRICS_MAP = {
 }
 
 # -------------------------------------------------------------------------------------
-# helper class to implement early stopping based on Bjarten's implementation
-# (@see: https://github.com/Bjarten/early-stopping-pytorch/blob/master/pytorchtools.py)
+# helper class to implement early stopping
+# based on Bjarten's implementation (@see: https://github.com/Bjarten/early-stopping-pytorch/blob/master/pytorchtools.py)
 # -------------------------------------------------------------------------------------
 
 
 class EarlyStopping:
-    """Early stops the training if monitored metric (usually validation loss) doesn't improve
+    """Early stops the training if monitored metric (usually validation loss) doesn't improve 
        after a given patience (or no of epochs)."""
 
     def __init__(self, monitor='val_loss', min_delta=0, patience=5, mode='min', verbose=False,
@@ -347,8 +353,8 @@ class EarlyStopping:
             monitor (str): which metric should be monitored (default: 'val_loss')
             min_delta (float): Minimum change in the monitored quantity to qualify as an improvement. (default: 0)
             patience (int): How many epochs to wait until after last validation loss improvement. (default: 5)
-            mode (str): one of {'min','max'} (default='min') In 'min' mode, training will stop when the quantity
-                monitored has stopped decreasing; in 'max' mode it will stop when the quantity monitored has
+            mode (str): one of {'min','max'} (default='min') In 'min' mode, training will stop when the quantity 
+                monitored has stopped decreasing; in 'max' mode it will stop when the quantity monitored has 
                 stopped increasing;
             verbose (bool): If True, prints a message for each validation loss improvement. (default: False)
             save_best_weights (bool): Save state with best weights so far (default: False)
@@ -383,7 +389,7 @@ class EarlyStopping:
         # if not (isinstance(model, PytModule) or isinstance(model, PytkModuleWrapper)):
         #     raise TypeError("model should be derived from PytModule or PytkModuleWrapper")
 
-        # self.is_wrapped = isinstance(model, PytkModuleWrapper)
+        #self.is_wrapped = isinstance(model, PytkModuleWrapper)
 
         if self.monitor_op(curr_metric_val - self.min_delta, self.best_score):
             if self.save_best_weights:
@@ -519,7 +525,7 @@ def get_lrates__(optimizer, format_str='%.8f'):
 
 
 def create_hist_and_metrics_ds__(metrics, include_val_metrics=True):
-    """ internal helper functions - create data structures to log epoch metrics,
+    """ internal helper functions - create data structures to log epoch metrics, 
         batch metrics & cumulative betch metrics """
     history = {'loss': []}
     batch_metrics = {'loss': 0.0}
@@ -562,20 +568,20 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
             defined as an instance of a loss function
         - optimizer: Pytorch optimizer to use during training (instance of any optimizer
           from the torch.optim package)
-            if optimizer == None, then model must define an attribute self.optimizer, which is
+            if optimizer == None, then model must define an attribute self.optimizer, which is 
             an instance of any optimizer defined in the torch.optim package
-        - validation_split: Float between 0 and 1. Fraction of the training data to be used as validation data.
-           The model will set apart this fraction of the training data, will not train on it, and will
+        - validation_split: Float between 0 and 1. Fraction of the training data to be used as validation data. 
+           The model will set apart this fraction of the training data, will not train on it, and will 
            evaluate the loss and any model metrics on this data at the end of each epoch.
         - validation_dataset: cross-validation dataset to use during training (optional, default=None)
-            if validation_dataset is not None, then model is cross trained on test dataset &
+            if validation_dataset is not None, then model is cross trained on test dataset & 
             cross-validation dataset (good practice to always use a cross-validation dataset!)
             (NOTE: validation_dataset will supercede validation_split if both specified)
         - lr_scheduler: learning rate scheduler to use during training (optional, default=None)
             if specified, should be one of the learning rate schedulers (e.g. StepLR) defined
             in the torch.optim.lr_scheduler package
         - epochs (int): number of epochs for which the model should be trained (optional, default=25)
-        - batch_size (int): batch size to split the training & cross-validation datasets during
+        - batch_size (int): batch size to split the training & cross-validation datasets during 
           training (optional, default=64). If batch_size = -1, entire dataset size is used as batch size.
         - metrics (list of strings): metrics to compute (optional, default=None)
             pass a list of strings from one or more of the following ['acc','prec','rec','f1']
@@ -583,8 +589,8 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
             when metrics not None, in addition to loss all specified metrics are computed for training
             set (and validation set, if specified)
         - shuffle (boolean, default = True): determines if the training dataset shuould be shuffled between
-            epochs or not. Validation dataset, if provided, is never shuffled.
-        - num_workers (int, default=0): number of worker threads to use when loading datasets internally using
+            epochs or not. Validation dataset, if provided, is never shuffled. 
+        - num_workers (int, default=0): number of worker threads to use when loading datasets internally using 
             DataLoader objects.
         - early_stopping(EarlyStopping, default=None): instance of EarlyStopping class to be passed in if training
             has to be early-stopped based on parameters used to construct instance of EarlyStopping
@@ -592,11 +598,11 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
             verbose=2 - very verbose output, displays batch wise metrics
             verbose=1 - medium verbose output, displays metrics at end of epoch, but shows incrimenting counter of batches
             verbose=0 - least verbose output, does NOT display any output until the training dataset (and validation dataset, if any) completes
-        - report_interval (value >= 1 & < num_epochs): interval at which training progress gets updated (e.g. if report_interval=100,
+        - report_interval (value >= 1 & < num_epochs): interval at which training progress gets updated (e.g. if report_interval=100, 
             training progress is printed every 100th epoch.) Default = 1, meaning status reported at end of each epoch.
     @returns:
         - history: dictionary of the loss & accuracy metrics across epochs
-            Metrics are saved by key name (see METRICS_MAP)
+            Metrics are saved by key name (see METRICS_MAP) 
             Metrics (across epochs) are accessed by key (e.g. hist['loss'] accesses training loss
             and hist['val_acc'] accesses validation accuracy
             Validation metrics are available ONLY if validation set is provided during training
@@ -616,11 +622,13 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
         if loss_fn is None:
             loss_fn = model.loss_fn
         if loss_fn is None:
+            # still not assigned??
             raise ValueError(
                 "Loss function is not defined. Must be passed as a parameter or defined in class")
         if optimizer is None:
             optimizer = model.optimizer
         if optimizer is None:
+            # still not assigned??
             raise ValueError(
                 "Optimizer is not defined. Must be passed as a parameter or defined in class")
         if lr_scheduler is not None:
@@ -739,19 +747,12 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
                 # compute metrics for batch + accumulate metrics across batches
                 batch_metrics['loss'] = batch_loss
                 if metrics is not None:
-
                     # compute metrics for training dataset only!
-<< << << < HEAD
                     compute_metrics__(logits, labels, metrics,
                                       batch_metrics, validation_dataset=False)
-                # same as cum_netrics[metric_name] += batch_metric[metric_name] across all metrics
+                # same as cum_metrics[metric_name] += batch_metric[metric_name] across all metrics
                 cum_metrics = accumulate_metrics__(
                     metrics_list, cum_metrics, batch_metrics, validation_dataset=False)
-=======
-                    compute_metrics__(logits, labels, metrics, batch_metrics, validation_dataset=False)
-                # same as cum_metrics[metric_name] += batch_metric[metric_name] across all metrics
-                cum_metrics = accumulate_metrics__(metrics_list, cum_metrics, batch_metrics, validation_dataset=False)
->>>>>>> 18efd420ec32025d2e92229e87a70b0f79b2315a
 
                 samples += len(labels)
                 num_batches += 1
@@ -759,7 +760,7 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
                 # display incremental progress
                 learning_rates = get_lrates__(optimizer)
 
-                if (verbose == 0):
+                if (verbose == 2):
                     if (epoch == 0) or ((epoch + 1) % report_interval == 0):
                         # display metrics at completion of each batch (default)
                         metrics_str = get_metrics_str__(
@@ -786,16 +787,10 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
 
                 # display average training metrics for this epoch if verbose = 1 or 2
                 # learning_rates = get_lrates__(optimizer)
-<<<<<<< HEAD
-                if ((verbose in [0, 1]) or (validation_dataset is None)):
+                if ((verbose in [1, 2]) or (validation_dataset is None)):
                     if (epoch == 0) or ((epoch + 1) % report_interval == 0):
                         metrics_str = get_metrics_str__(
                             metrics_list, cum_metrics, validation_dataset=False)
-=======
-                if ((verbose in [1,2]) or (validation_dataset is None)):
-                    if (epoch == 0) or ((epoch+1) % report_interval == 0):
-                        metrics_str = get_metrics_str__(metrics_list, cum_metrics, validation_dataset=False)
->>>>>>> 18efd420ec32025d2e92229e87a70b0f79b2315a
                         metrics_str += learning_rates
                         print('\rEpoch (%*d/%*d): (%*d/%*d) -> %s' %
                               (len_num_epochs, epoch + 1, len_num_epochs, epochs,
@@ -814,7 +809,7 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
                         num_val_batches = 0
 
                         for val_data, val_labels in val_loader:
-                            # val_data, val_labels = val_data.to(device), val_labels.to(device)
+                            #val_data, val_labels = val_data.to(device), val_labels.to(device)
                             val_data = val_data.cuda() if gpu_available else val_data.cpu()
                             val_labels = val_labels.cuda() if gpu_available else val_labels.cpu()
 
@@ -838,25 +833,16 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
                             # validation loop completed for this epoch
                             # average metrics across all val-dataset batches
                             for metric_name in metrics_list:
-<<<<<<< HEAD
                                 cum_metrics['val_%s' % metric_name] = cum_metrics['val_%s' %
                                                                                   metric_name] / num_val_batches
                                 history['val_%s' % metric_name].append(
                                     cum_metrics['val_%s' % metric_name])
 
-                            if (epoch == 0) or ((epoch + 1) % report_interval == 0):
-                                # display train + val set metrics
+                            if (verbose in [1, 2]) and ((epoch == 0) or ((epoch + 1) % report_interval == 0)):
+                                # display train + val set metrics only if verbose =1 or 2 and at reporting interval epoch
                                 metrics_str = get_metrics_str__(
                                     metrics_list, cum_metrics, validation_dataset=True)
-=======
-                                cum_metrics['val_%s' % metric_name] = cum_metrics['val_%s' % metric_name] / num_val_batches
-                                history['val_%s' % metric_name].append(cum_metrics['val_%s' % metric_name])
-
-                            if (verbose in [1,2]) and ((epoch == 0) or ((epoch+1) % report_interval == 0)):
-                                # display train + val set metrics only if verbose =1 or 2 and at reporting interval epoch
-                                metrics_str = get_metrics_str__(metrics_list, cum_metrics, validation_dataset=True) 
->>>>>>> 18efd420ec32025d2e92229e87a70b0f79b2315a
-                                # learning_rates = get_lrates__(optimizer)
+                                #learning_rates = get_lrates__(optimizer)
                                 metrics_str += learning_rates
                                 print('\rEpoch (%*d/%*d): (%*d/%*d) -> %s' %
                                       (len_num_epochs, epoch + 1, len_num_epochs, epochs,
@@ -879,18 +865,13 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
                     return history
 
             # step the learning rate scheduler at end of epoch
-<<<<<<< HEAD
             if (lr_scheduler is not None) and (epoch < epochs - 1):
-                lr_scheduler.step()
-=======
-            if (lr_scheduler is not None) and (epoch < epochs-1):
                 # have to go to these hoops as ReduceLROnPlateau requires a metric for step()
                 if isinstance(lr_scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
                     lr_metric = cum_metrics['val_loss'] if validation_dataset is not None else cum_metrics['loss']
                     lr_scheduler.step(lr_metric)
                 else:
                     lr_scheduler.step()
->>>>>>> 18efd420ec32025d2e92229e87a70b0f79b2315a
 
         return history
     finally:
@@ -1056,7 +1037,7 @@ def predict(model, data):
         with torch.no_grad():
             model.eval()
             if isinstance(data, np.ndarray):
-                # data = data.astype(np.float32)
+                #data = data.astype(np.float32)
                 data = torch.tensor(data, dtype=torch.float32)
             data = data.cuda() if gpu_available else data.cpu()
             # forward pass
@@ -1081,45 +1062,31 @@ def save_model(model, model_save_name, model_save_dir=os.path.join('.', 'model_s
         model_save_name = model_save_name + '.pt'
 
     # model_save_name could be just a file name or complete path
-<<<<<<< HEAD
-    if (len(os.path.dirname(model_save_name)) == 0):
-        # only file name specified e.g. pyt_model.pt. We'll use model_save_dir to save
-        if not os.path.exists(model_save_dir):
-            # check if save_dir exists, else create it
-            try:
-                os.mkdir(model_save_dir)
-            except OSError as err:
-                print("Unable to create folder {} to save Keras model. Can't continue!".format(
-                    model_save_dir))
-                raise err
-        model_save_path = os.path.join(model_save_dir, model_save_name)
-    else:
-        # user passed in complete path e.g. './save_states/kr_model.h5'
-        model_save_path = model_save_name
-=======
     if not (len(os.path.dirname(model_save_name)) == 0):
         # model_save_name is a complete path (e.g. ./model_save_dir/model_name.pt
-        model_save_dir, model_save_name = os.path.split(model_save_name)  # extract dir & file name
+        model_save_dir, model_save_name = os.path.split(
+            model_save_name)  # extract dir & file name
 
     # create model_save_dir if it does not exist
     if not os.path.exists(model_save_dir):
         try:
             os.mkdir(model_save_dir)
         except OSError as err:
-            print(f"FATAL ERROR: Unable to create folder {model_save_dir} to save Pytorch model!")
+            print(
+                f"FATAL ERROR: Unable to create folder {model_save_dir} to save Pytorch model!")
             raise err
 
     model_save_path = os.path.join(model_save_dir, model_save_name)
 
-        # # only file name specified e.g. pyt_model.pt. We'll use model_save_dir to save
-        # if not os.path.exists(model_save_dir):
-        #     # check if save_dir exists, else create it
-        #     try:
-        #         os.mkdir(model_save_dir)
-        #     except OSError as err:
-        #         print("Unable to create folder {} to save Pytorch model. Can't continue!".format(model_save_dir))
-        #         raise err
-        # model_save_path = os.path.join(model_save_dir, model_save_name)
+    # # only file name specified e.g. pyt_model.pt. We'll use model_save_dir to save
+    # if not os.path.exists(model_save_dir):
+    #     # check if save_dir exists, else create it
+    #     try:
+    #         os.mkdir(model_save_dir)
+    #     except OSError as err:
+    #         print("Unable to create folder {} to save Pytorch model. Can't continue!".format(model_save_dir))
+    #         raise err
+    # model_save_path = os.path.join(model_save_dir, model_save_name)
     # else:
     #     # user passed in complete path e.g. './save_states/kr_model.h5'
     #     if not os.path.exists(model_save_dir):
@@ -1130,7 +1097,6 @@ def save_model(model, model_save_name, model_save_dir=os.path.join('.', 'model_s
     #             raise err
 
     #     model_save_path = model_save_name
->>>>>>> 18efd420ec32025d2e92229e87a70b0f79b2315a
 
     torch.save(model, model_save_path)
     print(f'Pytorch model saved to {model_save_path}')
@@ -1211,7 +1177,7 @@ def show_plots(history, metric=None, plot_title=None, fig_size=None):
         # plot the losses
         losses_df = df.loc[:, loss_metrics]
         losses_df.plot(ax=axs)
-        # ax[0].set_ylim(0.0, 1.0)
+        #ax[0].set_ylim(0.0, 1.0)
         axs.grid(True)
         losses_title = 'Training \'loss\' vs Epochs' if len(
             loss_metrics) == 1 else 'Training & Validation \'loss\' vs Epochs'
@@ -1221,7 +1187,7 @@ def show_plots(history, metric=None, plot_title=None, fig_size=None):
         if metric is not None:
             metrics_df = df.loc[:, other_metrics]
             metrics_df.plot(ax=ax[1])
-            # ax[1].set_ylim(0.0, 1.0)
+            #ax[1].set_ylim(0.0, 1.0)
             ax[1].grid(True)
             metrics_title = f'Training \'{other_metrics[0]}\' vs Epochs' if len(other_metrics) == 1 \
                 else f'Training & Validation \'{other_metrics[0]}\' vs Epochs'
@@ -1397,20 +1363,13 @@ class PytkModule(nn.Module):
                 y_val_dtype = np.long
             else:
                 y_val_dtype = np.float32
-<<<<<<< HEAD
-            # validation_dataset = XyDataset(validation_data[0], validation_data[1], y_val_dtype)
+
             torch_X_val = torch.from_numpy(
                 validation_data[0]).type(torch.FloatTensor)
             torch_y_val = torch.from_numpy(validation_data[1]).type(
                 torch.LongTensor if y_val_dtype == np.long else torch.FloatTensor)
             validation_dataset = torch.utils.data.TensorDataset(
                 torch_X_val, torch_y_val)
-=======
-
-            torch_X_val = torch.from_numpy(validation_data[0]).type(torch.FloatTensor)
-            torch_y_val = torch.from_numpy(validation_data[1]).type(torch.LongTensor if y_val_dtype == np.long else torch.FloatTensor)
-            validation_dataset = torch.utils.data.TensorDataset(torch_X_val,torch_y_val)
->>>>>>> 18efd420ec32025d2e92229e87a70b0f79b2315a
 
         p_loss_fn = self.loss_fn if loss_fn is None else loss_fn
         p_optimizer = self.optimizer if optimizer is None else optimizer
@@ -1522,7 +1481,7 @@ class PytkModuleWrapper():
         else:
             y_dtype = np.float32
 
-        # train_dataset = XyDataset(X_train, y_train, y_dtype)
+        #train_dataset = XyDataset(X_train, y_train, y_dtype)
         torch_X_train = torch.from_numpy(X_train).type(torch.FloatTensor)
         torch_y_train = torch.from_numpy(y_train).type(
             torch.LongTensor if y_dtype == np.long else torch.FloatTensor)
@@ -1540,7 +1499,7 @@ class PytkModuleWrapper():
                 y_val_dtype = np.long
             else:
                 y_val_dtype = np.float32
-            # validation_dataset = XyDataset(validation_data[0], validation_data[1], y_val_dtype)
+            #validation_dataset = XyDataset(validation_data[0], validation_data[1], y_val_dtype)
             torch_X_val = torch.from_numpy(
                 validation_data[0]).type(torch.FloatTensor)
             torch_y_val = torch.from_numpy(validation_data[1]).type(

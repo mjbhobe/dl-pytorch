@@ -7,10 +7,11 @@ This code is meant for education purposes only & is not intended for commercial/
 Use at your own risk!! I am not responsible if your CPU or GPU gets fried :D
 """
 import warnings
-
 warnings.filterwarnings('ignore')
 
-import os, sys, random
+import os
+import sys
+import random
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -37,11 +38,11 @@ from torchsummary import summary
 # My helper functions for training/evaluating etc.
 import pytorch_toolkit as pytk
 
-seed = 123
+seed = 42
 random.seed(seed)
 os.environ['PYTHONHASHSEED'] = str(seed)
 np.random.seed(seed)
-torch.manual_seed(seed);
+torch.manual_seed(seed)
 
 if torch.cuda.is_available():
     torch.cuda.manual_seed(seed)
@@ -51,8 +52,8 @@ if torch.cuda.is_available():
     # torch.backends.cudnn.enabled = False
 
 NUM_EPOCHS = 2500
-BATCH_SIZE = 1024 * 3
-LR = 0.01
+BATCH_SIZE = 1024 * 4
+LR = 0.001
 
 DATA_FILE = os.path.join('.', 'csv_files', 'weatherAUS.csv')
 print(f"Data file: {DATA_FILE}")
@@ -60,7 +61,7 @@ MODEL_SAVE_PATH = os.path.join('.', 'model_states', 'weather_model.pt')
 
 
 # ---------------------------------------------------------------------------
-# Example:1 - with synthesized data
+# load data, select fields & apply scaling
 # ---------------------------------------------------------------------------
 def get_data(test_split=0.20, shuffle_it=True, balance=False, sampling_strategy=0.85,
              debug=False):
@@ -71,7 +72,8 @@ def get_data(test_split=0.20, shuffle_it=True, balance=False, sampling_strategy=
     if shuffle_it:
         df = shuffle(df)
 
-    cols = ['Rainfall', 'Humidity3pm', 'Pressure9am', 'RainToday', 'RainTomorrow']
+    cols = ['Rainfall', 'Humidity3pm',
+            'Pressure9am', 'RainToday', 'RainTomorrow']
     df = df[cols]
 
     # convert categorical cols - RainToday & RainTomorrow to numeric
@@ -115,16 +117,16 @@ def get_data(test_split=0.20, shuffle_it=True, balance=False, sampling_strategy=
     X_train = ss.fit_transform(X_train)
     X_test = ss.transform(X_test)
 
-    # convert to float
     X_train = X_train.astype('float32')
     X_test = X_test.astype('float32')
 
-    # NOTE: BCELoss() expects labels to be floats - why???
-    y_train = np.expand_dims(y_train, axis=1)
-    y_test = np.expand_dims(y_test, axis=1)
+    #y_train = np.expand_dims(y_train, axis=1)
+    #y_test = np.expand_dims(y_test, axis=1)
 
+    # NOTE: BCELoss() expects labels to be floats - why???
     y_train = y_train.astype('float32')
     y_test = y_test.astype('float32')
+
     y_train = y_train[:, np.newaxis]
     y_test = y_test[:, np.newaxis]
 
@@ -176,14 +178,16 @@ def main():
         # build model
         model = Net(X_train.shape[1])
         criterion = nn.BCELoss()
-        # optimizer = optim.Adam(model.parameters(), lr=LR)
-        optimizer = optim.SGD(model.parameters(), lr=LR)
-        model.compile(loss=criterion, optimizer=optimizer, metrics=['accuracy'])
+        optimizer = optim.Adam(model.parameters(), lr=LR)
+        # optimizer = optim.SGD(model.parameters(), lr=LR)
+        model.compile(loss=criterion, optimizer=optimizer,
+                      metrics=['accuracy'])
         print(model)
 
-        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=200, gamma=0.2)
+        scheduler = torch.optim.lr_scheduler.StepLR(
+            optimizer, step_size=200, gamma=0.2)
         hist = model.fit(X_train, y_train, validation_split=0.2, epochs=NUM_EPOCHS,
-                         batch_size=2048,
+                         batch_size=-1,
                          lr_scheduler=scheduler,
                          report_interval=50, verbose=2)
         pytk.show_plots(hist, metric='accuracy')

@@ -10,7 +10,9 @@ Use at your own risk!! I am not responsible if your CPU or GPU gets fried :D
 import warnings
 warnings.filterwarnings('ignore')
 
-import sys, os, random
+import sys
+import os
+import random
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -19,7 +21,7 @@ import seaborn as sns
 np.set_printoptions(precision=6, linewidth=1024, suppress=True)
 plt.style.use('seaborn')
 sns.set_style('darkgrid')
-sns.set_context('notebook',font_scale=1.10)
+sns.set_context('notebook', font_scale=1.10)
 
 # Pytorch imports
 import torch
@@ -46,6 +48,7 @@ if torch.cuda.is_available():
     torch.backends.cudnn.benchmark = False
     #torch.backends.cudnn.enabled = False
 
+
 def load_data():
     """
     load the data using datasets API. We also split the test_dataset into 
@@ -57,21 +60,23 @@ def load_data():
         transforms.Normalize(mean, std)
     ])
 
-    train_dataset =  datasets.FashionMNIST(root='./data', train=True, download=True,
-                                   transform=transformations)
+    train_dataset = datasets.FashionMNIST(root='./data', train=True, download=True,
+                                          transform=transformations)
 
     print("No of training records: %d" % len(train_dataset))
 
     test_dataset = datasets.FashionMNIST('./data', train=False, download=True,
-                                  transform=transformations)
+                                         transform=transformations)
     print("No of test records: %d" % len(test_dataset))
 
     # lets split the test dataset into val_dataset & test_dataset -> 8000:2000 records
-    val_dataset, test_dataset = torch.utils.data.random_split(test_dataset, [8000, 2000])
+    val_dataset, test_dataset = torch.utils.data.random_split(test_dataset, [
+                                                              8000, 2000])
     print("No of cross-val records: %d" % len(val_dataset))
     print("No of test records: %d" % len(test_dataset))
 
     return train_dataset, val_dataset, test_dataset
+
 
 def display_sample(sample_images, sample_labels, grid_shape=(10, 10), plot_title=None,
                    sample_predictions=None):
@@ -99,30 +104,34 @@ def display_sample(sample_images, sample_labels, grid_shape=(10, 10), plot_title
 
     with sns.axes_style("whitegrid"):
         sns.set_context("notebook", font_scale=0.98)
-        sns.set_style({"font.sans-serif": ["Verdana", "Arial", "Calibri", "DejaVu Sans"]})
+        sns.set_style(
+            {"font.sans-serif": ["Verdana", "Arial", "Calibri", "DejaVu Sans"]})
 
         f, ax = plt.subplots(num_rows, num_cols, figsize=(14, 10),
-            gridspec_kw={"wspace": 0.05, "hspace": 0.35}, squeeze=True)  # 0.03, 0.25
+                             gridspec_kw={"wspace": 0.05, "hspace": 0.35}, squeeze=True)  # 0.03, 0.25
         #fig = ax[0].get_figure()
         f.tight_layout()
-        f.subplots_adjust(top=0.90) # 0.93
+        f.subplots_adjust(top=0.90)  # 0.93
 
         for r in range(num_rows):
             for c in range(num_cols):
                 image_index = r * num_cols + c
                 ax[r, c].axis("off")
                 # de-normalize image
-                sample_images[image_index] = (sample_images[image_index] * 0.5) / 0.5
+                sample_images[image_index] = \
+                    (sample_images[image_index] * 0.5) / 0.5
 
                 # show selected image
-                ax[r, c].imshow(sample_images[image_index].squeeze(), cmap="Greys", interpolation='nearest')
+                ax[r, c].imshow(sample_images[image_index].squeeze(),
+                                cmap="Greys", interpolation='nearest')
 
                 if sample_predictions is None:
                     # but show the prediction in the title
-                    title = ax[r, c].set_title(f"{FASHION_LABELS[sample_labels[image_index]]}")
+                    title = ax[r, c].set_title(
+                        f"{FASHION_LABELS[sample_labels[image_index]]}")
                 else:
                     pred_matches_actual = (
-                                sample_labels[image_index] == sample_predictions[image_index])
+                        sample_labels[image_index] == sample_predictions[image_index])
                     if pred_matches_actual:
                         # show title from prediction or actual in green font
                         title = '%s' % FASHION_LABELS[sample_predictions[image_index]]
@@ -143,10 +152,13 @@ def display_sample(sample_images, sample_labels, grid_shape=(10, 10), plot_title
         plt.show()
         plt.close()
 
+
 # some globals
 IMAGE_HEIGHT, IMAGE_WIDTH, NUM_CHANNELS, NUM_CLASSES = 28, 28, 1, 10
 
 # define our network using Linear layers only
+
+
 class FMNISTNet(pytk.PytkModule):
     def __init__(self):
         super(FMNISTNet, self).__init__()
@@ -168,12 +180,14 @@ class FMNISTNet(pytk.PytkModule):
         return x
 
 # if you prefer to use Convolutional Neural Network, use the following model definition
+
+
 class FMNISTConvNet(pytk.PytkModule):
     def __init__(self):
         super(FMNISTConvNet, self).__init__()
         self.conv1 = pytk.Conv2d(1, 128, kernel_size=3)
         self.conv2 = pytk.Conv2d(128, 64, kernel_size=3)
-        self.fc1 = pytk.Linear(7*7*64, 512)
+        self.fc1 = pytk.Linear(7 * 7 * 64, 512)
         self.out = pytk.Linear(512, NUM_CLASSES)
 
     def forward(self, x):
@@ -191,23 +205,18 @@ class FMNISTConvNet(pytk.PytkModule):
         x = self.out(x)
         return x
 
+
 DO_TRAINING = True
 DO_PREDICTION = True
 SHOW_SAMPLE = True
-<<<<<<< HEAD
 USE_CNN = True     # if False, will use an F
-=======
-USE_CNN = True     # if False, will use an Feed Forward (MLP) model
->>>>>>> 18efd420ec32025d2e92229e87a70b0f79b2315a
 
 MODEL_SAVE_NAME = 'pyt_mnist_cnn' if USE_CNN else 'pyt_mnist_dnn'
 MODEL_SAVE_PATH = os.path.join('.', 'model_states', MODEL_SAVE_NAME)
 
-<<<<<<< HEAD
-NUM_EPOCHS, BATCH_SIZE, LEARNING_RATE, L2_REG = (25 if USE_CNN else 50), 64, 0.001, 0.0005
-=======
-NUM_EPOCHS, BATCH_SIZE, LEARNING_RATE, L2_REG = (25 if USE_CNN else 50), 32, 0.001, 0.0005
->>>>>>> 18efd420ec32025d2e92229e87a70b0f79b2315a
+NUM_EPOCHS, BATCH_SIZE, LEARNING_RATE, L2_REG = (
+    25 if USE_CNN else 50), 64, 0.001, 0.0005
+
 
 def main():
     print('Loading datasets...')
@@ -216,18 +225,22 @@ def main():
     if SHOW_SAMPLE:
         # display sample from test dataset
         print('Displaying sample from train dataset...')
-        trainloader = torch.utils.data.DataLoader(test_dataset, batch_size=64, shuffle=True)
+        trainloader = torch.utils.data.DataLoader(
+            test_dataset, batch_size=64, shuffle=True)
         data_iter = iter(trainloader)
         images, labels = data_iter.next()  # fetch first batch of 64 images & labels
-        display_sample(images.cpu().numpy(), labels.cpu().numpy(), grid_shape=(8, 8), plot_title='Sample Images')
+        display_sample(images.cpu().numpy(), labels.cpu().numpy(),
+                       grid_shape=(8, 8), plot_title='Sample Images')
 
     if DO_TRAINING:
         print(f'Using {"CNN" if USE_CNN else "ANN"} model...')
         model = FMNISTConvNet() if USE_CNN else FMNISTNet()
         # define the loss function & optimizer that model should
         loss_fn = nn.CrossEntropyLoss()
-        optimizer = optim.Adam(params=model.parameters(), lr=LEARNING_RATE, weight_decay=L2_REG)
-        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=(10 if USE_CNN else 20), gamma=0.2)
+        optimizer = optim.Adam(params=model.parameters(),
+                               lr=LEARNING_RATE, weight_decay=L2_REG)
+        scheduler = torch.optim.lr_scheduler.StepLR(
+            optimizer, step_size=(10 if USE_CNN else 20), gamma=0.2)
         model.compile(loss=loss_fn, optimizer=optimizer, metrics=['acc'])
         # display Keras like summary
         model.summary((NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH))
@@ -235,9 +248,9 @@ def main():
         # train model
         print(f'Training {"CNN" if USE_CNN else "ANN"} model')
         hist = model.fit_dataset(train_dataset, validation_dataset=val_dataset,
-                                 #lr_scheduler=scheduler,
-                                 epochs=NUM_EPOCHS, 
-                                 batch_size=BATCH_SIZE, verbose=0)
+                                 # lr_scheduler=scheduler,
+                                 epochs=NUM_EPOCHS,
+                                 batch_size=BATCH_SIZE)
         pytk.show_plots(hist, metric='acc', plot_title='Training metrics')
 
         # evaluate model performance on train/eval & test datasets
@@ -262,23 +275,25 @@ def main():
         y_pred = np.argmax(y_pred, axis=1)
         print('Sample labels (50): ', y_true[:50])
         print('Sample predictions: ', y_true[:50])
-        print('We got %d/%d incorrect!' % ((y_pred != y_true).sum(), len(y_true)))
+        print('We got %d/%d incorrect!' %
+              ((y_pred != y_true).sum(), len(y_true)))
 
         # display sample from test dataset
         print('Displaying sample predictions...')
-        trainloader = torch.utils.data.DataLoader(test_dataset, batch_size=64, shuffle=True)
+        trainloader = torch.utils.data.DataLoader(
+            test_dataset, batch_size=64, shuffle=True)
         data_iter = iter(trainloader)
         images, labels = data_iter.next()  # fetch a batch of 64 random images
         preds = np.argmax(model.predict(images), axis=1)
         display_sample(images.cpu().numpy(), labels.cpu().numpy(), sample_predictions=preds,
                        grid_shape=(8, 8), plot_title='Sample Predictions')
 
+
 if __name__ == "__main__":
     main()
 
 # ---------------------------------------------------------
-# Results: 
-<<<<<<< HEAD
+# Results:
 #   MLP with epochs=50, batch-size=32, LR=0.01
 #       Training  -> acc: 90.42%
 #       Cross-val -> acc: 87.78%
@@ -289,19 +304,3 @@ if __name__ == "__main__":
 #       Testing   -> acc: 92.82%
 # Clearly the CNN performs better than the MLP
 # --------------------------------------------------
-=======
-#   MLP with epochs=50, batch-size=32, LR=0.001
-#       Training  -> acc: 90.16%
-#       Cross-val -> acc: 87.48%
-#       Testing   -> acc: 87.84%
-#     Conclusion: some overfitting & low accuracies.
-#   CNN with epochs=25, batch-size=32, LR=0.001
-#       Training  -> acc: 94.32%
-#       Cross-val -> acc: 91.59%
-#       Testing   -> acc: 91.02%
-#     Conclusion: better than MLP, but overfitting.
-# Clearly the CNN performs better than the MLP. We could
-# reduce overfitting using regularization & (perhaps)
-# improve performance using a deeper CNN
-# --------------------------------------------------------
->>>>>>> 18efd420ec32025d2e92229e87a70b0f79b2315a

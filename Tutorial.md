@@ -780,9 +780,11 @@ model.compile(loss=loss_fn, optimizer=optimizer, metrics=['acc'])
 
 Now `model` points to an instance of `PytkModelWrapper` class and you can you all the functions like `fit()`, `fit_dataset()`, `evaluate()`, `evaluate_dataset()`, `predict()` and `predict_dataset()` 
 
-<font color='red'>
-**NOTE:** had you not called the `compile()` function as shown above, calls to `fit()`, `fit_dataset()`, `evaluate()` and `evaluate_dataset()` calls **will fail!**. Only the `predict()` and `predict_dataset()` methods will work without the `compile()` call!
-</font>
+|**A Point To Note**|
+|:---|
+|<font color='firebrick'>**NOTE:** had you not called the `compile()` function as shown above, calls to `fit()`, `fit_dataset()`, `evaluate()` and `evaluate_dataset()` calls **will fail!**. Only the `predict()` and `predict_dataset()` methods will work without the `compile()` call!
+</font>|
+
 
 ### Making Predictions
 You make predictions the same way you did when using the `PytkModule` derived class.
