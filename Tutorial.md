@@ -1,5 +1,5 @@
 # Pytorch Toolkit - Tutorial
-Thank you for your interest in the `Pytorch Toolkit`. I wrote this as a set of utility functions & classes that will ease the process of training, evaluating & running predictions from a model. As a developer, I would rather spend my time productively concentrating on the core tasks of ML - viz. preparing data, designing/re-using appropriate model architecture and tuning the hyperparameters to get the best performance from the model. Keras does a great job of hiding boilerplate code for training the model, evaluating performance and running predictions. I aim to bring the ease that Keras provides to Pytorch via the `Pytorch Toolkit`. Most of the API is similar to the Keras API, so Keras users should find it very easy to understand.
+Thank you for your interest in the `Pytorch Toolkit`. I wrote this as a set of utility functions & classes that will ease the process of training, evaluating & running predictions from a model. As a developer, I would rather spend my time productively concentrating on the core tasks of ML - viz. preparing data, designing/re-using appropriate model architecture and tuning the hyper-parameters to get the best performance from the model. Keras does a great job of hiding boilerplate code for training the model, evaluating performance and running predictions. I aim to bring the ease that Keras provides to Pytorch via the `Pytorch Toolkit`. Most of the API is similar to the Keras API, so Keras users should find it very easy to understand.
 
 I am **releasing this code as-is with no warranties of any kind under the MIT license**. Please feel free to use this in your projects, should you find it useful. Should you use it, please give me a mention :).
 
@@ -17,7 +17,7 @@ I am assuming that you have already installed the pre-requisites and have done t
 
  With that perspective, let's get started.
 
-## Training model when data available in Numpy arrays
+## Training model when data available in 2D Numpy arrays
 Often data & labels are available in Numpy arrays. This is true especially for structured datasets (e.g. datasets available with the `scikit-learn` package, like the Iris dataset, the Boston Housing dataset, the Wisconsin Breast Cancer dataset etc.) and in several repositories on Kaggle and UCI. 
 
 |**Tip**|
@@ -151,7 +151,7 @@ model.compile(loss=loss_fn, optimizer=optimizer, metrics=['acc'])
 
 |**NOTE**|
 |:---|
-|1. The training loop will **always track** the `loss` metric, _even if you leave out the metrics parameter in the `compile()` call_.<br/>2. The `loss` metric is tracked _in addition to any other metrics you supply_ in the metrics parameter of the `compile()` call.<br/>3. Additionally, you don't have to specifically mention the `loss` metric explicitly in your `metrics` parameter.|
+|<ol><li>The training loop will **always track** the `loss` metric, _even if you leave out the metrics parameter in the `compile()` call_.</li><li>The `loss` metric is tracked _in addition to any other metrics you supply_ in the metrics parameter of the `compile()` call.</li><li>Additionally, you don't have to specifically mention the `loss` metric explicitly in your `metrics` parameter.</li></ol>|
 
 
 **Table of available metrics**
@@ -225,8 +225,8 @@ hist = model.fit(X_train, y_train, epochs=100, batch_size=16,
 We have asked the model to to use `X_val` and `y_val` as the cross-validation data & labels by passing them as a tuple via the `validation_data` parameter. We don't use `validation_split` parameter in this case. 
 
 |**NOTE**|
-|:---|`
-|Avoid using both the `validation_split` and `validation_data` parameters together. <br/>Just in case you specify both the `validation_split` and `validation_data` parameters in the `fit()` call, then the `validation_dataset` parameter will take precedence and `validation_split` will simply be ignored.|
+|:---|
+| <ul><li>Avoid using both the `validation_split` and `validation_data` parameters together.</li><li>If you specify both the `validation_split` and `validation_data` parameters in the `fit()` call, then the `validation_dataset` parameter will take precedence and `validation_split` will simply be ignored.</li></ul>|
 
 ### Tracking Multiple Metrics
 Suppose you want to track `accuracy` and `F1-Score` by epoch. Here is what you do:

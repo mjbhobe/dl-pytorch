@@ -112,8 +112,8 @@ def display_sample(sample_images, sample_labels, sample_predictions=None, grid_s
                 sample_image = sample_images[image_index]
                 # got image as (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)
                 sample_image = sample_image.transpose((1, 2, 0))
-                # sample_image = sample_image * 0.5 + 0.5  # since we applied this normalization
-                sample_image *= 255.0
+                sample_image = sample_image * 0.5 + 0.5  # since we applied this normalization
+                #sample_image *= 255.0
 
                 ax[r, c].imshow(sample_image)
 
@@ -165,9 +165,10 @@ class HistoDataset(Dataset):
         img = Image.open(image_path)
         if self.transforms is not None:
             img = self.transforms(img)
-        img = np.array(img).astype(np.float32)
-        img /= 255.0
-        label = int(self.labels[index])
+        #img = np.array(img).astype(np.float32)
+        #img /= 255.0
+        #label = int(self.labels[index])
+        label = torch.LongTensor(self.labels[index])
         return (img, label)
 
 # we are scaling all images to same size + converting them to tensors & normalizing data
@@ -187,54 +188,50 @@ xforms = {
     ]),
 }
 
-class Flatten(nn.Module):
-    def forward(self, input):
-        return input.view(input.size(0), -1)
-
-cnn_model = nn.Sequential(
-    pytk.Conv2d(NUM_CHANNELS, 8, 3, padding=1),
-    nn.ReLU(),
-    nn.BatchNorm2d(8),
-    nn.MaxPool2d(kernel_size=2, stride=2),
-
-    pytk.Conv2d(8, 16, 3, padding=1),
-    nn.ReLU(),
-    nn.BatchNorm2d(16),
-    nn.MaxPool2d(kernel_size=2, stride=2),
-
-    pytk.Conv2d(16, 32, 3, padding=0),
-    nn.ReLU(),
-    nn.BatchNorm2d(32),
-    nn.MaxPool2d(kernel_size=2, stride=2),
-
-    pytk.Conv2d(32, 64, 3, padding=0),
-    nn.ReLU(),
-    nn.BatchNorm2d(64),
-    nn.MaxPool2d(kernel_size=2, stride=2),
-
-    Flatten(),
-    nn.ReLU(),
-    nn.Dropout(0.5),
-
-    # nn.Linear(64*4*4, 1024),
-    # nn.ReLU(),
-    # nn.Dropout(0.5),
-
-    nn.Linear(64*4*4, 100),
-    nn.ReLU(),
-    nn.Dropout(0.25),
-
-    nn.Linear(100, NUM_CLASSES)
-)
-
 def build_model():
+    cnn_model = nn.Sequential(
+        nn.Conv2d(NUM_CHANNELS, 8, 3, padding=1),
+        nn.ReLU(),
+        nn.BatchNorm2d(8),
+        nn.MaxPool2d(kernel_size=2, stride=2),
+
+        nn.Conv2d(8, 16, 3, padding=1),
+        nn.ReLU(),
+        nn.BatchNorm2d(16),
+        nn.MaxPool2d(kernel_size=2, stride=2),
+
+        nn.Conv2d(16, 32, 3, padding=0),
+        nn.ReLU(),
+        nn.BatchNorm2d(32),
+        nn.MaxPool2d(kernel_size=2, stride=2),
+
+        nn.Conv2d(32, 64, 3, padding=0),
+        nn.ReLU(),
+        nn.BatchNorm2d(64),
+        nn.MaxPool2d(kernel_size=2, stride=2),
+
+        nn.Flatten(),
+        nn.ReLU(),
+        nn.Dropout(0.5),
+
+        # nn.Linear(64*4*4, 1024),
+        # nn.ReLU(),
+        # nn.Dropout(0.5),
+
+        nn.Linear(64 * 4 * 4, 100),
+        nn.ReLU(),
+        nn.Dropout(0.25),
+
+        nn.Linear(100, NUM_CLASSES)
+    )
+
     model = pytk.PytkModuleWrapper(cnn_model)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(params=model.parameters(), lr=LR_RATE, weight_decay=L2_REG)
     model.compile(loss=criterion, optimizer=optimizer, metrics=['acc'])
     return model
 
-SHOW_SAMPLE = False
+SHOW_SAMPLE = True
 
 def main():
     (X_train_image_paths, y_train), (X_val_image_paths, y_val), \
@@ -253,13 +250,14 @@ def main():
         data_iter = iter(loader)
         sample_images, sample_labels = data_iter.next()  # fetch first batch of 64 images & labels
         print(f'Dataset: image.shape = {sample_images.shape}, labels.shape = {sample_labels.shape}')
-        display_sample(sample_images.numpy(), sample_labels.numpy(), plot_title="Sample Test Images")
+        display_sample(sample_images.cpu().numpy(), sample_labels.cpu().numpy(), plot_title="Sample Test Images")
 
     # define our model
-    model = pytk.PytkModuleWrapper(cnn_model)
-    criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(params=model.parameters(), lr=LR_RATE, weight_decay=L2_REG)
-    model.compile(loss=criterion, optimizer=optimizer, metrics=['acc'])
+    # model = pytk.PytkModuleWrapper(cnn_model)
+    # criterion = nn.CrossEntropyLoss()
+    # optimizer = optim.Adam(params=model.parameters(), lr=LR_RATE, weight_decay=L2_REG)
+    # model.compile(loss=criterion, optimizer=optimizer, metrics=['acc'])
+    model = build_model()
     print(model.summary((NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
 
     # train the model
@@ -284,10 +282,12 @@ def main():
     del model
 
     # load model from saved state
-    model = pytk.PytkModuleWrapper(pytk.load_model(MODEL_SAVE_PATH))
-    criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(params=model.parameters(), lr=LR_RATE, weight_decay=L2_REG)
-    model.compile(loss=criterion, optimizer=optimizer, metrics=['acc'])
+    # model = pytk.PytkModuleWrapper(pytk.load_model(MODEL_SAVE_PATH))
+    # criterion = nn.CrossEntropyLoss()
+    # optimizer = optim.Adam(params=model.parameters(), lr=LR_RATE, weight_decay=L2_REG)
+    # model.compile(loss=criterion, optimizer=optimizer, metrics=['acc'])
+    model = build_model()
+    model.load(MODEL_SAVE_PATH)
     print(model.summary((NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
 
     # run predictions

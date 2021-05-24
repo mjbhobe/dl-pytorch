@@ -11,7 +11,6 @@ warnings.filterwarnings('ignore')
 
 import os, sys, random
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
@@ -26,8 +25,6 @@ import torch
 print('Using Pytorch version: ', torch.__version__)
 import torch.nn as nn
 import torch.nn.functional as F
-from torch import optim
-from torchsummary import summary
 
 # My helper functions for training/evaluating etc.
 import pytorch_toolkit as pytk
@@ -87,8 +84,18 @@ class WineNet(pytk.PytkModule):
 DO_TRAINING = True
 DO_TESTING = True
 DO_PREDICTION = True
-MODEL_SAVE_NAME = 'pyt_wine_ann'
+MODEL_SAVE_PATH = './model_states/pyt_wine_ann.pyt'
 NUM_EPOCHS, BATCH_SIZE, LEARNING_RATE, L2_REG = 75, 16, 0.001, 0.0005
+
+def build_model():
+    model = WineNet(13, 20, 3)
+    # define the loss function & optimizer that model should
+    criterion = nn.CrossEntropyLoss()
+    # optimizer = torch.optim.SGD(model.parameters(), lr=LEARNING_RATE, nesterov=True,
+    #                             momentum=0.9, dampening=0, weight_decay=L2_REG)
+    optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
+    model.compile(loss=criterion, optimizer=optimizer, metrics=['acc'])
+    return model
 
 def main():
 
@@ -97,13 +104,7 @@ def main():
 
     if DO_TRAINING:
         print('Building model...')
-        model = WineNet(13, 20, 3)
-        # define the loss function & optimizer that model should
-        criterion = nn.CrossEntropyLoss()
-        optimizer = torch.optim.SGD(model.parameters(), lr=LEARNING_RATE, nesterov=True,
-                                    momentum=0.9, dampening=0, weight_decay=L2_REG)
-        optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
-        model.compile(loss=criterion, optimizer=optimizer, metrics=['acc'])
+        model = build_model()
         print(model)
 
         # train model
@@ -121,14 +122,15 @@ def main():
         print('  Test dataset      -> loss: %.4f - acc: %.4f' % (loss, acc))
 
         # save model state
-        model.save(MODEL_SAVE_NAME)
+        model.save(MODEL_SAVE_PATH)
         del model
 
     if DO_PREDICTION:
         print('\nRunning predictions...')
         # load model state from .pt file
-        model = pytk.load_model(MODEL_SAVE_NAME)
-        print(f'Loaded an instance of {type(model)}')
+        model = build_model()
+        model.load(MODEL_SAVE_PATH)
+        print(model)
 
         print('\nEvaluating model performance...')
         loss, acc = model.evaluate(X_train, y_train)

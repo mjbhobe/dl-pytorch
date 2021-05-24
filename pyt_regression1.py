@@ -9,11 +9,8 @@ Use at your own risk!! I am not responsible if your CPU or GPU gets fried :D
 import warnings
 warnings.filterwarnings('ignore')
 
-import os
-import sys
 import random
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.metrics import r2_score
@@ -28,9 +25,7 @@ sns.set_context('notebook', font_scale=1.10)
 import torch
 print('Using Pytorch version: ', torch.__version__)
 import torch.nn as nn
-import torch.nn.functional as F
 from torch import optim
-from torchsummary import summary
 
 # My helper functions for training/evaluating etc.
 import pytorch_toolkit as pytk
@@ -75,10 +70,9 @@ def main():
     # build our network
     net = Net()
     print('Before training: ')
-    print('   Weight: %.3f bias: %.3f' % (net.fc1.weight, net.fc1.bias))
+    print('   Weight: %.3f bias: %.3f' % (net.fc1.weight.item(), net.fc1.bias.item()))
     criterion = nn.MSELoss()
     optimizer = optim.SGD(net.parameters(), lr=0.001)
-    #optimizer = optim.Adam(net.parameters(), lr=0.001)
     net.compile(loss=criterion, optimizer=optimizer,
                 metrics=['mse', 'rmse', 'mae', 'r2_score'])
     print(net)

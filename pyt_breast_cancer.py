@@ -9,8 +9,7 @@ Use at your own risk!! I am not responsible if your CPU or GPU gets fried :D
 import warnings
 warnings.filterwarnings('ignore')
 
-import os
-import sys
+import os, sys
 import random
 import numpy as np
 import pandas as pd
@@ -20,16 +19,13 @@ import seaborn as sns
 # tweaks for libraries
 np.set_printoptions(precision=6, linewidth=1024, suppress=True)
 plt.style.use('seaborn')
-sns.set_style('darkgrid')
-sns.set_context('notebook', font_scale=1.10)
+sns.set(style='darkgrid', context='notebook', font_scale=1.10)
 
 # Pytorch imports
 import torch
 print('Using Pytorch version: ', torch.__version__)
 import torch.nn as nn
 import torch.nn.functional as F
-from torch import optim
-from torchsummary import summary
 
 # import pytorch_toolkit - training Nirvana :)
 import pytorch_toolkit as pytk
@@ -49,7 +45,6 @@ if torch.cuda.is_available():
     torch.backends.cudnn.enabled = False
 
 data_file_path = './data/wisconsin_breast_cancer.csv'
-
 
 def download_data_file():
     url = 'https://archive.ics.uci.edu/ml/machine-learning-databases/breast-cancer-wisconsin/wdbc.data'
@@ -76,21 +71,23 @@ def load_data(test_split=0.20):
     if not os.path.exists(data_file_path):
         download_data_file()
 
-    assert os.path.exists(
-        data_file_path), "%s - unable to open file!" % data_file_path
+    assert os.path.exists(data_file_path), "%s - unable to open file!" % data_file_path
 
     wis_df = pd.read_csv(data_file_path, index_col=0)
+    print(f"wis_df.shape: {wis_df.shape}")
 
     # diagnosis is the target col - char
     wis_df['diagnosis'] = wis_df['diagnosis'].map({'M': 1, 'B': 0})
+    print(wis_df.head(5))
     #f_names = wis_df.columns[wis_df.columns != 'diagnosis']
 
     X = wis_df.drop(['diagnosis'], axis=1).values
     y = wis_df['diagnosis'].values
+    print(f"X.shape: {X.shape} - y.shape: {y.shape}")
 
     # split into train/test sets
     X_train, X_test, y_train, y_test = \
-        train_test_split(X, y, test_size=test_split, random_state=seed)
+        train_test_split(X, y, test_size=test_split, random_state=seed, stratify=y)
 
     # scale data
     ss = StandardScaler()
@@ -99,15 +96,9 @@ def load_data(test_split=0.20):
     y_train = y_train[:, np.newaxis]
     y_test = y_test[:, np.newaxis]
 
-    # expand dims for y
-    y_train = np.expand_dims(y_train, axis=1)
-    y_test = np.expand_dims(y_test, axis=1)
-
     return (X_train, y_train), (X_test, y_test)
 
 # our ANN
-
-
 class WBCNet(pytk.PytkModule):
     def __init__(self, inp_size, hidden1, hidden2, num_classes):
         super(WBCNet, self).__init__()
@@ -125,7 +116,7 @@ class WBCNet(pytk.PytkModule):
 DO_TRAINING = True
 DO_TESTING = True
 DO_PREDICTION = True
-MODEL_SAVE_NAME = 'pyt_wbc_ann'
+MODEL_SAVE_PATH = './model_states/pyt_wbc_ann.pyt'
 
 # Hyper-parameters
 NUM_FEATURES = 30
@@ -134,21 +125,26 @@ NUM_EPOCHS = 100
 BATCH_SIZE = 16
 LEARNING_RATE = 0.001
 
+def build_model():
+    model = WBCNet(NUM_FEATURES, 30, 30, NUM_CLASSES)
+    # define the loss function & optimizer that model should
+    loss_fn = nn.BCELoss()  # nn.CrossEntropyLoss()
+    optimizer = torch.optim.SGD(model.parameters(), lr=LEARNING_RATE, nesterov=True,
+                                weight_decay=0.005, momentum=0.9, dampening=0)
+    model.compile(loss=loss_fn, optimizer=optimizer, metrics=['acc', 'f1'])
+    return model
 
 def main():
 
     (X_train, y_train), (X_test, y_test) = load_data()
+    # NOTE: BCELoss() functions expects labels to be floats (why can't it handle integers??)
     y_train, y_test = y_train.astype(np.float), y_test.astype(np.float)
     print(X_train.shape, y_train.shape, X_test.shape, y_test.shape)
+    # sys.exit(-1)
 
     if DO_TRAINING:
         print('Building model...')
-        model = WBCNet(NUM_FEATURES, 30, 30, NUM_CLASSES)
-        # define the loss function & optimizer that model should
-        loss_fn = nn.BCELoss()  # nn.CrossEntropyLoss()
-        optimizer = torch.optim.SGD(model.parameters(), lr=LEARNING_RATE, nesterov=True,
-                                    weight_decay=0.005, momentum=0.9, dampening=0)
-        model.compile(loss=loss_fn, optimizer=optimizer, metrics=['acc', 'f1'])
+        model = build_model()
         print(model)
 
         # train model
@@ -156,24 +152,24 @@ def main():
         # split training data into train/cross-val datasets in 80:20 ratio
         hist = model.fit(X_train, y_train, validation_split=0.20,
                          epochs=NUM_EPOCHS, batch_size=BATCH_SIZE)
-        pytk.show_plots(hist, metric='f1', plot_title="Performance Metrics")
+        pytk.show_plots(hist, metric='f1', plot_title="Performance Metrics (f1-score)")
 
         # evaluate model performance on train/eval & test datasets
         print('\nEvaluating model performance...')
         loss, acc, f1 = model.evaluate(X_train, y_train)
-        print('  Training dataset  -> loss: %.4f - acc: %.4f - f1: %.4f' %
-              (loss, acc, f1))
+        print(f'  Training dataset  -> loss: {loss:.4f} - acc: {acc:.4f} - f1: {f1:.4f}')
         loss, acc, f1 = model.evaluate(X_test, y_test)
-        print('  Test dataset  -> loss: %.4f - acc: %.4f - f1: %.4f' %
-              (loss, acc, f1))
+        print(f'  Test dataset      -> loss: {loss:.4f} - acc: {acc:.4f} - f1: {f1:.4f}')
 
         # save model state
-        model.save(MODEL_SAVE_NAME)
+        model.save(MODEL_SAVE_PATH)
         del model
 
     if DO_PREDICTION:
         print('\nRunning predictions...')
-        model = pytk.load_model(MODEL_SAVE_NAME)
+        model = build_model()
+        model.load(MODEL_SAVE_PATH)
+        print(model)
 
         y_pred = np.round(model.predict(X_test)).reshape(-1)
         # display output

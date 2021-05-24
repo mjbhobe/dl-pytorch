@@ -47,8 +47,8 @@ torch.manual_seed(seed)
 NUM_EPOCHS = 500
 BATCH_SIZE = 2
 LR = 0.01
-RUN_SKLEARN = False
-RUN_KERAS = True
+RUN_SKLEARN = True
+RUN_KERAS = False   # NOTE: model definition needs fixing!
 
 # ---------------------------------------------------------------------------
 # Example:1 - with synthesized data
@@ -137,8 +137,7 @@ def main():
         lr = LinearRegression()
         lr.fit(X_train, y_train)
         y_pred_skl = lr.predict(X_test)
-        print(
-            f'sklearn Logistic Regression: r2_score = {r2_score(y_test, y_pred_skl)}')
+        print(f'sklearn Logistic Regression: r2_score = {r2_score(y_test, y_pred_skl)}')
         print('Pytorch Model: r2_score = %.3f' % r2_score(y_test, y_pred))
 
     if RUN_KERAS:

@@ -9,26 +9,21 @@ Use at your own risk!! I am not responsible if your CPU or GPU gets fried :D
 import warnings
 warnings.filterwarnings('ignore')
 
-import os, sys, random
+import os, random
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
 # tweaks for libraries
 np.set_printoptions(precision=6, linewidth=1024, suppress=True)
 plt.style.use('seaborn')
-sns.set_style('darkgrid')
-sns.set_context('notebook',font_scale=1.10)
+sns.set(style='darkgrid', context='notebook', font_scale=1.2)
 
 # Pytorch imports
 import torch
 print('Using Pytorch version: ', torch.__version__)
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.utils.data.dataset import Dataset
-from torch import optim
-from torchsummary import summary
 
 # import the pytorch tookit - training nirvana :)
 import pytorch_toolkit as pytk
@@ -95,7 +90,7 @@ class IrisNet(pytk.PytkModule):
 DO_TRAINING = True
 DO_TESTING = True
 DO_PREDICTION = True
-MODEL_SAVE_NAME = 'pyt_iris_ann'
+MODEL_SAVE_NAME = './model_states/pyt_iris_ann.pyt'
 NUM_EPOCHS = 250
 BATCH_SIZE = 32
 
@@ -138,7 +133,9 @@ def main():
     if DO_PREDICTION:
         print('\nRunning predictions...')
         # load model state from .pt file
-        model = pytk.load_model(MODEL_SAVE_NAME)
+        #model = pytk.load_model(MODEL_SAVE_NAME)
+        model = IrisNet(4, 16, 16, 4)
+        model.load(MODEL_SAVE_NAME)
 
         y_pred = np.argmax(model.predict(X_test), axis=1)
         # we have just 5 elements in dataset, showing ALL

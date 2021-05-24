@@ -7,6 +7,7 @@ This code is meant for education purposes only & is not intended for commercial/
 Use at your own risk!! I am not responsible if your CPU or GPU gets fried :D
 """
 import warnings
+
 warnings.filterwarnings('ignore')
 
 import os
@@ -110,8 +111,8 @@ def get_data(test_split=0.20, shuffle_it=True, balance=False, sampling_strategy=
         train_test_split(X, y, test_size=test_split, random_state=seed)
     if debug:
         print(
-            f"Split data -> X_train.shape = {X_train.shape}, y_train.shape = {y_train.shape}, "
-            f"X_test.shape = {X_test.shape}, y_test.shape = {y_test.shape}")
+                f"Split data -> X_train.shape = {X_train.shape}, y_train.shape = {y_train.shape}, "
+                f"X_test.shape = {X_test.shape}, y_test.shape = {y_test.shape}")
 
     ss = StandardScaler()
     X_train = ss.fit_transform(X_train)
@@ -120,8 +121,8 @@ def get_data(test_split=0.20, shuffle_it=True, balance=False, sampling_strategy=
     X_train = X_train.astype('float32')
     X_test = X_test.astype('float32')
 
-    #y_train = np.expand_dims(y_train, axis=1)
-    #y_test = np.expand_dims(y_test, axis=1)
+    # y_train = np.expand_dims(y_train, axis=1)
+    # y_test = np.expand_dims(y_test, axis=1)
 
     # NOTE: BCELoss() expects labels to be floats - why???
     y_train = y_train.astype('float32')
@@ -164,7 +165,6 @@ class Net(pytk.PytkModule):
 
 
 DO_TRAINING = True
-DO_EVALUATION = True
 DO_PREDICTION = True
 
 
@@ -180,29 +180,17 @@ def main():
         criterion = nn.BCELoss()
         optimizer = optim.Adam(model.parameters(), lr=LR)
         # optimizer = optim.SGD(model.parameters(), lr=LR)
-        model.compile(loss=criterion, optimizer=optimizer,
-                      metrics=['accuracy'])
+        model.compile(loss=criterion, optimizer=optimizer, metrics=['accuracy'])
         print(model)
 
         scheduler = torch.optim.lr_scheduler.StepLR(
-            optimizer, step_size=200, gamma=0.2)
+                optimizer, step_size=200, gamma=0.2)
         hist = model.fit(X_train, y_train, validation_split=0.2, epochs=NUM_EPOCHS,
                          batch_size=-1,
                          lr_scheduler=scheduler,
                          report_interval=50, verbose=2)
         pytk.show_plots(hist, metric='accuracy')
 
-        model.save(MODEL_SAVE_PATH)
-        del model
-
-    if not os.path.exists(MODEL_SAVE_PATH):
-        raise ValueError(
-            f"Could not find saved model at {MODEL_SAVE_PATH}. Did you train model?")
-
-    model = pytk.load_model(MODEL_SAVE_PATH)
-    print(model)
-
-    if DO_EVALUATION:
         # evaluate performance
         print('Evaluating performance...')
         loss, acc = model.evaluate(X_train, y_train, batch_size=2048)
@@ -210,13 +198,24 @@ def main():
         loss, acc = model.evaluate(X_test, y_test)
         print(f'  - Test dataset  -> loss: {loss:.3f} acc: {acc:.3f}')
 
+        model.save(MODEL_SAVE_PATH)
+        del model
+
     if DO_PREDICTION:
+        if not os.path.exists(MODEL_SAVE_PATH):
+            raise ValueError(f"Could not find saved model at {MODEL_SAVE_PATH}. Did you train model?")
         # run predictions
+        # model = pytk.load_model(MODEL_SAVE_PATH)
+        model = Net(X_train.shape[1])
+        model.load(MODEL_SAVE_PATH)
+        print(model)
+
         y_pred = (model.predict(X_test) >= 0.5).astype('int32').ravel()
         y_test = y_test.astype('int32').reshape(-1)
         print(classification_report(y_test, y_pred))
         pytk.plot_confusion_matrix(confusion_matrix(y_test, y_pred), ["No Rain", "Rain"],
                                    title="Rain Prediction for Tomorrow")
+        del model
 
 
 if __name__ == '__main__':

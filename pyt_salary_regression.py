@@ -10,7 +10,7 @@ Use at your own risk!! I am not responsible if your CPU or GPU gets fried :D
 import warnings
 warnings.filterwarnings('ignore')
 
-import os, sys, random
+import random
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt

@@ -7,6 +7,7 @@ This code is meant for education purposes only & is not intended for commercial/
 Use at your own risk!! I am not responsible if your CPU or GPU gets fried :D
 """
 import warnings
+
 warnings.filterwarnings('ignore')
 
 import os, sys, random
@@ -20,15 +21,14 @@ from sklearn.metrics import r2_score
 np.set_printoptions(precision=6, linewidth=1024, suppress=True)
 plt.style.use('seaborn')
 sns.set_style('darkgrid')
-sns.set_context('notebook',font_scale=1.10)
+sns.set_context('notebook', font_scale=1.10)
 
 # Pytorch imports
 import torch
+
 print('Using Pytorch version: ', torch.__version__)
 import torch.nn as nn
-import torch.nn.functional as F
 from torch import optim
-from torchsummary import summary
 
 # My helper functions for training/evaluating etc.
 import pytorch_toolkit as pytk
@@ -38,15 +38,17 @@ random.seed(seed)
 np.random.seed(seed)
 torch.manual_seed(seed);
 
+
 # ---------------------------------------------------------------------------
 # Example:1 - with synthesized data
 # ---------------------------------------------------------------------------
 def get_synthesized_data(m, c, min_val=1.0, max_val=50.0, numelems=100, std=10):
     torch.manual_seed(seed)
     X = torch.linspace(min_val, max_val, numelems).reshape(-1, 1)
-    noise = torch.randint(-(std-1),std,(numelems,1), dtype=torch.float32)
+    noise = torch.randint(-(std - 1), std, (numelems, 1), dtype=torch.float32)
     y = m * X + c + noise
     return (X.cpu().numpy(), y.cpu().numpy())
+
 
 # our regression model
 class Net(pytk.PytkModule):
@@ -57,6 +59,7 @@ class Net(pytk.PytkModule):
     def forward(self, inp):
         out = self.fc1(inp)
         return out
+
 
 def main():
     # generate data with noise
@@ -79,25 +82,25 @@ def main():
     print('Before training: ')
     print('   Weight: %.3f bias: %.3f' % (net.fc1.weight, net.fc1.bias))
     criterion = nn.MSELoss()
-    #optimizer = optim.SGD(net.parameters(), lr=0.001)
+    # optimizer = optim.SGD(net.parameters(), lr=0.001)
     optimizer = optim.Adam(net.parameters(), lr=0.001)
     net.compile(loss=criterion, optimizer=optimizer, metrics=['mse', 'rmse', 'mae', 'r2_score'])
     print(net)
 
     # train on the data
     hist = net.fit(X, y, epochs=5000, batch_size=32, report_interval=100)
-    pytk.show_plots(hist, metric='r2_score', plot_title="Performance Metrics")
+    pytk.show_plots(hist, metric='r2_score', plot_title="Performance Metrics (R2 Score)")
 
     # print the results
     print('After training: ')
-    W, b = net.fc1.weight, net.fc1.bias
-    print('   Weight: %.3f bias: %.3f' % (W, b))
+    W, b = net.fc1.weight.item(), net.fc1.bias.item()
+    print(f'   Weight: {W:.3f}  bias: {b:.3f}')
     # get predictions (need to pass Tensors!)
     y_pred = net.predict(X)
 
     # what is my r2_score?
     print('R2 score (sklearn): %.3f' % r2_score(y, y_pred))
-    print('R2 score (pytk): %.3f' % pytk.r2_score(torch.Tensor(y_pred), torch.Tensor(y))) 
+    print('R2 score (pytk): %.3f' % pytk.r2_score(torch.Tensor(y_pred), torch.Tensor(y)))
 
     # display plot
     plt.figure(figsize=(8, 6))
@@ -105,6 +108,7 @@ def main():
     plt.plot(X, y_pred, lw=2, color='firebrick')
     plt.title('Predicted Line -> $y = %.3f * X + %.3f$' % (W, b))
     plt.show()
+
 
 if __name__ == '__main__':
     main()
@@ -115,4 +119,3 @@ if __name__ == '__main__':
 # After training (2000 epochs)
 #    M = 1.828 , C = 31.304 
 # R2 score: 0.765
-

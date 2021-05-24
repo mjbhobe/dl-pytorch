@@ -8,6 +8,7 @@ This code is meant for education purposes only & is not intended for commercial/
 Use at your own risk!! I am not responsible if your CPU or GPU gets fried :D
 """
 import warnings
+
 warnings.filterwarnings('ignore')
 
 import sys
@@ -25,6 +26,7 @@ sns.set_context('notebook', font_scale=1.10)
 
 # Pytorch imports
 import torch
+
 print('Using Pytorch version: ', torch.__version__)
 import torch.nn as nn
 import torch.nn.functional as F
@@ -41,11 +43,12 @@ random.seed(seed)
 os.environ['PYTHONHASHSEED'] = str(seed)
 np.random.seed(seed)
 torch.manual_seed(seed)
-torch.cuda.manual_seed(seed)
-torch.cuda.manual_seed_all(seed)
-torch.backends.cudnn.deterministic = True
-torch.backends.cudnn.benchmark = False
-# torch.backends.cudnn.enabled = False
+if torch.cuda.is_available():
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    # torch.backends.cudnn.enabled = False
 
 
 def load_data():
@@ -54,7 +57,7 @@ def load_data():
     cross-val/test datasets using 80:20 ration
     """
     transformations = transforms.Compose([
-        transforms.ToTensor(),
+            transforms.ToTensor(),
     ])
 
     train_dataset = datasets.MNIST(root='./data', train=True, download=True,
@@ -68,7 +71,7 @@ def load_data():
 
     # lets split the test dataset into val_dataset & test_dataset -> 8000:2000 records
     val_dataset, test_dataset = torch.utils.data.random_split(test_dataset, [
-                                                              8000, 2000])
+            8000, 2000])
     print("No of cross-val records: %d" % len(val_dataset))
     print("No of test records: %d" % len(test_dataset))
 
@@ -88,11 +91,11 @@ def display_sample(sample_images, sample_labels, grid_shape=(10, 10), plot_title
     with sns.axes_style("whitegrid"):
         sns.set_context("notebook", font_scale=0.90)
         sns.set_style(
-            {"font.sans-serif": ["SF UI Text", "Verdana", "Arial", "DejaVu Sans", "sans"]})
+                {"font.sans-serif": ["SF UI Text", "Verdana", "Arial", "DejaVu Sans", "sans"]})
 
         f, ax = plt.subplots(num_rows, num_cols, figsize=(14, 10),
                              gridspec_kw={"wspace": 0.02, "hspace": 0.25}, squeeze=True)
-        #fig = ax[0].get_figure()
+        # fig = ax[0].get_figure()
         f.tight_layout()
         f.subplots_adjust(top=0.90)
 
@@ -102,15 +105,13 @@ def display_sample(sample_images, sample_labels, grid_shape=(10, 10), plot_title
                 ax[r, c].axis("off")
                 # show selected image
                 ax[r, c].imshow(
-                    sample_images[image_index].numpy().squeeze(), cmap="Greys")
+                        sample_images[image_index].numpy().squeeze(), cmap="Greys")
 
                 if sample_predictions is None:
                     # but show the prediction in the title
-                    title = ax[r, c].set_title(
-                        "No: %d" % sample_labels[image_index])
+                    title = ax[r, c].set_title("No: %d" % sample_labels[image_index])
                 else:
-                    pred_matches_actual = (
-                        sample_labels[image_index] == sample_predictions[image_index])
+                    pred_matches_actual = (sample_labels[image_index] == sample_predictions[image_index])
                     if pred_matches_actual:
                         # show title from prediction or actual in green font
                         title = '%s' % sample_predictions[image_index]
@@ -135,9 +136,8 @@ def display_sample(sample_images, sample_labels, grid_shape=(10, 10), plot_title
 # some globals
 IMAGE_HEIGHT, IMAGE_WIDTH, NUM_CHANNELS, NUM_CLASSES = 28, 28, 1, 10
 
+
 # define our network using Linear layers only
-
-
 class MNISTNet(pytk.PytkModule):
     def __init__(self):
         super(MNISTNet, self).__init__()
@@ -150,14 +150,15 @@ class MNISTNet(pytk.PytkModule):
         # flatten input (for DNN)
         x = pytk.Flatten(x)
         x = F.relu(self.fc1(x))
-        #x = self.dropout(x)
+        # x = self.dropout(x)
         x = F.relu(self.fc2(x))
-        #x = self.dropout(x)
+        # x = self.dropout(x)
         # NOTE: nn.CrossEntropyLoss() includes a logsoftmax call, which applies a softmax
         # function to outputs. So, don't apply one yourself!
         # x = F.softmax(self.out(x), dim=1)  # -- don't do this!
         x = self.out(x)
         return x
+
 
 # if you prefer to use Convolutional Neural Network, use the following model definition
 
@@ -186,16 +187,24 @@ class MNISTConvNet(pytk.PytkModule):
         return x
 
 
+def build_model(use_cnn=False):
+    model = MNISTConvNet() if use_cnn else MNISTNet()
+    # define the loss function & optimizer that model should
+    loss_fn = nn.CrossEntropyLoss()
+    optimizer = optim.Adam(params=model.parameters(),
+                           lr=LEARNING_RATE, weight_decay=L2_REG)
+    model.compile(loss=loss_fn, optimizer=optimizer, metrics=['acc'])
+    return model, optimizer
+
+
 DO_TRAINING = True
 DO_PREDICTION = True
 SHOW_SAMPLE = True
-USE_CNN = True     # if False, will use an MLP
+USE_CNN = False  # if False, will use an MLP
 
-MODEL_SAVE_NAME = 'pyt_mnist_cnn' if USE_CNN else 'pyt_mnist_dnn'
+MODEL_SAVE_NAME = 'pyt_mnist_cnn.pyt' if USE_CNN else 'pyt_mnist_dnn.pyt'
 MODEL_SAVE_PATH = os.path.join('.', 'model_states', MODEL_SAVE_NAME)
-
 NUM_EPOCHS, BATCH_SIZE, LEARNING_RATE, L2_REG = 25, 32, 0.001, 0.0005
-
 
 def main():
     print('Loading datasets...')
@@ -204,28 +213,20 @@ def main():
     if SHOW_SAMPLE:
         # display sample from test dataset
         print('Displaying sample from train dataset...')
-        trainloader = torch.utils.data.DataLoader(
-            test_dataset, batch_size=64, shuffle=True)
+        trainloader = torch.utils.data.DataLoader(test_dataset, batch_size=64, shuffle=True)
         data_iter = iter(trainloader)
         images, labels = data_iter.next()  # fetch first batch of 64 images & labels
-        display_sample(images, labels, grid_shape=(
-            8, 8), plot_title='Sample Images')
+        display_sample(images, labels, grid_shape=(8, 8), plot_title='Sample Images')
 
     if DO_TRAINING:
         print(f'Using {"CNN" if USE_CNN else "ANN"} model...')
-        model = MNISTConvNet() if USE_CNN else MNISTNet()
-        # define the loss function & optimizer that model should
-        loss_fn = nn.CrossEntropyLoss()
-        optimizer = optim.Adam(params=model.parameters(),
-                               lr=LEARNING_RATE, weight_decay=L2_REG)
-        scheduler = torch.optim.lr_scheduler.StepLR(
-            optimizer, step_size=10, gamma=0.2)
-        model.compile(loss=loss_fn, optimizer=optimizer, metrics=['acc'])
+        model, optimizer = build_model(USE_CNN)
         # display Keras like summary
         model.summary((NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH))
 
         # train model
         print(f'Training {"CNN" if USE_CNN else "ANN"} model')
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.2)
         hist = model.fit_dataset(train_dataset, validation_dataset=val_dataset, lr_scheduler=scheduler,
                                  epochs=NUM_EPOCHS, batch_size=BATCH_SIZE, verbose=1)
         pytk.show_plots(hist, metric='acc', plot_title='Training metrics')
@@ -246,19 +247,20 @@ def main():
     if DO_PREDICTION:
         print('Running predictions...')
         # load model state from .pt file
-        model = pytk.load_model(MODEL_SAVE_PATH)
+        model, _ = build_model(USE_CNN)
+        model.load(MODEL_SAVE_PATH)
+        # model = pytk.load_model(MODEL_SAVE_PATH)
+        model.summary((NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH))
 
         y_pred, y_true = model.predict_dataset(test_dataset)
         y_pred = np.argmax(y_pred, axis=1)
         print('Sample labels (50): ', y_true[:50])
         print('Sample predictions: ', y_true[:50])
-        print('We got %d/%d incorrect!' %
-              ((y_pred != y_true).sum(), len(y_true)))
+        print('We got %d/%d incorrect!' % ((y_pred != y_true).sum(), len(y_true)))
 
         # display sample from test dataset
         print('Displaying sample predictions...')
-        trainloader = torch.utils.data.DataLoader(
-            test_dataset, batch_size=64, shuffle=True)
+        trainloader = torch.utils.data.DataLoader(test_dataset, batch_size=64, shuffle=True)
         data_iter = iter(trainloader)
         images, labels = data_iter.next()  # fetch a batch of 64 random images
         preds = np.argmax(model.predict(images), axis=1)
@@ -271,11 +273,11 @@ if __name__ == "__main__":
 
 # --------------------------------------------------
 # Results:
-#   MLP with epochs=25, batch-size=32, LR=0.01
+#   MLP with epochs=25, batch-size=32, LR=0.001
 #       Training  -> acc: 99.88%
 #       Cross-val -> acc: 98.45%
 #       Testing   -> acc: 97.90%
-#   CNN with epochs=25, batch-size=32, LR=0.01
+#   CNN with epochs=25, batch-size=32, LR=0.001
 #       Training  -> acc: 99.89%
 #       Cross-val -> acc: 99.50%
 #       Testing   -> acc: 99.17%
