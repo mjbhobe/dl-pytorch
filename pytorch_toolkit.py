@@ -1,4 +1,4 @@
-# encoding='utf-8'
+# -*- coding: utf-8 -*-
 """
 pytorch_toolkit.py: 
     Functions, Classes and Metrics to ease the process of training, evaluating and testing models.
@@ -17,11 +17,13 @@ Usage:
        import pytorch_toolkit as pytk
 """
 import warnings
+
 warnings.filterwarnings('ignore')
 
 import sys
 import os
 import random
+import pathlib
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -34,6 +36,7 @@ import torch
 import torch.nn as nn
 from torchsummary import summary
 from torch.utils.data.dataset import Dataset
+
 # to ensure that you get consistent results across runs & machines
 # @see: https://discuss.pytorch.org/t/reproducibility-over-different-machines/63047
 seed = 123
@@ -49,10 +52,11 @@ if torch.cuda.is_available():
     torch.backends.cudnn.benchmark = False
     torch.backends.cudnn.enabled = False
 
+
 # library tweaks
-np.set_printoptions(precision=6, linewidth=1024, suppress=True)
-plt.style.use('seaborn')
-sns.set(style='whitegrid', font_scale=1.1, palette='muted')
+# np.set_printoptions(precision=6, linewidth=1024, suppress=True)
+# plt.style.use('seaborn')
+# sns.set(style='whitegrid', font_scale=1.1, palette='muted')
 
 # -----------------------------------------------------------------------------
 # helper function to create various layers of model
@@ -134,6 +138,7 @@ def getConv2dFlattenShape(image_height, image_width, conv2d_layer, pool=2):
         out_width /= pool
     return int(out_height), int(out_width)
 
+
 # --------------------------------------------------------------------------------------
 # Metrics used during training of model
 # In this section, I provide code for typical metrics used during training
@@ -157,7 +162,7 @@ def accuracy(logits, labels):
     """
     if logits.size()[1] == 1:
         # binary classification case (just 2 classes)
-        #predicted = torch.round(logits.data).reshape(-1)
+        # predicted = torch.round(logits.data).reshape(-1)
         # any value > 0.5 -> 1 else 0
         predicted = logits.ge(0.5).view(-1)
     else:
@@ -190,7 +195,7 @@ def precision(logits, labels):
     """
     if logits.size()[1] == 1:
         # binary classification case (just 2 classes)
-        #predicted = torch.round(logits.data).reshape(-1)
+        # predicted = torch.round(logits.data).reshape(-1)
         # any value > 0.5 -> 1 else 0
         predicted = logits.ge(0.5).view(-1)
     else:
@@ -219,7 +224,7 @@ def recall(logits, labels):
     """
     if logits.size()[1] == 1:
         # binary classification case (just 2 classes)
-        #predicted = torch.round(logits.data).reshape(-1)
+        # predicted = torch.round(logits.data).reshape(-1)
         # any value > 0.5 -> 1 else 0
         predicted = logits.ge(0.5).view(-1)
     else:
@@ -227,7 +232,7 @@ def recall(logits, labels):
 
     y_pred = predicted.long()
     if len(labels.shape) > 1:
-        y_true = labels.reshape(-1).long()   # flatten
+        y_true = labels.reshape(-1).long()  # flatten
     else:
         y_true = labels.long()
     true_positives = torch.sum(torch.clamp(y_true * y_pred, 0, 1))
@@ -335,9 +340,11 @@ METRICS_MAP = {
     'r2_score': r2_score
 }
 
+
 # -------------------------------------------------------------------------------------
 # helper class to implement early stopping
-# based on Bjarten's implementation (@see: https://github.com/Bjarten/early-stopping-pytorch/blob/master/pytorchtools.py)
+# based on Bjarten's implementation (@see: https://github.com/Bjarten/early-stopping-pytorch/blob/master/pytorchtools
+# .py)
 # -------------------------------------------------------------------------------------
 
 
@@ -388,7 +395,7 @@ class EarlyStopping:
         # if not (isinstance(model, PytModule) or isinstance(model, PytkModuleWrapper)):
         #     raise TypeError("model should be derived from PytModule or PytkModuleWrapper")
 
-        #self.is_wrapped = isinstance(model, PytkModuleWrapper)
+        # self.is_wrapped = isinstance(model, PytkModuleWrapper)
         if self.monitor_op(curr_metric_val - self.min_delta, self.best_score):
             if self.save_best_weights:
                 # save model state for restore later
@@ -398,17 +405,23 @@ class EarlyStopping:
             self.metrics_log = []
             self.best_epoch = epoch + 1
             if self.verbose:
-                print('   EarlyStopping (log): patience counter reset to 0 at epoch %d where best score of \'%s\' is %.3f' % (
-                    epoch, self.monitor, self.best_score))
+                print(
+                    '   EarlyStopping (log): patience counter reset to 0 at epoch %d where best score of \'%s\' is '
+                    '%.3f' % (
+                        epoch, self.monitor, self.best_score))
         else:
             self.counter += 1
             if self.verbose:
-                print('   EarlyStopping (log): patience counter increased to %d - best_score of \'%s\' is %.3f at epoch %d' % (
-                    self.counter, self.monitor, self.best_score, self.best_epoch))
+                print(
+                    '   EarlyStopping (log): patience counter increased to %d - best_score of \'%s\' is %.3f at epoch '
+                    '%d' % (
+                        self.counter, self.monitor, self.best_score, self.best_epoch))
             if self.counter >= self.patience:
                 self.early_stop = True
-                print('   EarlyStopping: Early stopping training at epoch %d. \'%s\' has not improved for past %d epochs.' % (
-                    epoch, self.monitor, self.patience))
+                print(
+                    '   EarlyStopping: Early stopping training at epoch %d. \'%s\' has not improved for past %d '
+                    'epochs.' % (
+                        epoch, self.monitor, self.patience))
                 print('     - Best score: %.4f at epoch %d. Last %d scores -> %s' % (
                     self.best_score, self.best_epoch, len(self.metrics_log), self.metrics_log))
             else:
@@ -423,6 +436,7 @@ class EarlyStopping:
         if isinstance(model, PytkModuleWrapper):
             mod = model.model
         torch.save(mod.state_dict(), self.checkpoint_file)
+
 
 # -------------------------------------------------------------------------------------
 # helper functions for training model, evaluating performance & making predictions
@@ -594,9 +608,12 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
             has to be early-stopped based on parameters used to construct instance of EarlyStopping
         - verbose (0, 1 or 2, default=0): sets the verbosity level for reporting progress during training
             verbose=2 - very verbose output, displays batch wise metrics
-            verbose=1 - medium verbose output, displays metrics at end of epoch, but shows incrimenting counter of batches
-            verbose=0 - least verbose output, does NOT display any output until the training dataset (and validation dataset, if any) completes
-        - report_interval (value >= 1 & < num_epochs): interval at which training progress gets updated (e.g. if report_interval=100, 
+            verbose=1 - medium verbose output, displays metrics at end of epoch, but shows incrimenting counter of
+            batches
+            verbose=0 - least verbose output, does NOT display any output until the training dataset (and validation
+            dataset, if any) completes
+        - report_interval (value >= 1 & < num_epochs): interval at which training progress gets updated (e.g. if
+        report_interval=100,
             training progress is printed every 100th epoch.) Default = 1, meaning status reported at end of each epoch.
     @returns:
         - history: dictionary of the loss & accuracy metrics across epochs
@@ -634,7 +651,8 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
             # is odd as all other schedulers derive from _LRScheduler
             assert (isinstance(lr_scheduler, torch.optim.lr_scheduler._LRScheduler) or
                     isinstance(lr_scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau)), \
-                "lr_scheduler: incorrect type. Expecting class derived from torch.optim._LRScheduler or ReduceLROnPlateau"
+                "lr_scheduler: incorrect type. Expecting class derived from torch.optim._LRScheduler or " \
+                "ReduceLROnPlateau"
         early_stopping_metric = None
         if early_stopping is not None:
             assert isinstance(early_stopping, EarlyStopping), \
@@ -675,8 +693,7 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
             print('Training on %d samples' % len(train_dataset))
 
         if report_interval != 1:
-            print(
-                f"NOTE: training progress will be reported after every {report_interval} epochs")
+            print(f"NOTE: training progress will be reported after every {report_interval} epochs")
 
         tot_samples = len(train_dataset)
         len_tot_samples = len(str(tot_samples))
@@ -807,7 +824,7 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
                         num_val_batches = 0
 
                         for val_data, val_labels in val_loader:
-                            #val_data, val_labels = val_data.to(device), val_labels.to(device)
+                            # val_data, val_labels = val_data.to(device), val_labels.to(device)
                             val_data = val_data.cuda() if gpu_available else val_data.cpu()
                             val_labels = val_labels.cuda() if gpu_available else val_labels.cpu()
 
@@ -837,10 +854,11 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
                                     cum_metrics['val_%s' % metric_name])
 
                             if (verbose in [1, 2]) and ((epoch == 0) or ((epoch + 1) % report_interval == 0)):
-                                # display train + val set metrics only if verbose =1 or 2 and at reporting interval epoch
+                                # display train + val set metrics only if verbose =1 or 2 and at reporting interval
+                                # epoch
                                 metrics_str = get_metrics_str__(
                                     metrics_list, cum_metrics, validation_dataset=True)
-                                #learning_rates = get_lrates__(optimizer)
+                                # learning_rates = get_lrates__(optimizer)
                                 metrics_str += learning_rates
                                 print('\rEpoch (%*d/%*d): (%*d/%*d) -> %s' %
                                       (len_num_epochs, epoch + 1, len_num_epochs, epochs,
@@ -1035,7 +1053,7 @@ def predict(model, data):
         with torch.no_grad():
             model.eval()
             if isinstance(data, np.ndarray):
-                #data = data.astype(np.float32)
+                # data = data.astype(np.float32)
                 data = torch.tensor(data, dtype=torch.float32)
             data = data.cuda() if gpu_available else data.cpu()
             # forward pass
@@ -1049,13 +1067,23 @@ def predict(model, data):
 def save_model(model, model_save_name, model_save_dir=os.path.join('.', 'model_states')):
     """ saves Pytorch model to disk (file with .pt extension) 
     @params:
-        - model: instance of model derived from nn.Model (or instance of pyt.PytModel or pyt.PytSequential)
+        - model: instance of model derived from nn.Model (or instance of pytk.PytModel or pytk.PytSequential)
         - model_save_name: name of file or complete path of file to save model to 
           (NOTE: this file is overwritten without warning!)
         - model_save_dir (optional, defaul='./model_states'): folder to save Pytorch model to
            used only if model_save_name is just a name of file
            ignored if model_save_name is complete path to a file
     """
+
+    # some checks
+    # model_save_path = pathlib.Path(model_save_name)
+
+    # # check if I have an extension in model_save_name
+    # if len(model_save_path.suffix) == 0:
+    #     # no extension -- add .pyt as default extension
+    #     model_save_path = model_save_path.with_suffix('.pyt')
+
+    # ----------- old code ----------------------------
     if not model_save_name.endswith('.pt'):
         model_save_name = model_save_name + '.pt'
 
@@ -1100,6 +1128,48 @@ def save_model(model, model_save_name, model_save_dir=os.path.join('.', 'model_s
     print(f'Pytorch model saved to {model_save_path}')
 
 
+def save_model_state(model, model_save_path):
+    """ saves Pytorch state (state_dict) to disk  
+    @params:
+        - model: instance of model derived from nn.Model (or instance of pytk.PytModel or pytk.PytSequential)
+        - model_save_path: complete path where model should be saved 
+          (NOTE:
+             - the file is overwritten at destination without warning
+             - if `model_save_path` is just a file name, then model saved to current dir
+             - if `model_save_path` contains directory, it attempts to create directories if possible 
+          )
+    """
+
+    # do I have an extension? If not append '.pyt' extension
+    model_save_path = pathlib.Path(model_save_path)
+    if len(model_save_path.suffix) == 0:
+        # no extension specified, append a '.pyt' extension
+        model_save_path = model_save_path.with_suffix('.pyt')
+
+    # is model_save_path a path of just a file name?
+    model_save_path_dir, model_save_path_name = os.path.split(model_save_path)
+    if len(model_save_path_dir) == 0:
+        # print("model_save_path is just a file-name (no dir). Saving to current dir")
+        model_save_path = pathlib.Path.cwd() / model_save_path_name
+        # print(f"model_save_path: {model_save_path}")
+    else:
+        # print("model_save_path contains dir name - will create if required")
+        model_save_path_dir = pathlib.Path(model_save_path_dir).absolute()
+        model_save_path = model_save_path_dir / model_save_path_name
+        if not os.path.exists(model_save_path_dir):
+            try:
+                # print(f"model dir {model_save_path_dir} does NOT exist. Will try & create")
+                os.mkdir(model_save_path_dir)
+                # print(f"{model_save_path_dir} created successfully!")
+            except OSError as err:
+                print(f"FATAL ERROR: cannot create dir {model_save_path_dir}! Will abort")
+                raise err
+
+    # save model to model_save_path
+    torch.save(model.state_dict(), model_save_path)
+    print(f"Pytorch model saved to {model_save_path}")
+
+
 def load_model(model_save_name, model_save_dir='./model_states'):
     """ loads model from disk and create a complete instance from saved state
     @params:
@@ -1129,19 +1199,35 @@ def load_model(model_save_name, model_save_dir='./model_states'):
     return model
 
 
+def load_model_state(model, model_save_path):
+    """ saves Pytorch state (state_dict) to disk
+    @params:
+        - model: instance of model derived from nn.Model (or instance of pytk.PytModel or pytk.PytSequential)
+        - model_save_path: complete/relative path where model should be loaded
+    """
+
+    # do I have an extension? If not append '.pyt' extension
+    model_save_path = pathlib.Path(model_save_path).absolute()
+    if not os.path.exists(model_save_path):
+        raise IOError(f"ERROR: can't load model from {model_save_path} - file does not exist!")
+
+    # load state dict from path
+    state_dict = torch.load(model_save_path)
+    model.load_state_dict(state_dict)
+    print(f"Pytorch model loaded from {model_save_path}")
+    return model
+
+
 def show_plots(history, metric=None, plot_title=None, fig_size=None):
     """ Useful function to view plot of loss values & 'metric' across the various epochs
         Works with the history object returned by the fit() or fit_generator() call """
     assert type(history) is dict
 
     # we must have at least loss in the history object
-    assert 'loss' in history.keys(
-    ), f"ERROR: expecting \'loss\' as one of the metrics in history object"
+    assert 'loss' in history.keys(), f"ERROR: expecting \'loss\' as one of the metrics in history object"
     if metric is not None:
-        assert isinstance(
-            metric, str), "ERROR: expecting a string value for the \'metric\' parameter"
-        assert metric in history.keys(
-        ), f"{metric} is not tracked in training history!"
+        assert isinstance(metric, str), "ERROR: expecting a string value for the \'metric\' parameter"
+        assert metric in history.keys(), f"{metric} is not tracked in training history!"
 
     loss_metrics = ['loss']
     if 'val_loss' in history.keys():
@@ -1164,18 +1250,16 @@ def show_plots(history, metric=None, plot_title=None, fig_size=None):
     df = pd.DataFrame(history)
 
     with sns.axes_style("darkgrid"):
-        sns.set_context("notebook", font_scale=1.3)
-        sns.set_style(
-            {"font.sans-serif": ["SF UI Text", "Verdana", "Arial", "Calibri", "DejaVu Sans"]})
+        sns.set_context("notebook", font_scale=1.2)
+        sns.set_style({"font.sans-serif": ["SF UI Text", "Arial", "Calibri", "DejaVu Sans"]})
 
-        f, ax = plt.subplots(nrows=1, ncols=col_count, figsize=(
-            (16, 5) if fig_size is None else fig_size))
+        f, ax = plt.subplots(nrows=1, ncols=col_count, figsize=((16, 5) if fig_size is None else fig_size))
         axs = ax[0] if col_count == 2 else ax
 
         # plot the losses
         losses_df = df.loc[:, loss_metrics]
         losses_df.plot(ax=axs)
-        #ax[0].set_ylim(0.0, 1.0)
+        # ax[0].set_ylim(0.0, 1.0)
         axs.grid(True)
         losses_title = 'Training \'loss\' vs Epochs' if len(
             loss_metrics) == 1 else 'Training & Validation \'loss\' vs Epochs'
@@ -1185,7 +1269,7 @@ def show_plots(history, metric=None, plot_title=None, fig_size=None):
         if metric is not None:
             metrics_df = df.loc[:, other_metrics]
             metrics_df.plot(ax=ax[1])
-            #ax[1].set_ylim(0.0, 1.0)
+            # ax[1].set_ylim(0.0, 1.0)
             ax[1].grid(True)
             metrics_title = f'Training \'{other_metrics[0]}\' vs Epochs' if len(other_metrics) == 1 \
                 else f'Training & Validation \'{other_metrics[0]}\' vs Epochs'
@@ -1226,10 +1310,10 @@ def plot_confusion_matrix(cm, class_names=None, title="Confusion Matrix", cmap=p
     plt.show()
     plt.close()
 
+
 # --------------------------------------------------------------------------------------------
 # Utility classes
 # --------------------------------------------------------------------------------------------
-
 
 class PytkModule(nn.Module):
     """
@@ -1288,10 +1372,13 @@ class PytkModule(nn.Module):
             - validation_split: Float between 0 and 1. Fraction of the training data to be used as validation data. 
               The model will set apart this fraction of the training data, will not train on it, and will 
               evaluate the loss and any model metrics on this data at the end of each epoch.
-            - validation_dataset (optional, default=None) - instance of torch.utils.data.Dataset used for cross-validation
-              If you pass a valid instance, then model is cross-trained on train_dataset and validation_dataset, else model
+            - validation_dataset (optional, default=None) - instance of torch.utils.data.Dataset used for
+            cross-validation
+              If you pass a valid instance, then model is cross-trained on train_dataset and validation_dataset,
+              else model
               is trained on just train_dataset. As a best practice, it is advisible to use cross training.
-            - lr_scheduler (optional, default=NOne) - learning rate scheduler, used to step the learning rate across epochs 
+            - lr_scheduler (optional, default=NOne) - learning rate scheduler, used to step the learning rate across
+            epochs
                as model trains. Instance of any scheduler defined in torch.optim.lr_scheduler package
             - epochs (optional, default=25): no of epochs for which model is trained
             - batch_size (optional, default=64): batch size to use
@@ -1412,8 +1499,14 @@ class PytkModule(nn.Module):
             "data must be an instance of Numpy ndarray or torch.tensor"
         return predict(self, data)
 
-    def save(self, model_save_name, model_save_dir='./model_states'):
+    def save__(self, model_save_name, model_save_dir='./model_states'):
         save_model(self, model_save_name, model_save_dir)
+
+    def save(self, model_save_path):
+        save_model_state(self, model_save_path)
+
+    def load(self, model_save_path):
+        load_model_state(self, model_save_path)
 
     # NOTE: load() is not implemented. Use standalone load_model() function instead
 
@@ -1460,8 +1553,10 @@ class PytkModuleWrapper():
         p_metrics_list = self.metrics_list if metrics is None else metrics
 
         return train_model(self.model, train_dataset, loss_fn=p_loss_fn, optimizer=p_optimizer,
-                           validation_split=validation_split, validation_dataset=validation_dataset, lr_scheduler=lr_scheduler,
-                           epochs=epochs, batch_size=batch_size, metrics=p_metrics_list, shuffle=shuffle, num_workers=num_workers,
+                           validation_split=validation_split, validation_dataset=validation_dataset,
+                           lr_scheduler=lr_scheduler,
+                           epochs=epochs, batch_size=batch_size, metrics=p_metrics_list, shuffle=shuffle,
+                           num_workers=num_workers,
                            early_stopping=early_stopping, verbose=verbose, report_interval=report_interval)
 
     def fit(self, X_train, y_train, loss_fn=None, optimizer=None, validation_split=0.0, validation_data=None,
@@ -1477,7 +1572,7 @@ class PytkModuleWrapper():
         else:
             y_dtype = np.float32
 
-        #train_dataset = XyDataset(X_train, y_train, y_dtype)
+        # train_dataset = XyDataset(X_train, y_train, y_dtype)
         torch_X_train = torch.from_numpy(X_train).type(torch.FloatTensor)
         torch_y_train = torch.from_numpy(y_train).type(
             torch.LongTensor if y_dtype == np.long else torch.FloatTensor)
@@ -1495,7 +1590,7 @@ class PytkModuleWrapper():
                 y_val_dtype = np.long
             else:
                 y_val_dtype = np.float32
-            #validation_dataset = XyDataset(validation_data[0], validation_data[1], y_val_dtype)
+            # validation_dataset = XyDataset(validation_data[0], validation_data[1], y_val_dtype)
             torch_X_val = torch.from_numpy(
                 validation_data[0]).type(torch.FloatTensor)
             torch_y_val = torch.from_numpy(validation_data[1]).type(
@@ -1546,8 +1641,14 @@ class PytkModuleWrapper():
             "data must be an instance of Numpy ndarray or torch.tensor"
         return predict(self.model, data)
 
-    def save(self, model_save_name, model_save_dir='./model_states'):
+    def save__(self, model_save_name, model_save_dir='./model_states'):
         save_model(self.model, model_save_name, model_save_dir)
+
+    def save(self, model_save_path):
+        save_model_state(self.model, model_save_path)
+
+    def load(self, model_save_path):
+        load_model_state(self.model, model_save_path)
 
     # NOTE: load() is not implemented
 
