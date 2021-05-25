@@ -33,8 +33,10 @@ Since all functions & classes are included in just 1 file - `pytorch_toolkit.py`
 
 * This library depends on several other Python libraries, viz:
     * Numpy
-    * Pandas
-    * Matplotlib
+    * pandas
+    * pathlib
+    * matplotlib
+    * seaborn
     * scikit-learn
     * Pytorch (of course!)
     * torchsummary - if you want to see a Keras-like summary of your model (optional!)
