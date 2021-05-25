@@ -693,7 +693,8 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
             print('Training on %d samples' % len(train_dataset))
 
         if report_interval != 1:
-            print(f"NOTE: training progress will be reported after every {report_interval} epochs")
+            print(
+                f"NOTE: training progress will be reported after every {report_interval} epochs")
 
         tot_samples = len(train_dataset)
         len_tot_samples = len(str(tot_samples))
@@ -794,7 +795,8 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
                                len_tot_samples, samples, len_tot_samples, tot_samples),
                               end='', flush=True)
             else:
-                # all batches for this epochs are completed
+                # all batches in train_loader dataset are complete...
+
                 # compute average metrics across all batches of train_loader
                 for metric_name in metrics_list:
                     cum_metrics[metric_name] = cum_metrics[metric_name] / num_batches
@@ -1162,7 +1164,8 @@ def save_model_state(model, model_save_path):
                 os.mkdir(model_save_path_dir)
                 # print(f"{model_save_path_dir} created successfully!")
             except OSError as err:
-                print(f"FATAL ERROR: cannot create dir {model_save_path_dir}! Will abort")
+                print(
+                    f"FATAL ERROR: cannot create dir {model_save_path_dir}! Will abort")
                 raise err
 
     # save model to model_save_path
@@ -1209,7 +1212,8 @@ def load_model_state(model, model_save_path):
     # do I have an extension? If not append '.pyt' extension
     model_save_path = pathlib.Path(model_save_path).absolute()
     if not os.path.exists(model_save_path):
-        raise IOError(f"ERROR: can't load model from {model_save_path} - file does not exist!")
+        raise IOError(
+            f"ERROR: can't load model from {model_save_path} - file does not exist!")
 
     # load state dict from path
     state_dict = torch.load(model_save_path)
@@ -1224,10 +1228,13 @@ def show_plots(history, metric=None, plot_title=None, fig_size=None):
     assert type(history) is dict
 
     # we must have at least loss in the history object
-    assert 'loss' in history.keys(), f"ERROR: expecting \'loss\' as one of the metrics in history object"
+    assert 'loss' in history.keys(
+    ), f"ERROR: expecting \'loss\' as one of the metrics in history object"
     if metric is not None:
-        assert isinstance(metric, str), "ERROR: expecting a string value for the \'metric\' parameter"
-        assert metric in history.keys(), f"{metric} is not tracked in training history!"
+        assert isinstance(
+            metric, str), "ERROR: expecting a string value for the \'metric\' parameter"
+        assert metric in history.keys(
+        ), f"{metric} is not tracked in training history!"
 
     loss_metrics = ['loss']
     if 'val_loss' in history.keys():
@@ -1251,9 +1258,11 @@ def show_plots(history, metric=None, plot_title=None, fig_size=None):
 
     with sns.axes_style("darkgrid"):
         sns.set_context("notebook", font_scale=1.2)
-        sns.set_style({"font.sans-serif": ["SF UI Text", "Arial", "Calibri", "DejaVu Sans"]})
+        sns.set_style(
+            {"font.sans-serif": ["SF UI Text", "Arial", "Calibri", "DejaVu Sans"]})
 
-        f, ax = plt.subplots(nrows=1, ncols=col_count, figsize=((16, 5) if fig_size is None else fig_size))
+        f, ax = plt.subplots(nrows=1, ncols=col_count, figsize=(
+            (16, 5) if fig_size is None else fig_size))
         axs = ax[0] if col_count == 2 else ax
 
         # plot the losses

@@ -273,17 +273,17 @@ pytk.show_plots(hist, metric='acc',
 
 * `hist` is the value returned by the `fit(...)` call as shown above.
 * `metric` (optional, default=None) is the additional metric you want to plot. **This should be a string value and should be one of the metrics you track in the `metrics=[...]` parameter** of the `compile()` call. You can leave it out, in which case only the `loss` will be plotted. Recall that `loss` is tracked by default! You should specify the metric using the same string value you used in the `compile()` call - e.g. if you used metric=['accuracy'], then you should use `metric='accuracy'` here. **In this version, there is support for just 1 metric (apart from `loss`)**.
-* `plot_title` is a user defined title for your plot (e.g. 'Performance plots of model XXX')
+* `plot_title` is a user defined title for your plot (e.g. 'Performance plots of model XXX') [Optional: with a default value of None (no title)]
 * `fig_size=(x, y)` - this is an additional optional parameter you can specify to size your plot to some dimension of your choice - I use it only if my plot gets 'crunched up'. The default value is `fig_size=(16,5)`
 
 The output of the above `show_plots(...)` call will be something like below - on the left is the plot of loss vs epochs (for both the training & cross-validation datasets) and on the right is the plot for `acc` against epochs.
 
 ![](images/show_plots.png)
 
-You can see that across epochs, the _training_ and _validation_ losses fall to their lows, whereas the accuracies rise to their highest values. If there is a large gap between the loss plots, with $training\ loss << validation\ loss$ your model is overfitting training data!
+You can see that across epochs, the _training_ and _validation_ losses fall to their lows, whereas the accuracies rise to their highest values. If there is a large gap between the loss plots, with `training loss << validation loss` your model is over-fitting training data! The epochs from where these plots start to diverge is the point from where the model has started over-fitting. Similarly, if the `validation loss is << than training loss`, your model is under-fitting.
 
 ### Evaluating Model performance
-Once you are done with training, you will want to verify model's performance on `testing` data & labels, which the model _has not seen_ during the entire cross-training process. This can be done as follows:
+Once you are done with training, you will want to verify model's performance on `testing` data & labels. You should never _expose_ your model to test data during training! This can be done as follows:
 
 ```python
 # assuming you are tracking both accuracy & f1-score metrics
@@ -312,26 +312,53 @@ print(f'  Train dataset  -> loss: {loss:.4f} - acc: {acc:.4f} - f1: {f1:.4f}')
 You should see output similar to the one shown above.
 
 ### Saving the model's state:
-Once you are happy with the model's performance, you may want to save the model's weights and structure to disk, so you can just load this at a later date and use the model without having to re-train it. The `PytModule` provides a `save()` method to do just that. Use it on an instance of the model as follows:
+Once you are happy with the model's performance, you may want to save the model's weights and structure to disk, so you can just load this at a later date and use the model without having to re-train it. The `PytkModule` provides a `save()` method to do just that. Use it on an instance of the model as follows:
 
 ```python
 # specify path of file where model state should be saved
 model.save('./model_states/wbc.pt')
 ```
 
-`save()` takes a path to file where the model state is saved - if the directory leading up to the path does not exist, it is created the very first time `save()` is called. You need not specify the `.pt` extension is optional - it will be tagged on to file name. **The `.pt` file is a binary file, which only Pytorch API can comprehend.**
+* `save()` takes a path to file where the model state is saved - if the directory leading up to the path does not exist, it is created the very first time `save()` is called.
+* `save()` method saves the model's `state_dict` under the hood, by calling `torch.save(model.state_dict()...)`
 
 ### Loading model's state from disk
-The `Pytorch Toolkit` provides a **stand alone** `load_model()` function to load the model's state from disk - I could have coded this as a static function of the PytModule class, but I chose to code a stand-alone function instead. Here is how you use it.
+The `PytkModule` class provides a  `load()` method to load the model's state from disk. It will load the model's saved `state_dict` from disk. Here is how you use the `load()` method.
 
 ```python
-# NOTE: load_model() is a stand-alone function and not a class member function!
-model = pytk.load_model('./model_states/wbc.pt')
+# first instantiate the model using API provided in the class definition 
+model = WBCNet(32, 32, 10)
+model.load('./model_states/wbc.pt')
 ```
-This call will load the model's structure as well as the weights & biases of the various layers of the model. It is ready-to-go! 
+**NOTE:** 
+* The `load()` call takes the complete path of the file name to which the model was saved. If this path does not exist and `IOError` exception is thrown.
+* The `load()` method will load just object's `state_dict` from disk. You still have to assign the `loss` function, the `optimizer` and the `metrics` should you want to retrain the model.
+
+**Best Practice**
+* I usually encapsulate the model creatioon function in a separate function, which I call `build_model()`, but you can choose any name
+* In this function, I instantiate the model as well as call the `compile()` method to assign the `loss`, `optimizer` and the `metrics`
+* I return the model instance & optimizer instance from this call - the latter is required if you want to assign a learning rate scheduled (covered later)
+
+For example, I would create a `build_model()` function for this example as below:
+
+```python
+def build_model():
+    model = WBCNet(32, 32, 10)
+
+    loss_fn = nn.BCELoss()
+    optimizer = torch.optim.SGD(model.parameters(), lr=0.001,...)
+    model.compile(loss=loss_fn, optimizer=optimizer, metrics=['acc'])
+    return model, optimizer
+```
+
+And before the `load()` call, I would then do something like:
+```python
+model = build_model()
+model.load('./model_states/wbc.pt')
+```
 
 ### Running Predictions
-Once you have trained the model and are satisfied with the performace, you will run predictions on the _test_ data and labels (or even on the _training_ data and labels). Use the `predict(...)` call as follows: 
+Once you have trained the model and are satisfied with the performace, you will run predictions on the _test_ data and labels (or even on the _training_ data and labels). The `PytkModule` class provided a  `predict(...)` method, which can be used as follows:
 
 ```python
 y_pred = model.predict(X_test)
