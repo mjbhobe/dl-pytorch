@@ -32,7 +32,6 @@ Since all functions & classes are included in just 1 file - `pytorch_toolkit.py`
     ```
 
 * This library depends on several other Python libraries, viz:
-    * itertools
     * Numpy
     * Pandas
     * Matplotlib
@@ -83,6 +82,8 @@ If you are excited about starting with the Pytorch Toolkit, jump to the [step-by
 ### Regression Examples:
 * `pyt_regression.py` - _univariate regression_ on synthesized data
 * `pyt_salary_regression.py` - _multivariate regression_ on salary data (`@see csv_filed/salary_data.csv`)
+
+I will be adding mode examples over the course of time. Keep watching this repository :).
 
 Hope you enjoy using the Pytorch Toolkit - my small contribution to the Pytorch community. Feedback is welcome.
 
