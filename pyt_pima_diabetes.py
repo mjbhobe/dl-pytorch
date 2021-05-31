@@ -6,16 +6,21 @@ My experiments with Python, Machine Learning & Deep Learning.
 This code is meant for education purposes only & is not intended for commercial/production use!
 Use at your own risk!! I am not responsible if your CPU or GPU gets fried :D
 """
+import pytorch_toolkit as pytk
+from torch.utils.data import Dataset
+import torch.nn.functional as F
+import torch.nn as nn
+import torch
+import seaborn as sns
+import matplotlib.pyplot as plt
+import pandas as pd
+import numpy as np
+import random
+import sys
+import os
 import warnings
 warnings.filterwarnings('ignore')
 
-import os
-import sys
-import random
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
 
 # tweaks for libraries
 np.set_printoptions(precision=6, linewidth=1024, suppress=True)
@@ -24,14 +29,9 @@ sns.set_style('darkgrid')
 sns.set_context('notebook', font_scale=1.10)
 
 # Pytorch imports
-import torch
 print('Using Pytorch version: ', torch.__version__)
-import torch.nn as nn
-import torch.nn.functional as F
-from torch.utils.data import Dataset
 
 # import pytorch_toolkit - training Nirvana :)
-import pytorch_toolkit as pytk
 
 # to ensure that you get consistent results across runs & machines
 # @see: https://discuss.pytorch.org/t/reproducibility-over-different-machines/63047
@@ -50,6 +50,7 @@ if torch.cuda.is_available():
 url = r'https://raw.githubusercontent.com/a-coders-guide-to-ai/a-coders-guide-to-neural-networks/master/data/diabetes.csv'
 local_data_path = './data/diabetes.csv'
 
+
 def load_data(upsample=False, test_split=0.20):
     from sklearn.model_selection import train_test_split
     from sklearn.preprocessing import StandardScaler
@@ -66,20 +67,23 @@ def load_data(upsample=False, test_split=0.20):
 
     X = df.iloc[:, :-1].values
     y = df.iloc[:, -1].values
-    print(f"Raw data shapes -> X.shape: {X.shape} - y.shape: {y.shape} - label dist: {np.bincount(y)}")
+    print(
+        f"Raw data shapes -> X.shape: {X.shape} - y.shape: {y.shape} - label dist: {np.bincount(y)}")
 
     # split into train/test sets
     X_train, X_test, y_train, y_test = \
-        train_test_split(X, y, test_size=test_split, random_state=SEED, stratify=y)
+        train_test_split(X, y, test_size=test_split,
+                         random_state=SEED, stratify=y)
     if upsample:
-        difference = sum((y_train==0)*1) - sum((y_train==1)*1)
-        indices = np.where(y_train == 1) [0]
+        difference = sum((y_train == 0)*1) - sum((y_train == 1)*1)
+        indices = np.where(y_train == 1)[0]
         rand_subsample = np.random.randint(0, len(indices), (difference,))
         X_train = np.concatenate((X_train, X_train[indices[rand_subsample]]))
         y_train = np.concatenate((y_train, y_train[indices[rand_subsample]]))
 
     X_train, X_val, y_train, y_val = \
-        train_test_split(X_train, y_train, test_size=test_split, random_state=SEED, stratify=y_train)
+        train_test_split(X_train, y_train, test_size=test_split,
+                         random_state=SEED, stratify=y_train)
 
     # scale data
     ss = StandardScaler()
@@ -96,6 +100,7 @@ def load_data(upsample=False, test_split=0.20):
 
     return (X_train, y_train), (X_val, y_val), (X_test, y_test)
 
+
 class PimaDataset(Dataset):
     def __init__(self, X, y):
         super(PimaDataset, self).__init__()
@@ -111,18 +116,25 @@ class PimaDataset(Dataset):
         return X_ret, y_ret
 
 # our ANN
+
+
 class PimaModel(pytk.PytkModule):
     def __init__(self):
         super(PimaModel, self).__init__()
-        self.fc1 = nn.Linear(8, 8)
-        self.fc2 = nn.Linear(8, 4)
+        self.fc1 = nn.Linear(8, 16)
+        self.fc2 = nn.Linear(16, 8)
+        self.fc3 = nn.Linear(8, 4)
         self.out = nn.Linear(4, 1)
 
     def forward(self, inp):
         x = F.relu(self.fc1(inp))
-        x = F.relu(self.fc2(inp))
+        x = F.dropout(x, p=0.20, training=self.training)
+        x = F.relu(self.fc2(x))
+        x = F.dropout(x, p=0.20, training=self.training)
+        x = F.relu(self.fc3(x))
         x = F.sigmoid(self.out(x))
         return x
+
 
 DO_TRAINING = True
 DO_TESTING = False
@@ -132,10 +144,11 @@ MODEL_SAVE_PATH = './model_states/pyt_diabetes_ann'
 # Hyper-parameters
 NUM_FEATURES = 30
 NUM_CLASSES = 1
-NUM_EPOCHS = 500
+NUM_EPOCHS = 2500
 BATCH_SIZE = 32
-LEARNING_RATE = 1e-2
-DECAY = 0.001
+LEARNING_RATE = 1e-3
+DECAY = 0.005
+
 
 def main():
     (X_train, y_train), (X_val, y_val), (X_test, y_test) = load_data(upsample=True)
@@ -148,7 +161,10 @@ def main():
         model = PimaModel()
         # define the loss function & optimizer that model should
         loss_fn = nn.BCELoss()  # nn.CrossEntropyLoss()
-        optimizer = torch.optim.SGD(model.parameters(), lr=LEARNING_RATE, weight_decay=DECAY)
+        # optimizer = torch.optim.SGD(
+        #     model.parameters(), lr=LEARNING_RATE, weight_decay=DECAY)
+        optimizer = torch.optim.Adam(
+            model.parameters(), lr=LEARNING_RATE, weight_decay=DECAY)
         model.compile(loss=loss_fn, optimizer=optimizer, metrics=['acc'])
         print(model)
 
@@ -156,8 +172,9 @@ def main():
         print('Training model...')
         # split training data into train/cross-val datasets in 80:20 ratio
         hist = model.fit_dataset(train_dataset, validation_dataset=val_dataset,
-                                 epochs=NUM_EPOCHS, batch_size=BATCH_SIZE)
-        pytk.show_plots(hist, metric='acc', plot_title="Performance Metrics")
+                                 epochs=NUM_EPOCHS, batch_size=BATCH_SIZE, report_interval=100)
+        pytk.show_plots(hist, metric='acc',
+                        plot_title="Performance Metrics")
 
         # evaluate model performance on train/eval & test datasets
         print('\nEvaluating model performance...')
