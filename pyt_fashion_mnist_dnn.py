@@ -21,7 +21,7 @@ import seaborn as sns
 # tweaks for libraries
 np.set_printoptions(precision=6, linewidth=1024, suppress=True)
 plt.style.use('seaborn')
-sns.set(style='darkgrid', context='notebook', font_scale=1.10)
+sns.set(style='darkgrid', context='notebook', font_scale=1.20)
 
 # Pytorch imports
 import torch
@@ -60,15 +60,18 @@ def load_data():
         transforms.Normalize(mean, std)
     ])
 
-    train_dataset = datasets.FashionMNIST(root='./data', train=True, download=True, transform=transformations)
+    train_dataset = datasets.FashionMNIST(
+        root='./data', train=True, download=True, transform=transformations)
 
     print("No of training records: %d" % len(train_dataset))
 
-    test_dataset = datasets.FashionMNIST('./data', train=False, download=True, transform=transformations)
+    test_dataset = datasets.FashionMNIST(
+        './data', train=False, download=True, transform=transformations)
     print("No of test records: %d" % len(test_dataset))
 
     # lets split the test dataset into val_dataset & test_dataset -> 8000:2000 records
-    val_dataset, test_dataset = torch.utils.data.random_split(test_dataset, [8000, 2000])
+    val_dataset, test_dataset = torch.utils.data.random_split(test_dataset, [
+                                                              8000, 2000])
     print("No of cross-val records: %d" % len(val_dataset))
     print("No of test records: %d" % len(test_dataset))
 
@@ -100,7 +103,8 @@ def display_sample(sample_images, sample_labels, grid_shape=(10, 10), plot_title
 
     with sns.axes_style("whitegrid"):
         sns.set_context("notebook", font_scale=0.98)
-        sns.set_style({"font.sans-serif": ["SF UI Text", "Calibri", "Arial", "DejaVu Sans", "sans"]})
+        sns.set_style(
+            {"font.sans-serif": ["SF UI Text", "Calibri", "Arial", "DejaVu Sans", "sans"]})
 
         f, ax = plt.subplots(num_rows, num_cols, figsize=(14, 10),
                              gridspec_kw={"wspace": 0.05, "hspace": 0.35}, squeeze=True)  # 0.03, 0.25
@@ -122,9 +126,11 @@ def display_sample(sample_images, sample_labels, grid_shape=(10, 10), plot_title
 
                 if sample_predictions is None:
                     # show the text label as image title
-                    title = ax[r, c].set_title(f"{FASHION_LABELS[sample_labels[image_index]]}")
+                    title = ax[r, c].set_title(
+                        f"{FASHION_LABELS[sample_labels[image_index]]}")
                 else:
-                    pred_matches_actual = (sample_labels[image_index] == sample_predictions[image_index])
+                    pred_matches_actual = (
+                        sample_labels[image_index] == sample_predictions[image_index])
                     # show prediction from model as image title
                     title = '%s' % FASHION_LABELS[sample_predictions[image_index]]
                     if pred_matches_actual:
@@ -208,14 +214,15 @@ def build_model(use_cnn=False):
     return model
 
 
-DO_TRAINING = False
+DO_TRAINING = True
 DO_PREDICTION = True
 SHOW_SAMPLE = True
 USE_CNN = True  # if False, will use an ANN
 
 MODEL_SAVE_NAME = 'pyt_mnist_cnn.pyt' if USE_CNN else 'pyt_mnist_dnn.pyt'
 MODEL_SAVE_PATH = os.path.join('.', 'model_states', MODEL_SAVE_NAME)
-NUM_EPOCHS, BATCH_SIZE, LEARNING_RATE, L2_REG = (25 if USE_CNN else 50), 64, 0.001, 0.0005
+NUM_EPOCHS, BATCH_SIZE, LEARNING_RATE, L2_REG = (
+    25 if USE_CNN else 50), 64, 0.001, 0.0005
 
 
 def main():
@@ -225,7 +232,8 @@ def main():
     if SHOW_SAMPLE:
         # display sample from test dataset
         print('Displaying sample from train dataset...')
-        trainloader = torch.utils.data.DataLoader(test_dataset, batch_size=64, shuffle=True)
+        trainloader = torch.utils.data.DataLoader(
+            test_dataset, batch_size=64, shuffle=True)
         data_iter = iter(trainloader)
         images, labels = data_iter.next()  # fetch first batch of 64 images & labels
         display_sample(images.cpu().numpy(), labels.cpu().numpy(),
@@ -266,11 +274,13 @@ def main():
         y_pred = np.argmax(y_pred, axis=1)
         print('Sample labels (50): ', y_true[:50])
         print('Sample predictions: ', y_true[:50])
-        print('We got %d/%d incorrect!' % ((y_pred != y_true).sum(), len(y_true)))
+        print('We got %d/%d incorrect!' %
+              ((y_pred != y_true).sum(), len(y_true)))
 
         # display sample from test dataset
         print('Displaying sample predictions...')
-        trainloader = torch.utils.data.DataLoader(test_dataset, batch_size=64, shuffle=True)
+        trainloader = torch.utils.data.DataLoader(
+            test_dataset, batch_size=64, shuffle=True)
         data_iter = iter(trainloader)
         images, labels = data_iter.next()  # fetch a batch of 64 random images
         preds = np.argmax(model.predict(images), axis=1)
