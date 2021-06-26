@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 pytorch_toolkit.py: 
-    Functions, Classes and Metrics to ease the process of training, evaluating and testing models.
+    Functions, Classes and Metrics to ease the process of training, evaluating and testing Pytorch models.
     This module provides a Keras-like API to preclude the need to write boiler-plate code when
     training your Pytorch models. Convenience functions and classes that wrap those functions
     have been provided to ease the process of training, evaluating & testing your models.
@@ -20,7 +20,6 @@ import warnings
 
 warnings.filterwarnings('ignore')
 
-import sys
 import os
 import random
 import pathlib
@@ -29,7 +28,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.metrics import roc_auc_score
-import itertools
 
 # torch imports
 import torch
@@ -52,12 +50,6 @@ if torch.cuda.is_available():
     torch.backends.cudnn.benchmark = False
     torch.backends.cudnn.enabled = False
 
-
-# library tweaks
-# np.set_printoptions(precision=6, linewidth=1024, suppress=True)
-# plt.style.use('seaborn')
-# sns.set(style='whitegrid', font_scale=1.1, palette='muted')
-
 # -----------------------------------------------------------------------------
 # helper function to create various layers of model
 # -----------------------------------------------------------------------------
@@ -67,13 +59,12 @@ def Conv2d(in_channels, out_channels, kernel_size=3, stride=1, padding=1,
            dilation=1, groups=1, bias=True, padding_mode='zeros'):
     """
     (convenience function)
-    creates a nn.Conv2d layer, with weights initiated using glorot_uniform initializer
-    and bias initialized using zeros initializer as is the default in Keras.
+    Creates a nn.Conv2d layer, with weights initiated using xavier_uniform initializer
+    and bias, if set, initialized using zeros initializer as is the default in Keras.
     @params:
         - same as nn.Conv2d params
     @returns:
-        - instance of nn.Conv2d layer, with weights initialized using xavier_uniform
-          initializer and bias initialized using zeros initializer
+        - instance of nn.Conv2d layer
     """
     layer = nn.Conv2d(in_channels, out_channels, kernel_size=kernel_size,
                       stride=stride, padding=padding, dilation=dilation,
@@ -85,16 +76,16 @@ def Conv2d(in_channels, out_channels, kernel_size=3, stride=1, padding=1,
     return layer
 
 
-def Dense(in_nodes, out_nodes, bias=True):
+def Linear(in_nodes, out_nodes, bias=True):
     """
     (convenience function)
-    creates a fully connected layer
+    creates a nn.Linear layer, with weights initiated using xavier_uniform initializer 
+    and bias, if set, initialized using zeros initializer as is the default in Keras.
     @params:
       - in_nodes: # of nodes from pervious layer
       - out_nodes: # of nodes in this layer
     @returns:
-      - an instance of nn.Linear class with weights (params) initialized
-        using xavier_uniform initializer & bias initialized with zeros
+      - an instance of nn.Linear class 
     """
     layer = nn.Linear(in_nodes, out_nodes, bias)
     # @see: https://msdn.microsoft.com/en-us/magazine/mt833293.aspx for example
@@ -104,11 +95,11 @@ def Dense(in_nodes, out_nodes, bias=True):
     return layer
 
 
-def Linear(in_nodes, out_nodes, bias=True):
+def Dense(in_nodes, out_nodes, bias=True):
     """
-    another shortcut for dense(in_nodes, out_nodes)
+    another shortcut for Linear(in_nodes, out_nodes)
     """
-    return Dense(in_nodes, out_nodes, bias)
+    return Linear(in_nodes, out_nodes, bias)
 
 
 def Flatten(x):
@@ -128,7 +119,7 @@ def getConv2dFlattenShape(image_height, image_width, conv2d_layer, pool=2):
 
     # calculate the output shape for Flatten layer
     # Andrew Ng's formula without dilation -> out = (f + 2p - (k-1))/s) + 1
-    # with dilation out = ((f + 2p - d * ((k-1) - 1)) / s)  + 1
+    # with dilation, out = ((f + 2p - d * ((k-1) - 1)) / s)  + 1
     out_height = np.floor(
         (image_height + 2 * padding[0] - dilation[0] * (kernel_size[0] - 1) - 1) / stride[0] + 1)
     out_width = np.floor(
@@ -144,7 +135,6 @@ def getConv2dFlattenShape(image_height, image_width, conv2d_layer, pool=2):
 # In this section, I provide code for typical metrics used during training
 # NOTE: In this version, there is no provision to add your own metric!
 # --------------------------------------------------------------------------------------
-
 
 def epsilon():
     return torch.tensor(1e-7)
@@ -162,10 +152,11 @@ def accuracy(logits, labels):
     """
     if logits.size()[1] == 1:
         # binary classification case (just 2 classes)
+        # predict any value > 0.5 -> 1 else 0
         # predicted = torch.round(logits.data).reshape(-1)
-        # any value > 0.5 -> 1 else 0
         predicted = logits.ge(0.5).view(-1)
     else:
+        # for multi-class classification, get index of max value
         vals, predicted = torch.max(logits.data, 1)
 
     total_count = labels.size(0)
@@ -342,11 +333,9 @@ METRICS_MAP = {
 
 
 # -------------------------------------------------------------------------------------
-# helper class to implement early stopping
-# based on Bjarten's implementation (@see: https://github.com/Bjarten/early-stopping-pytorch/blob/master/pytorchtools
-# .py)
+# helper class to implement early stopping (# based on Bjarten's implementation)
+# (@see: https://github.com/Bjarten/early-stopping-pytorch/blob/master/pytorchtools.py)
 # -------------------------------------------------------------------------------------
-
 
 class EarlyStopping:
     """Early stops the training if monitored metric (usually validation loss) doesn't improve 
@@ -1078,14 +1067,6 @@ def save_model(model, model_save_name, model_save_dir=os.path.join('.', 'model_s
     """
 
     # some checks
-    # model_save_path = pathlib.Path(model_save_name)
-
-    # # check if I have an extension in model_save_name
-    # if len(model_save_path.suffix) == 0:
-    #     # no extension -- add .pyt as default extension
-    #     model_save_path = model_save_path.with_suffix('.pyt')
-
-    # ----------- old code ----------------------------
     if not model_save_name.endswith('.pt'):
         model_save_name = model_save_name + '.pt'
 
@@ -1105,26 +1086,6 @@ def save_model(model, model_save_name, model_save_dir=os.path.join('.', 'model_s
             raise err
 
     model_save_path = os.path.join(model_save_dir, model_save_name)
-
-    # # only file name specified e.g. pyt_model.pt. We'll use model_save_dir to save
-    # if not os.path.exists(model_save_dir):
-    #     # check if save_dir exists, else create it
-    #     try:
-    #         os.mkdir(model_save_dir)
-    #     except OSError as err:
-    #         print("Unable to create folder {} to save Pytorch model. Can't continue!".format(model_save_dir))
-    #         raise err
-    # model_save_path = os.path.join(model_save_dir, model_save_name)
-    # else:
-    #     # user passed in complete path e.g. './save_states/kr_model.h5'
-    #     if not os.path.exists(model_save_dir):
-    #         try:
-    #             os.mkdir(model_save_dir)
-    #         except OSError as err:
-    #             print("Unable to create folder {} to save Pytorch model. Can't continue!".format(model_save_dir))
-    #             raise err
-
-    #     model_save_path = model_save_name
 
     torch.save(model, model_save_path)
     print(f'Pytorch model saved to {model_save_path}')
@@ -1261,8 +1222,8 @@ def show_plots(history, metric=None, plot_title=None, fig_size=None):
         sns.set_style(
             {"font.sans-serif": ["SF UI Text", "Arial", "Calibri", "DejaVu Sans"]})
 
-        f, ax = plt.subplots(nrows=1, ncols=col_count, figsize=(
-            (16, 5) if fig_size is None else fig_size))
+        f, ax = plt.subplots(nrows=1, ncols=col_count,
+                             figsize=((16, 5) if fig_size is None else fig_size))
         axs = ax[0] if col_count == 2 else ax
 
         # plot the losses
@@ -1327,25 +1288,23 @@ def plot_confusion_matrix(cm, class_names=None, title="Confusion Matrix", cmap=p
 class PytkModule(nn.Module):
     """
     A class that you can inherit from to define your project's model
-    Inheriting from this class provides a Keras-like interface for training model, evaluating model performance
-    and for generating predictions.
+    Inheriting from this class provides a Keras-like interface for training model, evaluating model's 
+    performance and for generating predictions.
         - As usual, you must override the constructor and the forward() method in your derived class.
         - You may provide a compile() function to set loss, optimizer and metrics at one location, else
           you will have to provide these as parameters to the fit(), evaluate() calls
-    This class provides the following convenience methods that call functions defined above
-    You call this class's functions with the same parameters, except model, which is passed as 'self'
-       - compile(loss, optimizer, metrics=None) - keras compile() like function. Sets the loss function,
-            optimizer and metrics (if any) to use during testing. Note that loss is always measured.
+    This class provides the following convenience methods: 
+       - compile(loss, optimizer, metrics=None) - Keras-like compile() function. Sets the loss function,
+            optimizer and metrics (if any) to use during testing. 
        - fit() - trains the model on numpy arrays (X = data & y = labels). 
        - fit_dataset() - trains model on torch.utils.data.Dataset instance. 
        - evaluate() - evaluate on numpy arrays (X & y)
        - evaluate_dataset() - evaluate on torch.utils.data.Dataset
        - predict() - generates class predictions
-       - save() - same as save_model(). Saved model's state to disk
+       - predict_dataset() - returns labels & predictions from dataset
+       - save() - saves model's state to disk.
+       - load() - loads the model's state from file on disk.
        - summary() - provides a Keras like summary of model
-       NOTE:
-       - a load() function, to load model's state from disk is not implemented, use stand-alone load_model() 
-         function instead
     """
 
     def __init__(self):
@@ -1355,6 +1314,15 @@ class PytkModule(nn.Module):
         self.metrics_list = None
 
     def compile(self, loss, optimizer, metrics=None):
+        """
+        this function sets loss, optimizer and metrics attributes of the module
+        @params:
+            - loss: instance of loss function from torch.nn package (e.g. torch.nn.CrossEntroptLoss())
+            - optimizer: instance of an optimizer from torch.optim package (e.g. torch.optim.Adam(...))
+            - metrics (optional): list of metrics that should be tracked during training. Metrics are
+                specified in a list e.g. ['acc', 'f1-score']. The 'loss' metric is always tracked,
+                and you don't have to explicitly specify this in the list of metrics to track.
+        """
         assert loss is not None, "ERROR: loss function must be a valid loss function!"
         assert optimizer is not None, "ERROR: optimizer must be a valid optimizer function"
         self.loss_fn = loss
@@ -1428,6 +1396,52 @@ class PytkModule(nn.Module):
     def fit(self, X_train, y_train, loss_fn=None, optimizer=None, validation_split=0.0, validation_data=None,
             lr_scheduler=None, epochs=25, batch_size=64, metrics=None, shuffle=True, num_workers=0,
             early_stopping=None, verbose=2, report_interval=1):
+        """ 
+        train model on Numpy arrays (X_train, y_train)
+        @params:
+            - X_train: Numpy array of features from training set
+            - y_train: Numpy array of labels 
+            - loss_fn (optional, default=None): instance of one of the loss functions defined in Pytorch
+              You could pass loss functions as a parameter to this function or pre-set it using the compile function.
+              Value passed into this parameter takes precedence over value set in compile(...) call
+            - optimizer (optional, default=None): instance of any optimizer defined by Pytorch
+              You could pass optimizer as a parameter to this function or pre-set it using the compile function.
+              Value passed into this parameter takes precedence over value set in compile(...) call
+            - validation_split: Float between 0 and 1. Fraction of the training data to be used as validation data. 
+              The model will set apart this fraction of the training data, will not train on it, and will 
+              evaluate the loss and any model metrics on this data at the end of each epoch.
+            - validation_data (optional, default=None) - a tuple of validation data comprising Numpy arrays
+              of features & labels (e.g. (X_val, y_val)) - columns of X_val & y_val should match those of X_train, y_train
+              If you do not include validation_data, the model is trained on just the training data (X_train, y_train)
+            - lr_scheduler (optional, default=NOne) - learning rate scheduler, used to step the learning rate across
+              epochs as model trains. Instance of any scheduler defined in torch.optim.lr_scheduler package
+            - epochs (optional, default=25): no of epochs for which model is trained
+            - batch_size (optional, default=64): batch size to use
+            - metrics (optional, default=None): list of metrics to measure across epochs as model trains. 
+              Following metrics are supported (each identified by a key)
+                'acc' or 'accuracy' - accuracy
+                'prec' or 'precision' - precision
+                'rec' or 'recall' - recall
+                'f1' or 'f1_score' - f1_score
+                'roc_auc' - roc_auc_score
+                'mse' - mean squared error
+                'rmse' - root mean squared error
+               metrics are provided as a list (e.g. ['acc','f1'])
+               Loss is ALWAYS measures, even if you don't provide a list of metrics
+               NOTE: if validation_data is provided, each metric is also measured for the validaton data
+            - num_workers: no of worker threads to use to load datasets
+            - early_stopping: instance of EarlyStopping class if early stopping is to be used (default: None)
+            - verbose (integer = 0,1 or 2, default=0): sets verbosity level of progress reported during training
+                verbose=2: max verbose output, displays metrics batchwise
+                verbose=1: medium verbosity, displays batch progress, but metrics only at end of epoch
+                verbose=0: least verbose, no output is displayed until epoch completes.
+            - report_interval (default=1): interval at which training progress is reported.
+        @returns:
+           - history object (which is a map of metrics measured across epochs).
+             Each metric list is accessed as hist[metric_name] (e.g. hist['loss'] or hist['acc'])
+             If validation_dataset is also provided, it will return corresponding metrics for validation dataset too
+             (e.g. hist['val_acc'], hist['val_loss'])
+        """
 
         assert ((X_train is not None) and (isinstance(X_train, np.ndarray))), \
             "Parameter error: X_train is None or is NOT an instance of np.ndarray"

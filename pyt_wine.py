@@ -9,7 +9,9 @@ Use at your own risk!! I am not responsible if your CPU or GPU gets fried :D
 import warnings
 warnings.filterwarnings('ignore')
 
-import os, sys, random
+import os
+import sys
+import random
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -18,7 +20,7 @@ import seaborn as sns
 np.set_printoptions(precision=6, linewidth=1024, suppress=True)
 plt.style.use('seaborn')
 sns.set_style('darkgrid')
-sns.set_context('notebook',font_scale=1.10)
+sns.set_context('notebook', font_scale=1.10)
 
 # Pytorch imports
 import torch
@@ -42,6 +44,7 @@ torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 torch.backends.cudnn.enabled = False
 
+
 def load_data(val_split=0.20, test_split=0.10):
     from sklearn.datasets import load_wine
     from sklearn.model_selection import train_test_split
@@ -53,7 +56,7 @@ def load_data(val_split=0.20, test_split=0.10):
     # split into train/test sets
     X_train, X_val, y_train, y_val = \
         train_test_split(X, y, test_size=val_split, random_state=seed)
-    
+
     # scale data
     ss = StandardScaler()
     X_train = ss.fit_transform(X_train)
@@ -62,10 +65,12 @@ def load_data(val_split=0.20, test_split=0.10):
     # split val dataset into eval & test setssets
     X_val, X_test, y_val, y_test = \
         train_test_split(X_val, y_val, test_size=test_split, random_state=seed)
-    
+
     return (X_train, y_train), (X_val, y_val), (X_test, y_test)
 
 # our ANN
+
+
 class WineNet(pytk.PytkModule):
     def __init__(self, inp_size, hidden1, num_classes):
         super(WineNet, self).__init__()
@@ -81,11 +86,13 @@ class WineNet(pytk.PytkModule):
         x = self.out(x)
         return x
 
+
 DO_TRAINING = True
 DO_TESTING = True
 DO_PREDICTION = True
 MODEL_SAVE_PATH = './model_states/pyt_wine_ann.pyt'
 NUM_EPOCHS, BATCH_SIZE, LEARNING_RATE, L2_REG = 75, 16, 0.001, 0.0005
+
 
 def build_model():
     model = WineNet(13, 20, 3)
@@ -97,10 +104,12 @@ def build_model():
     model.compile(loss=criterion, optimizer=optimizer, metrics=['acc'])
     return model
 
+
 def main():
 
     (X_train, y_train), (X_val, y_val), (X_test, y_test) = load_data()
-    print(X_train.shape, y_train.shape, X_val.shape, y_val.shape, X_test.shape, y_test.shape)
+    print(X_train.shape, y_train.shape, X_val.shape,
+          y_val.shape, X_test.shape, y_test.shape)
 
     if DO_TRAINING:
         print('Building model...')
@@ -109,7 +118,8 @@ def main():
 
         # train model
         print('Training model...')
-        hist = model.fit(X_train, y_train, validation_data=(X_val, y_val), epochs=NUM_EPOCHS, batch_size=BATCH_SIZE)
+        hist = model.fit(X_train, y_train, validation_data=(X_val, y_val),
+                         epochs=NUM_EPOCHS, batch_size=BATCH_SIZE)
         pytk.show_plots(hist, metric='acc', plot_title='Training metrics')
 
         # evaluate model performance on train/eval & test datasets
@@ -118,7 +128,7 @@ def main():
         print('  Training dataset  -> loss: %.4f - acc: %.4f' % (loss, acc))
         loss, acc = model.evaluate(X_val, y_val)
         print('  Cross-val dataset -> loss: %.4f - acc: %.4f' % (loss, acc))
-        oss, acc = model.evaluate(X_test, y_test)
+        loss, acc = model.evaluate(X_test, y_test)
         print('  Test dataset      -> loss: %.4f - acc: %.4f' % (loss, acc))
 
         # save model state
@@ -137,7 +147,7 @@ def main():
         print('  Training dataset  -> loss: %.4f - acc: %.4f' % (loss, acc))
         loss, acc = model.evaluate(X_val, y_val)
         print('  Cross-val dataset -> loss: %.4f - acc: %.4f' % (loss, acc))
-        oss, acc = model.evaluate(X_test, y_test)
+        loss, acc = model.evaluate(X_test, y_test)
         print('  Test dataset      -> loss: %.4f - acc: %.4f' % (loss, acc))
 
         y_preds = np.argmax(model.predict(X_test), axis=1)
@@ -146,17 +156,14 @@ def main():
         print(f'Sample predictions: {y_preds}')
         print(f'We got {(y_preds == y_test).sum()}/{len(y_test)} correct!!')
 
+
 if __name__ == "__main__":
     main()
 
 # --------------------------------------------------
-# Results: 
+# Results:
 #   MLP with epochs=75, batch-size=16, LR=0.001
 #       Training  -> acc: 97.10%
 #       Cross-val -> acc: 100%
 #       Testing   -> acc: 100%
 # --------------------------------------------------
-
-
-
-
