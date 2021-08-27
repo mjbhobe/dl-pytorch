@@ -42,6 +42,7 @@ torch.manual_seed(seed)
 
 def get_data():
     """ generate simple arrays """
+    """ NOTE: relationship is y = 2 * x - 1"""
     X = np.array([-1.0, 0.0, 1.0, 2.0, 3.0, 4.0], dtype=float)
     X = X.reshape(-1, 1)
     y = np.array([-3.0, -1.0, 1.0, 3.0, 5.0, 7.0], dtype=float)
@@ -70,7 +71,8 @@ def main():
     # build our network
     net = Net()
     print('Before training: ')
-    print('   Weight: %.3f bias: %.3f' % (net.fc1.weight.item(), net.fc1.bias.item()))
+    print('   Weight: %.3f bias: %.3f' %
+          (net.fc1.weight.item(), net.fc1.bias.item()))
     criterion = nn.MSELoss()
     optimizer = optim.SGD(net.parameters(), lr=0.001)
     net.compile(loss=criterion, optimizer=optimizer,

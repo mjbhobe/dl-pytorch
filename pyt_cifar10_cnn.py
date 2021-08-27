@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-pyt_fashion_mnist_dnn.py: multiclass classification of Zolando's Fashion MNIST dataset.
+pyt_cifar10_dnn.py: multiclass classification of the CIFAR10 image library.
 
 @author: Manish Bhobe
 My experiments with Python, Machine Learning & Deep Learning.
@@ -54,24 +54,34 @@ def load_data():
     load the data using datasets API. We also split the test_dataset into 
     cross-val/test datasets using 80:20 ration
     """
-    mean, std = 0.5, 0.5
-    transformations = transforms.Compose([
+    from torch.utils.data.sampler import SubsetRandomSampler
+
+    means, stds = [0.5, 0.5, 0.5], [0.5, 0.5, 0.5]
+    train_xforms = transforms.Compose([
+        transforms.RandomHorizontalFlip(),
+        transforms.RandomRotation(20),
         transforms.ToTensor(),
-        transforms.Normalize(mean, std)
+        transforms.Normalize(means, stds)
+    ])
+    val_test_xforms = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize(means, stds)
     ])
 
-    train_dataset = datasets.FashionMNIST(
-        root='./data', train=True, download=True, transform=transformations)
+    train_dataset = datasets.CIFAR10(
+        root='./data', train=True, download=True, transform=train_xforms)
 
     print("No of training records: %d" % len(train_dataset))
 
-    test_dataset = datasets.FashionMNIST(
-        './data', train=False, download=True, transform=transformations)
+    test_dataset = datasets.CIFAR10(
+        './data', train=False, download=True, transform=val_test_xforms)
     print("No of test records: %d" % len(test_dataset))
 
     # lets split the test dataset into val_dataset & test_dataset -> 8000:2000 records
-    val_dataset, test_dataset = torch.utils.data.random_split(test_dataset, [
-                                                              8000, 2000])
+    val_size = int(0.8 * len(test_dataset))
+    test_size = len(test_dataset) - val_size
+    val_dataset, test_dataset = torch.utils.data.random_split(
+        test_dataset, [val_size, test_size])
     print("No of cross-val records: %d" % len(val_dataset))
     print("No of test records: %d" % len(test_dataset))
 
@@ -88,17 +98,17 @@ def display_sample(sample_images, sample_labels, grid_shape=(10, 10), plot_title
     assert sample_images.shape[0] == num_rows * num_cols
 
     # a dict to help encode/decode the labels
-    FASHION_LABELS = {
-        0: 'T-shirt/top',
-        1: 'Trouser',
-        2: 'Pullover',
-        3: 'Dress',
-        4: 'Coat',
-        5: 'Sandal',
-        6: 'Shirt',
-        7: 'Sneaker',
-        8: 'Bag',
-        9: 'Ankle boot',
+    CIFAR10_LABELS = {
+        0: 'Plane',
+        1: 'Auto',
+        2: 'Bird',
+        3: 'Cat',
+        4: 'Deer',
+        5: 'Dog',
+        6: 'Frog',
+        7: 'Horse',
+        8: 'Ship',
+        9: 'Truck',
     }
 
     with sns.axes_style("whitegrid"):
@@ -106,40 +116,42 @@ def display_sample(sample_images, sample_labels, grid_shape=(10, 10), plot_title
         sns.set_style(
             {"font.sans-serif": ["SF UI Text", "Calibri", "Arial", "DejaVu Sans", "sans"]})
 
-        f, ax = plt.subplots(num_rows, num_cols, figsize=(14, 10),
+        f, ax = plt.subplots(num_rows, num_cols, figsize=(8, 8),
                              gridspec_kw={"wspace": 0.05, "hspace": 0.35}, squeeze=True)  # 0.03, 0.25
         # fig = ax[0].get_figure()
         f.tight_layout()
         f.subplots_adjust(top=0.90)  # 0.93
+        means, stds = np.array([0.5, 0.5, 0.5]), np.array([0.5, 0.5, 0.5])
 
         for r in range(num_rows):
             for c in range(num_cols):
                 image_index = r * num_cols + c
                 ax[r, c].axis("off")
                 # de-normalize image
-                sample_images[image_index] = \
-                    (sample_images[image_index] * 0.5) / 0.5
+                sample_image = sample_images[image_index].transpose((1, 2, 0))
+                sample_image = (sample_image * stds) + means
 
                 # show selected image
-                ax[r, c].imshow(sample_images[image_index].squeeze(),
+                ax[r, c].imshow(sample_image.squeeze(),
                                 cmap="Greys", interpolation='nearest')
 
                 if sample_predictions is None:
                     # show the text label as image title
                     title = ax[r, c].set_title(
-                        f"{FASHION_LABELS[sample_labels[image_index]]}")
+                        f"{CIFAR10_LABELS[sample_labels[image_index]]}")
                 else:
                     pred_matches_actual = (
                         sample_labels[image_index] == sample_predictions[image_index])
                     # show prediction from model as image title
-                    title = '%s' % FASHION_LABELS[sample_predictions[image_index]]
+
                     if pred_matches_actual:
+                        title = '%s' % CIFAR10_LABELS[sample_predictions[image_index]]
                         # if matches, title color is green
                         title_color = 'g'
                     else:
                         # else title color is red
-                        # title = '%s/%s' % (FASHION_LABELS[sample_labels[image_index]],
-                        #                    FASHION_LABELS[sample_predictions[image_index]])
+                        title = '%s/%s' % (CIFAR10_LABELS[sample_labels[image_index]],
+                                           CIFAR10_LABELS[sample_predictions[image_index]])
                         title_color = 'r'
 
                     # but show the prediction in the title
@@ -154,49 +166,30 @@ def display_sample(sample_images, sample_labels, grid_shape=(10, 10), plot_title
 
 
 # some globals
-IMAGE_HEIGHT, IMAGE_WIDTH, NUM_CHANNELS, NUM_CLASSES = 28, 28, 1, 10
-
-
-# define our network using Linear layers only
-class FMNISTNet(pytk.PytkModule):
-    def __init__(self):
-        super(FMNISTNet, self).__init__()
-        self.fc1 = pytk.Linear(IMAGE_HEIGHT * IMAGE_WIDTH * NUM_CHANNELS, 256)
-        self.fc2 = pytk.Linear(256, 128)
-        self.out = pytk.Linear(128, NUM_CLASSES)
-
-    def forward(self, x):
-        # flatten input (for DNN)
-        x = pytk.Flatten(x)
-        x = F.relu(self.fc1(x))
-        x = F.dropout(x, p=0.20, training=self.training)
-        x = F.relu(self.fc2(x))
-        x = F.dropout(x, p=0.20, training=self.training)
-        # NOTE: nn.CrossEntropyLoss() includes a logsoftmax call, which applies a softmax
-        # function to outputs. So, don't apply one yourself!
-        # x = F.softmax(self.out(x), dim=1)  # -- don't do this!
-        x = self.out(x)
-        return x
+IMAGE_HEIGHT, IMAGE_WIDTH, NUM_CHANNELS, NUM_CLASSES = 32, 32, 3, 10
 
 
 # if you prefer to use Convolutional Neural Network, use the following model definition
-class FMNISTConvNet(pytk.PytkModule):
+class Cifar10ConvNet(pytk.PytkModule):
     def __init__(self):
-        super(FMNISTConvNet, self).__init__()
-        self.conv1 = pytk.Conv2d(1, 128, kernel_size=3)
-        self.conv2 = pytk.Conv2d(128, 64, kernel_size=3)
-        self.fc1 = pytk.Linear(7 * 7 * 64, 512)
+        super(Cifar10ConvNet, self).__init__()
+        self.conv1 = pytk.Conv2d(3, 32, 3, padding=1)
+        self.conv2 = pytk.Conv2d(32, 64, 3, padding=1)
+        self.conv3 = pytk.Conv2d(64, 128, 3, padding=1)
+        self.fc1 = pytk.Linear(4 * 4 * 128, 512)
         self.out = pytk.Linear(512, NUM_CLASSES)
 
     def forward(self, x):
         x = F.max_pool2d(F.relu(self.conv1(x)), 2)
-        x = F.dropout(x, p=0.20, training=self.training)
+        #x = F.dropout(x, p=0.20, training=self.training)
         x = F.max_pool2d(F.relu(self.conv2(x)), 2)
-        x = F.dropout(x, p=0.10, training=self.training)
+        #x = F.dropout(x, p=0.10, training=self.training)
+        x = F.max_pool2d(F.relu(self.conv3(x)), 2)
         # flatten input (for DNN)
         x = pytk.Flatten(x)
+        x = F.dropout(x, p=0.30, training=self.training)
         x = F.relu(self.fc1(x))
-        x = F.dropout(x, p=0.20, training=self.training)
+        x = F.dropout(x, p=0.30, training=self.training)
         # NOTE: nn.CrossEntropyLoss() includes a logsoftmax call, which applies a softmax
         # function to outputs. So, don't apply one yourself!
         # x = F.softmax(self.out(x), dim=1)  # -- don't do this!
@@ -204,8 +197,8 @@ class FMNISTConvNet(pytk.PytkModule):
         return x
 
 
-def build_model(use_cnn=False):
-    model = FMNISTConvNet() if use_cnn else FMNISTNet()
+def build_model():
+    model = Cifar10ConvNet()
     # define the loss function & optimizer that model should
     loss_fn = nn.CrossEntropyLoss()
     optimizer = optim.Adam(params=model.parameters(),
@@ -214,15 +207,13 @@ def build_model(use_cnn=False):
     return model
 
 
-DO_TRAINING = True
+DO_TRAINING = False
 DO_PREDICTION = True
 SHOW_SAMPLE = True
-USE_CNN = False  # if False, will use an ANN
 
-MODEL_SAVE_NAME = 'pyt_mnist_cnn.pyt' if USE_CNN else 'pyt_mnist_dnn.pyt'
+MODEL_SAVE_NAME = 'pyt_cifar10_cnn.pyt'
 MODEL_SAVE_PATH = os.path.join('.', 'model_states', MODEL_SAVE_NAME)
-NUM_EPOCHS, BATCH_SIZE, LEARNING_RATE, L2_REG = (
-    25 if USE_CNN else 50), 64, 0.001, 0.0005
+NUM_EPOCHS, BATCH_SIZE, LEARNING_RATE, L2_REG = 25, 64, 0.001, 0.0005
 
 
 def main():
@@ -232,16 +223,15 @@ def main():
     if SHOW_SAMPLE:
         # display sample from test dataset
         print('Displaying sample from train dataset...')
-        trainloader = torch.utils.data.DataLoader(
+        testloader = torch.utils.data.DataLoader(
             test_dataset, batch_size=64, shuffle=True)
-        data_iter = iter(trainloader)
+        data_iter = iter(testloader)
         images, labels = data_iter.next()  # fetch first batch of 64 images & labels
         display_sample(images.cpu().numpy(), labels.cpu().numpy(),
                        grid_shape=(8, 8), plot_title='Sample Images')
 
     if DO_TRAINING:
-        print(f'Using {"CNN" if USE_CNN else "ANN"} model...')
-        model = build_model(USE_CNN)
+        model = build_model()
         # display Keras like summary
         model.summary((NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH))
 
@@ -265,10 +255,19 @@ def main():
 
     if DO_PREDICTION:
         # load model state from .pt file
-        model = build_model(USE_CNN)
+        model = build_model()
         model.load(MODEL_SAVE_PATH)
         # model = pytk.load_model(MODEL_SAVE_PATH)
         model.summary((NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH))
+
+        # evaluate model performance on train/eval & test datasets
+        print('Evaluating model performance...')
+        loss, acc = model.evaluate_dataset(train_dataset)
+        print('  Training dataset  -> loss: %.4f - acc: %.4f' % (loss, acc))
+        loss, acc = model.evaluate_dataset(val_dataset)
+        print('  Cross-val dataset -> loss: %.4f - acc: %.4f' % (loss, acc))
+        loss, acc = model.evaluate_dataset(test_dataset)
+        print('  Test dataset      -> loss: %.4f - acc: %.4f' % (loss, acc))
 
         y_pred, y_true = model.predict_dataset(test_dataset)
         y_pred = np.argmax(y_pred, axis=1)
@@ -279,9 +278,9 @@ def main():
 
         # display sample from test dataset
         print('Displaying sample predictions...')
-        trainloader = torch.utils.data.DataLoader(
+        test_loader = torch.utils.data.DataLoader(
             test_dataset, batch_size=64, shuffle=True)
-        data_iter = iter(trainloader)
+        data_iter = iter(test_loader)
         images, labels = data_iter.next()  # fetch a batch of 64 random images
         preds = np.argmax(model.predict(images), axis=1)
         display_sample(images.cpu().numpy(), labels.cpu().numpy(), sample_predictions=preds,
@@ -291,16 +290,11 @@ def main():
 if __name__ == "__main__":
     main()
 
-# ---------------------------------------------------------
+# ------------------------------------------------------------------
 # Results:
-#   ANN with epochs=50, batch-size=32, LR=0.001
-#       Training  -> acc: 90.42%
-#       Cross-val -> acc: 87.78%
-#       Testing   -> acc: 87.70%
 #   CNN with epochs=25, batch-size=32, LR=0.001
-#       Training  -> acc: 95.34%
-#       Cross-val -> acc: 92.01%
-#       Testing   -> acc: 92.09%
-# Clearly the CNN performs better than the MLP
-# However, both models are over-fitting
-# --------------------------------------------------
+#       Training  -> acc: 79.40%
+#       Cross-val -> acc: 76.26%
+#       Testing   -> acc: 76.81%
+# Model is slightly over-fitting, overall performance could be much better!
+# -------------------------------------------------------------------

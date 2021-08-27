@@ -374,7 +374,7 @@ class EarlyStopping:
         self.best_epoch = 0
         assert os.path.exists(
             checkpoint_file_path), f"Error: {checkpoint_file_path} does not appear to be a valid path!"
-        self.checkpoint_file = os.path.join(
+        self.checkpoint_file_path = os.path.join(
             checkpoint_file_path, 'checkpoint.pt')
         self.metrics_log = []
 
@@ -424,7 +424,7 @@ class EarlyStopping:
         mod = model
         if isinstance(model, PytkModuleWrapper):
             mod = model.model
-        torch.save(mod.state_dict(), self.checkpoint_file)
+        torch.save(mod.state_dict(), self.checkpoint_file_path)
 
 
 # -------------------------------------------------------------------------------------
@@ -1531,8 +1531,6 @@ class PytkModule(nn.Module):
     def load(self, model_save_path):
         load_model_state(self, model_save_path)
 
-    # NOTE: load() is not implemented. Use standalone load_model() function instead
-
     def summary(self, input_shape):
         if torch.cuda.is_available():
             summary(self.cuda(), input_shape)
@@ -1672,8 +1670,6 @@ class PytkModuleWrapper():
 
     def load(self, model_save_path):
         load_model_state(self.model, model_save_path)
-
-    # NOTE: load() is not implemented
 
     def summary(self, input_shape):
         if torch.cuda.is_available():

@@ -11,6 +11,7 @@ import warnings
 warnings.filterwarnings('ignore')
 
 import random
+import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -20,11 +21,14 @@ from sklearn.model_selection import train_test_split
 from sklearn.utils import shuffle
 from sklearn.metrics import r2_score
 
+# limit loads of debug info from Tensorflow
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
 # tweaks for libraries
 np.set_printoptions(precision=6, linewidth=1024, suppress=True)
 plt.style.use('seaborn')
 sns.set_style('darkgrid')
-sns.set_context('notebook',font_scale=1.10)
+sns.set_context('notebook', font_scale=1.10)
 
 # Pytorch imports
 import torch
@@ -38,7 +42,7 @@ import pytorch_toolkit as pytk
 seed = 123
 random.seed(seed)
 np.random.seed(seed)
-torch.manual_seed(seed);
+torch.manual_seed(seed)
 
 NUM_EPOCHS = 250
 BATCH_SIZE = 5
@@ -49,6 +53,8 @@ RUN_KERAS = True
 # ---------------------------------------------------------------------------
 # Example:1 - with synthesized data
 # ---------------------------------------------------------------------------
+
+
 def get_data(test_split=0.20, shuffle_it=True):
 
     df = pd.read_csv('./csv_files/salary_data.csv')
@@ -74,6 +80,8 @@ def get_data(test_split=0.20, shuffle_it=True):
     return (X_train, y_train), (X_test, y_test)
 
 # our regression model
+
+
 class Net(pytk.PytkModule):
     def __init__(self, in_features, out_features):
         super(Net, self).__init__()
@@ -82,6 +90,7 @@ class Net(pytk.PytkModule):
     def forward(self, inp):
         out = self.fc1(inp)
         return out
+
 
 def main():
     # read Salary data csv & return X & y
@@ -105,7 +114,9 @@ def main():
     net.compile(loss=criterion, optimizer=optimizer)
     print(net)
 
-    hist = net.fit(X_train, y_train, epochs=NUM_EPOCHS, batch_size=BATCH_SIZE) #, lr_scheduler=scheduler)
+    print('Running Pytorch model (no output)...please wait', flush=True)
+    hist = net.fit(X_train, y_train, epochs=NUM_EPOCHS,
+                   batch_size=BATCH_SIZE, verbose=0)  # , lr_scheduler=scheduler)
     pytk.show_plots(hist)
 
     # run predictions
@@ -113,7 +124,7 @@ def main():
 
     # what is my r2_score?
     r2 = r2_score(y_test, y_pred)
-    print('R2 score: %.3f' % r2) # got 0.974
+    print('R2 score: %.3f' % r2)  # got 0.974
 
     # display plot
     plt.figure(figsize=(8, 6))
@@ -132,7 +143,8 @@ def main():
         lr = LinearRegression()
         lr.fit(X_train, y_train)
         y_pred_skl = lr.predict(X_test)
-        print('sklearn Logistic Regression: r2_score = %.3f' % r2_score(y_test, y_pred_skl))
+        print('sklearn Logistic Regression: r2_score = %.3f' %
+              r2_score(y_test, y_pred_skl))
         print('Pytorch Model: r2_score = %.3f' % r2_score(y_test, y_pred))
 
     if RUN_KERAS:
@@ -151,18 +163,19 @@ def main():
         ])
         opt = SGD(learning_rate=LR)
         kr_model.compile(loss='mse', optimizer=opt)
-        hist = kr_model.fit(X_train, y_train, epochs=NUM_EPOCHS, 
+        print('Running Keras model (no output)...please wait', flush=True)
+        hist = kr_model.fit(X_train, y_train, epochs=NUM_EPOCHS,
                             batch_size=BATCH_SIZE, verbose=0)
         y_pred_k = kr_model.predict(X_test)
         print('Keras model: r2_score = %.3f' % r2_score(y_test, y_pred_k))
+
 
 if __name__ == '__main__':
     main()
 
 # Results:
-# Before training: 
+# Before training:
 #    M = 2, C = 1
 # After training (1000 epochs)
 #    Weight: 1.986 bias: 0.997
 # R2 score: 0.974
-
