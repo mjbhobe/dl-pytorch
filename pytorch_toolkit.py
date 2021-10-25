@@ -1,20 +1,20 @@
 # -*- coding: utf-8 -*-
 """
-pytorch_toolkit.py: 
-    Functions, Classes and Metrics to ease the process of training, evaluating and testing Pytorch models.
-    This module provides a Keras-like API to preclude the need to write boiler-plate code when
-    training your Pytorch models. Convenience functions and classes that wrap those functions
-    have been provided to ease the process of training, evaluating & testing your models.
-    NOTE: these are utility classes/functions to ease the process to training/evaluating & testing ONLY!
+    pytorch_toolkit.py: 
+        Functions, Classes and Metrics to ease the process of training, evaluating and testing Pytorch models.
+        This module provides a Keras-like API to preclude the need to write boiler-plate code when
+        training your Pytorch models. Convenience functions and classes that wrap those functions
+        have been provided to ease the process of training, evaluating & testing your models.
+        NOTE: these are utility classes/functions to ease the process to training/evaluating & testing ONLY!
 
-@author: Manish Bhobe
-This code is shared with MIT license as-is. Feel free to use it, extend it, but please give me 
-some credit as the original author of this code :) & don't hold me responsible if your project blows up!! ;)
+    @author: Manish Bhobe
+    This code is shared with MIT license as-is. Feel free to use it, extend it, but please give me 
+    some credit as the original author of this code :) & don't hold me responsible if your project blows up!! ;)
 
-Usage:
-  - Copy this file into a directory in sys.path
-  - import the file into your code - I use this syntax
-       import pytorch_toolkit as pytk
+    Usage:
+    - Copy this file into a directory in sys.path
+    - import the file into your code - I use this syntax
+        import pytorch_toolkit as pytk
 """
 import warnings
 
@@ -46,9 +46,10 @@ torch.manual_seed(seed)
 if torch.cuda.is_available():
     torch.cuda.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
-    torch.backends.cudnn.enabled = False
+    # torch.backends.cudnn.deterministic = True
+    # torch.backends.cudnn.benchmark = False
+    # torch.backends.cudnn.enabled = False
+
 
 # -----------------------------------------------------------------------------
 # helper function to create various layers of model
@@ -58,13 +59,13 @@ if torch.cuda.is_available():
 def Conv2d(in_channels, out_channels, kernel_size=3, stride=1, padding=1,
            dilation=1, groups=1, bias=True, padding_mode='zeros'):
     """
-    (convenience function)
-    Creates a nn.Conv2d layer, with weights initiated using xavier_uniform initializer
-    and bias, if set, initialized using zeros initializer as is the default in Keras.
-    @params:
-        - same as nn.Conv2d params
-    @returns:
-        - instance of nn.Conv2d layer
+        (convenience function)
+        Creates a nn.Conv2d layer, with weights initiated using xavier_uniform initializer
+        and bias, if set, initialized using zeros initializer as is the default in Keras.
+        @params:
+            - same as nn.Conv2d params
+        @returns:
+            - instance of nn.Conv2d layer
     """
     layer = nn.Conv2d(in_channels, out_channels, kernel_size=kernel_size,
                       stride=stride, padding=padding, dilation=dilation,
@@ -78,14 +79,14 @@ def Conv2d(in_channels, out_channels, kernel_size=3, stride=1, padding=1,
 
 def Linear(in_nodes, out_nodes, bias=True):
     """
-    (convenience function)
-    creates a nn.Linear layer, with weights initiated using xavier_uniform initializer 
-    and bias, if set, initialized using zeros initializer as is the default in Keras.
-    @params:
-      - in_nodes: # of nodes from pervious layer
-      - out_nodes: # of nodes in this layer
-    @returns:
-      - an instance of nn.Linear class 
+        (convenience function)
+        creates a nn.Linear layer, with weights initiated using xavier_uniform initializer 
+        and bias, if set, initialized using zeros initializer as is the default in Keras.
+        @params:
+        - in_nodes: # of nodes from pervious layer
+        - out_nodes: # of nodes in this layer
+        @returns:
+        - an instance of nn.Linear class 
     """
     layer = nn.Linear(in_nodes, out_nodes, bias)
     # @see: https://msdn.microsoft.com/en-us/magazine/mt833293.aspx for example
@@ -97,24 +98,24 @@ def Linear(in_nodes, out_nodes, bias=True):
 
 def Dense(in_nodes, out_nodes, bias=True):
     """
-    another shortcut for Linear(in_nodes, out_nodes)
+        another shortcut for Linear(in_nodes, out_nodes)
     """
     return Linear(in_nodes, out_nodes, bias)
 
 
 def Flatten(x):
     """
-    (convenience function)
-    Flattens out the previous layer. Normally used between Conv2D/MaxPooling2D or LSTM layers
-    and Linear/Dense layers
+        (convenience function)
+        Flattens out the previous layer. Normally used between Conv2D/MaxPooling2D or LSTM layers
+        and Linear/Dense layers
     """
     return x.view(x.shape[0], -1)
 
 
 def getConv2dFlattenShape(image_height, image_width, conv2d_layer, pool=2):
     kernel_size = conv2d_layer.kernel_size
-    stride = conv2d_layer.stride
     padding = conv2d_layer.padding
+    stride = conv2d_layer.stride
     dilation = conv2d_layer.dilation
 
     # calculate the output shape for Flatten layer
@@ -142,17 +143,18 @@ def epsilon():
 
 def accuracy(logits, labels):
     """
-    computes accuracy given logits (computed probabilities) & labels (actual values)
-    @params:
-        - logits: predictions computed from call to model.forward(...) (Tensor)
-        - labels: actual values (labels) (Tensor)
-    @returns:
-        computed accuracy value
-           accuracy = (correct_predictions) / len(labels)
+        computes accuracy given logits (computed probabilities) & labels (actual values)
+        @params:
+            - logits: predictions computed from call to model.forward(...) (Tensor)
+            - labels: actual values (labels) (Tensor)
+        @returns:
+            computed accuracy value
+            accuracy = (correct_predictions) / len(labels)
     """
     if logits.size()[1] == 1:
         # binary classification case (just 2 classes)
         # predict any value > 0.5 -> 1 else 0
+
         # predicted = torch.round(logits.data).reshape(-1)
         predicted = logits.ge(0.5).view(-1)
     else:
@@ -175,19 +177,20 @@ def accuracy(logits, labels):
 
 def precision(logits, labels):
     """
-    computes precision metric (for BINARY classification)
-        - logits: predictions computed from call to model.forward(...) (Tensor)
-        - labels: actual values (labels) (Tensor)
-    NOTE: in this version, we limit precision/recall/f1-score calc to binary classification
-    @returns:    # eps=1e-10
-    # prec = true_positives / (predicted_positives + eps)
-        computed precision value
-           precision = true_positives / (predicted_positives + epsilon)
+        computes precision given logits (computed probabilities) & labels (actual values)
+            - logits: predictions computed from call to model.forward(...) (Tensor)
+            - labels: actual values (labels) (Tensor)
+        @returns:   
+            precision = true_positives / (predicted_positives + epsilon)
+            where predicted positives = true positive + false positives
+        A value close to 1 indicates that there are low incidences of false positives.
+        ML algorithm should aim at getting values of precision closer to 1
     """
     if logits.size()[1] == 1:
         # binary classification case (just 2 classes)
+        # predict any value > 0.5 as 1 else 0
+
         # predicted = torch.round(logits.data).reshape(-1)
-        # any value > 0.5 -> 1 else 0
         predicted = logits.ge(0.5).view(-1)
     else:
         vals, predicted = torch.max(logits.data, 1)
@@ -197,6 +200,9 @@ def precision(logits, labels):
         y_true = labels.reshape(-1).long()  # flatten
     else:
         y_true = labels.long()
+
+    # y_true * y_pred - element-wise multiplication, and will result in 1 only
+    # when y_true == y_pred == 1 - all other cases will give 0
     true_positives = torch.sum(torch.clamp(y_true * y_pred, 0, 1))
     predicted_positives = torch.sum(torch.clamp(y_pred, 0, 1))
 
@@ -206,12 +212,14 @@ def precision(logits, labels):
 
 def recall(logits, labels):
     """
-    computes precision metric (for binary classification)
-        - logits: predictions computed from call to model.forward(...) (Tensor)
-        - labels: actual values (labels) (Tensor)
-    @returns:
-        computed recall value
-           precision = true_positives / (all_positives + epsilon)
+        computes recall (a.k.a. sensitivity) given logits (computed probabilities) & labels (actual values)
+            - logits: predictions computed from call to model.forward(...) (Tensor)
+            - labels: actual values (labels) (Tensor)
+        @returns:
+            recall = true_positives / (all_positives + epsilon)
+            where all positives = true positives + false negatives
+        A value close to 1 indicates that there are low incidences of false negatives.
+        ML algorithm should aim at getting values closer to 1
     """
     if logits.size()[1] == 1:
         # binary classification case (just 2 classes)
@@ -226,6 +234,7 @@ def recall(logits, labels):
         y_true = labels.reshape(-1).long()  # flatten
     else:
         y_true = labels.long()
+
     true_positives = torch.sum(torch.clamp(y_true * y_pred, 0, 1))
     all_positives = torch.sum(torch.clamp(y_true, 0, 1))
 
@@ -235,12 +244,12 @@ def recall(logits, labels):
 
 def f1_score2(logits, labels):
     """
-    computes F1 score (for binary classification)
-        - logits: predictions computed from call to model.forward(...) (Tensor)
-        - labels: actual values (labels) (Tensor)
-    @returns:
-        computed F1 score value
-           f1 = 2*((precision*recall)/(precision+recall))
+        computes F1 score (for binary classification)
+            - logits: predictions computed from call to model.forward(...) (Tensor)
+            - labels: actual values (labels) (Tensor)
+        @returns:
+            f1 = 2*((precision*recall)/(precision+recall))
+            F1 score is harmonic mean of precision & recall
     """
 
     prec = precision(logits, labels)
@@ -251,26 +260,26 @@ def f1_score2(logits, labels):
 
 def roc_auc(logits, labels):
     """
-    computes roc_auc score (for BINARY classification)
-        - logits: predictions computed from call to model.forward(...) (Tensor)
-        - labels: actual values (labels) (Tensor)
-    @returns:
-        computed roc_auc score
+        computes roc_auc score (for BINARY classification)
+            - logits: predictions computed from call to model.forward(...) (Tensor)
+            - labels: actual values (labels) (Tensor)
+        @returns:
+            computed roc_auc score
     """
     _, predicted = torch.max(logits.data, 1)
     y_true = labels.detach().numpy()
     y_pred = predicted.detach().numpy()
     rcac = roc_auc_score(y_true, y_pred)
-    return rcac.detach().numpy()
+    return rcac  # .detach().numpy()
 
 
 def mse(predictions, actuals):
     """
-    computes mean-squared-error
-        - predictions: predictions computed from call to model.forward(...) (Tensor)
-        - actuals: actual values (labels) (Tensor)
-    @returns:
-        computed mse = sum((actuals - predictions)**2) / actuals.size(0)
+        computes mean-squared-error
+            - predictions: predictions computed from call to model.forward(...) (Tensor)
+            - actuals: actual values (labels) (Tensor)
+        @returns:
+            computed mse = sum((actuals - predictions)**2) / actuals.size(0)
     """
     diff = actuals - predictions
     mse_err = torch.sum(diff * diff) / (diff.numel() + epsilon())
@@ -279,11 +288,11 @@ def mse(predictions, actuals):
 
 def rmse(predictions, actuals):
     """
-    computes root-mean-squared-error
-        - predictions: predictions computed from call to model.forward(...) (Tensor)
-        - actuals: actual values (labels) (Tensor)
-    @returns:
-        computed rmse = sqrt(mse(predictions, actuals))
+        computes root-mean-squared-error
+            - predictions: predictions computed from call to model.forward(...) (Tensor)
+            - actuals: actual values (labels) (Tensor)
+        @returns:
+            computed rmse = sqrt(mse(predictions, actuals))
     """
     rmse_err = torch.sqrt(torch.tensor(
         mse(predictions, actuals), dtype=torch.float32))
@@ -292,11 +301,11 @@ def rmse(predictions, actuals):
 
 def mae(predictions, actuals):
     """
-    computes mean absolute error
-        - predictions: predictions computed from call to model.forward(...) (Tensor)
-        - actuals: actual values (labels) (Tensor)
-    @returns:
-        computed mae = sum(abs(predictions - actuals)) / actuals.size(0)
+        computes mean absolute error
+            - predictions: predictions computed from call to model.forward(...) (Tensor)
+            - actuals: actual values (labels) (Tensor)
+        @returns:
+            computed mae = sum(abs(predictions - actuals)) / actuals.size(0)
     """
     diff = actuals - predictions
     mae_err = torch.mean(torch.abs(diff))
@@ -305,9 +314,9 @@ def mae(predictions, actuals):
 
 def r2_score(predictions, actuals):
     """
-    computes the r2_score
-    @returns:
-        computed r2_score
+        computes the r2_score
+        @returns:
+            computed r2_score
     """
     SS_res = torch.sum(torch.pow(actuals - predictions, 2))
     SS_tot = torch.sum(torch.pow(actuals - torch.mean(actuals), 2))
@@ -321,6 +330,8 @@ METRICS_MAP = {
     'precision': precision,
     'rec': recall,
     'recall': recall,
+    'sens': recall,
+    'sensitivity': recall,
     'f1': f1_score2,  # f1_score2 to avoid conflict with scklern.metrics.f1_score
     'f1_score': f1_score2,
     'roc_auc': roc_auc,
@@ -338,23 +349,25 @@ METRICS_MAP = {
 # -------------------------------------------------------------------------------------
 
 class EarlyStopping:
-    """Early stops the training if monitored metric (usually validation loss) doesn't improve 
-       after a given patience (or no of epochs)."""
+    """
+        Early stops the training if monitored metric (usually validation loss) doesn't improve 
+       after a given patience (or no of epochs).
+    """
 
     def __init__(self, monitor='val_loss', min_delta=0, patience=5, mode='min', verbose=False,
                  save_best_weights=False, checkpoint_file_path='.'):
         """
-        Args:
-            monitor (str): which metric should be monitored (default: 'val_loss')
-            min_delta (float): Minimum change in the monitored quantity to qualify as an improvement. (default: 0)
-            patience (int): How many epochs to wait until after last validation loss improvement. (default: 5)
-            mode (str): one of {'min','max'} (default='min') In 'min' mode, training will stop when the quantity 
-                monitored has stopped decreasing; in 'max' mode it will stop when the quantity monitored has 
-                stopped increasing;
-            verbose (bool): If True, prints a message for each validation loss improvement. (default: False)
-            save_best_weights (bool): Save state with best weights so far (default: False)
-            checkpoint_file_path (string, optional): directory to which the checkpoint file must be saved
-               (optional, defaults to current directory)
+            Args:
+                monitor (str): which metric should be monitored (default: 'val_loss')
+                min_delta (float): Minimum change in the monitored quantity to qualify as an improvement. (default: 0)
+                patience (int): How many epochs to wait until after last validation loss improvement. (default: 5)
+                mode (str): one of {'min','max'} (default='min') In 'min' mode, training will stop when the quantity 
+                    monitored has stopped decreasing; in 'max' mode it will stop when the quantity monitored has 
+                    stopped increasing;
+                verbose (bool): If True, prints a message for each validation loss improvement. (default: False)
+                save_best_weights (bool): Save state with best weights so far (default: False)
+                checkpoint_file_path (string, optional): directory to which the checkpoint file must be saved
+                (optional, defaults to current directory)
         """
         self.monitor = monitor
         self.min_delta = min_delta
@@ -394,30 +407,26 @@ class EarlyStopping:
             self.metrics_log = []
             self.best_epoch = epoch + 1
             if self.verbose:
-                print(
-                    '   EarlyStopping (log): patience counter reset to 0 at epoch %d where best score of \'%s\' is '
-                    '%.3f' % (
-                        epoch, self.monitor, self.best_score))
+                print(f'   EarlyStopping (log): patience counter reset to 0 at epoch {epoch}' +
+                      f'where best score of \'{self.monitor}\' is {self.best_score:.3f}')
         else:
             self.counter += 1
             if self.verbose:
-                print(
-                    '   EarlyStopping (log): patience counter increased to %d - best_score of \'%s\' is %.3f at epoch '
-                    '%d' % (
-                        self.counter, self.monitor, self.best_score, self.best_epoch))
+                print(f'   EarlyStopping (log): patience counter increased to {self.counter}' +
+                      f' - best_score of \'{self.monitor}\' is {self.best_score:.3f} at' +
+                      f' epoch {self.best_epoch}')
             if self.counter >= self.patience:
                 self.early_stop = True
                 print(
                     '   EarlyStopping: Early stopping training at epoch %d. \'%s\' has not improved for past %d '
-                    'epochs.' % (
-                        epoch, self.monitor, self.patience))
+                    'epochs.' % (epoch, self.monitor, self.patience))
                 print('     - Best score: %.4f at epoch %d. Last %d scores -> %s' % (
                     self.best_score, self.best_epoch, len(self.metrics_log), self.metrics_log))
             else:
                 self.metrics_log.append(curr_metric_val)
 
     def save_checkpoint(self, model, metric_name, curr_metric_val):
-        '''Saves model when validation loss decrease.'''
+        """Saves model when validation loss decrease."""
         if self.verbose:
             print('   EarlyStopping (log): \'%s\' metric has \'improved\' - from %.4f to %.4f. Saving checkpoint...' % (
                 metric_name, self.best_score, curr_metric_val))
@@ -480,8 +489,8 @@ def accumulate_metrics__(metrics, cum_metrics, batch_metrics, validation_dataset
     if metrics is not None:
         for metric in metrics:
             if validation_dataset:
-                cum_metrics['val_%s' %
-                            metric] += batch_metrics['val_%s' % metric]
+                cum_metrics['val_%s' % metric] += \
+                    batch_metrics['val_%s' % metric]
             else:
                 cum_metrics[metric] += batch_metrics[metric]
 
@@ -555,70 +564,71 @@ def create_hist_and_metrics_ds__(metrics, include_val_metrics=True):
     return history, batch_metrics, cum_metrics
 
 
-def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_split=0.0, validation_dataset=None,
-                lr_scheduler=None, epochs=25, batch_size=64, metrics=None, shuffle=True,
-                num_workers=0, early_stopping=None, verbose=2, report_interval=1):
+def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_split=0.0,
+                validation_dataset=None, lr_scheduler=None, epochs=25, batch_size=64,
+                metrics=None, shuffle=True, num_workers=0, early_stopping=None,
+                verbose=2, report_interval=1):
     """
-    Trains model (derived from nn.Module) across epochs using specified loss function,
-    optimizer, validation dataset (if any), learning rate scheduler, epochs and batch size etc.
-    @parms:
-        - model: instance of a model derived from torch.nn.Module class
-        - train_dataset: training dataset derived from torchvision.dataset
-        - loss_fn: loss function to use when training (optional, default=None)
-            if loss_fn == None, then the model class must define an attribute self.loss_fn
-            defined as an instance of a loss function
-        - optimizer: Pytorch optimizer to use during training (instance of any optimizer
-          from the torch.optim package)
-            if optimizer == None, then model must define an attribute self.optimizer, which is 
-            an instance of any optimizer defined in the torch.optim package
-        - validation_split: Float between 0 and 1. Fraction of the training data to be used as validation data. 
-           The model will set apart this fraction of the training data, will not train on it, and will 
-           evaluate the loss and any model metrics on this data at the end of each epoch.
-        - validation_dataset: cross-validation dataset to use during training (optional, default=None)
-            if validation_dataset is not None, then model is cross trained on test dataset & 
-            cross-validation dataset (good practice to always use a cross-validation dataset!)
-            (NOTE: validation_dataset will supercede validation_split if both specified)
-        - lr_scheduler: learning rate scheduler to use during training (optional, default=None)
-            if specified, should be one of the learning rate schedulers (e.g. StepLR) defined
-            in the torch.optim.lr_scheduler package
-        - epochs (int): number of epochs for which the model should be trained (optional, default=25)
-        - batch_size (int): batch size to split the training & cross-validation datasets during 
-          training (optional, default=64). If batch_size = -1, entire dataset size is used as batch size.
-        - metrics (list of strings): metrics to compute (optional, default=None)
-            pass a list of strings from one or more of the following ['acc','prec','rec','f1']
-            when metrics = None, only loss is computed for training set (and validation set, if any)
-            when metrics not None, in addition to loss all specified metrics are computed for training
-            set (and validation set, if specified)
-        - shuffle (boolean, default = True): determines if the training dataset shuould be shuffled between
-            epochs or not. Validation dataset, if provided, is never shuffled. 
-        - num_workers (int, default=0): number of worker threads to use when loading datasets internally using 
-            DataLoader objects.
-        - early_stopping(EarlyStopping, default=None): instance of EarlyStopping class to be passed in if training
-            has to be early-stopped based on parameters used to construct instance of EarlyStopping
-        - verbose (0, 1 or 2, default=0): sets the verbosity level for reporting progress during training
-            verbose=2 - very verbose output, displays batch wise metrics
-            verbose=1 - medium verbose output, displays metrics at end of epoch, but shows incrimenting counter of
-            batches
-            verbose=0 - least verbose output, does NOT display any output until the training dataset (and validation
-            dataset, if any) completes
-        - report_interval (value >= 1 & < num_epochs): interval at which training progress gets updated (e.g. if
-        report_interval=100,
-            training progress is printed every 100th epoch.) Default = 1, meaning status reported at end of each epoch.
-    @returns:
-        - history: dictionary of the loss & accuracy metrics across epochs
-            Metrics are saved by key name (see METRICS_MAP) 
-            Metrics (across epochs) are accessed by key (e.g. hist['loss'] accesses training loss
-            and hist['val_acc'] accesses validation accuracy
-            Validation metrics are available ONLY if validation set is provided during training
+        Trains model (derived from nn.Module) across epochs using specified loss function,
+        optimizer, validation dataset (if any), learning rate scheduler, epochs and batch size etc.
+        @parms:
+            - model: instance of a model derived from torch.nn.Module class
+            - train_dataset: training dataset derived from torchvision.dataset
+            - loss_fn: loss function to use when training (optional, default=None)
+                if loss_fn == None, then the model class must define an attribute self.loss_fn
+                defined as an instance of a loss function
+            - optimizer: Pytorch optimizer to use during training (instance of any optimizer
+            from the torch.optim package)
+                if optimizer == None, then model must define an attribute self.optimizer, which is 
+                an instance of any optimizer defined in the torch.optim package
+            - validation_split: Float between 0 and 1. Fraction of the training data to be used as validation data. 
+            The model will set apart this fraction of the training data, will not train on it, and will 
+            evaluate the loss and any model metrics on this data at the end of each epoch.
+            - validation_dataset: cross-validation dataset to use during training (optional, default=None)
+                if validation_dataset is not None, then model is cross trained on test dataset & 
+                cross-validation dataset (good practice to always use a cross-validation dataset!)
+                (NOTE: validation_dataset will supercede validation_split if both specified)
+            - lr_scheduler: learning rate scheduler to use during training (optional, default=None)
+                if specified, should be one of the learning rate schedulers (e.g. StepLR) defined
+                in the torch.optim.lr_scheduler package
+            - epochs (int): number of epochs for which the model should be trained (optional, default=25)
+            - batch_size (int): batch size to split the training & cross-validation datasets during 
+            training (optional, default=64). If batch_size = -1, entire dataset size is used as batch size.
+            - metrics (list of strings): metrics to compute (optional, default=None)
+                pass a list of strings from one or more of the following ['acc','prec','rec','f1']
+                when metrics = None, only loss is computed for training set (and validation set, if any)
+                when metrics not None, in addition to loss all specified metrics are computed for training
+                set (and validation set, if specified)
+            - shuffle (boolean, default = True): determines if the training dataset shuould be shuffled between
+                epochs or not. Validation dataset, if provided, is never shuffled. 
+            - num_workers (int, default=0): number of worker threads to use when loading datasets internally using 
+                DataLoader objects.
+            - early_stopping(EarlyStopping, default=None): instance of EarlyStopping class to be passed in if training
+                has to be early-stopped based on parameters used to construct instance of EarlyStopping
+            - verbose (0, 1 or 2, default=0): sets the verbosity level for reporting progress during training
+                verbose=2 - very verbose output, displays batch wise metrics
+                verbose=1 - medium verbose output, displays metrics at end of epoch, but shows incrimenting counter of
+                batches
+                verbose=0 - least verbose output, does NOT display any output until the training dataset (and validation
+                dataset, if any) completes
+            - report_interval (value >= 1 & < num_epochs): interval at which training progress gets updated (e.g. if
+            report_interval=100,
+                training progress is printed every 100th epoch.) Default = 1, meaning status reported at end of each epoch.
+        @returns:
+            - history: dictionary of the loss & accuracy metrics across epochs
+                Metrics are saved by key name (see METRICS_MAP) 
+                Metrics (across epochs) are accessed by key (e.g. hist['loss'] accesses training loss
+                and hist['val_acc'] accesses validation accuracy
+                Validation metrics are available ONLY if validation set is provided during training
     """
     try:
         # checks for parameters
-        assert isinstance(
-            model, nn.Module), "train_model() works with instances of nn.Module only!"
+        assert isinstance(model, nn.Module), \
+            "train_model() works with instances of nn.Module only!"
         assert isinstance(train_dataset, torch.utils.data.Dataset), \
             "train_dataset must be a subclass of torch.utils.data.Dataset"
-        assert (0.0 <= validation_split <
-                1.0), "validation_split must be a float between (0.0, 1.0]"
+        assert (0.0 <= validation_split < 1.0), \
+            "validation_split must be a float between (0.0, 1.0]"
         if validation_dataset is not None:
             assert isinstance(validation_dataset, torch.utils.data.Dataset), \
                 "validation_dataset must be a subclass of torch.utils.data.Dataset"
@@ -656,7 +666,7 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
 
         # if validation_split is provided by user, then split train_dataset
         if (validation_split > 0.0) and (validation_dataset is None):
-            # NOTE: validation_dataset supercedes validation_split, use validation_split only
+            # NOTE: validation_dataset supersedes validation_split, use validation_split only
             # if validation_dataset is None
             num_recs = len(train_dataset)
             train_count = int((1.0 - validation_split) * num_recs)
@@ -688,7 +698,7 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
         tot_samples = len(train_dataset)
         len_tot_samples = len(str(tot_samples))
 
-        # create data structurs to hold batch metrics, epoch metrics etc.
+        # create data structures to hold batch metrics, epoch metrics etc.
         history, batch_metrics, cum_metrics = \
             create_hist_and_metrics_ds__(
                 metrics, validation_dataset is not None)
@@ -737,7 +747,7 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
                 data = data.cuda() if gpu_available else data.cpu()
                 labels = labels.cuda() if gpu_available else labels.cpu()
 
-                # clear accummulated gradients
+                # clear accumulated gradients
                 optimizer.zero_grad()
                 # make a forward pass
                 logits = model(data)
@@ -765,7 +775,7 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
                 # display incremental progress
                 learning_rates = get_lrates__(optimizer)
 
-                if (verbose == 2):
+                if verbose == 2:
                     if (epoch == 0) or ((epoch + 1) % report_interval == 0):
                         # display metrics at completion of each batch (default)
                         metrics_str = get_metrics_str__(
@@ -776,7 +786,7 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
                                len_tot_samples, samples, len_tot_samples, tot_samples,
                                metrics_str),
                               end='', flush=True)
-                elif (verbose == 1):
+                elif verbose == 1:
                     if (epoch == 0) or ((epoch + 1) % report_interval == 0):
                         # display updating counter only - no incremental metrics
                         print('\rEpoch (%*d/%*d): (%*d/%*d) -> ...' %
@@ -805,8 +815,8 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
                               end='' if validation_dataset is not None else '\n', flush=True)
 
                 if validation_dataset is not None:
-                    val_batch_size = batch_size if batch_size != - \
-                        1 else len(validation_dataset)
+                    val_batch_size = batch_size if batch_size != -1 \
+                        else len(validation_dataset)
                     model.eval()  # mark model as evaluating - don't apply any dropouts
                     with torch.no_grad():
                         # run through the validation dataset
@@ -828,11 +838,11 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
                             # calculate all metrics for validation dataset batch
                             batch_metrics['val_loss'] = batch_loss
                             if metrics is not None:
-                                compute_metrics__(
-                                    val_logits, val_labels, metrics, batch_metrics, validation_dataset=True)
+                                compute_metrics__(val_logits, val_labels, metrics,
+                                                  batch_metrics, validation_dataset=True)
                             # same as cum_metrics[val_metric_name] += batch_metrics[val_metric_name] for all metrics
-                            cum_metrics = accumulate_metrics__(
-                                metrics_list, cum_metrics, batch_metrics, validation_dataset=True)
+                            cum_metrics = accumulate_metrics__(metrics_list, cum_metrics,
+                                                               batch_metrics, validation_dataset=True)
 
                             num_val_batches += 1
                         else:
@@ -845,8 +855,8 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
                                     cum_metrics['val_%s' % metric_name])
 
                             if (verbose in [1, 2]) and ((epoch == 0) or ((epoch + 1) % report_interval == 0)):
-                                # display train + val set metrics only if verbose =1 or 2 and at reporting interval
-                                # epoch
+                                # display train + val set metrics only if verbose =1 or 2 and at
+                                # reporting interval epoch
                                 metrics_str = get_metrics_str__(
                                     metrics_list, cum_metrics, validation_dataset=True)
                                 # learning_rates = get_lrates__(optimizer)
@@ -875,7 +885,8 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
             if (lr_scheduler is not None) and (epoch < epochs - 1):
                 # have to go to these hoops as ReduceLROnPlateau requires a metric for step()
                 if isinstance(lr_scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
-                    lr_metric = cum_metrics['val_loss'] if validation_dataset is not None else cum_metrics['loss']
+                    lr_metric = cum_metrics['val_loss'] if validation_dataset is not None \
+                        else cum_metrics['loss']
                     lr_scheduler.step(lr_metric)
                 else:
                     lr_scheduler.step()
@@ -1180,6 +1191,7 @@ def load_model_state(model, model_save_path):
     state_dict = torch.load(model_save_path)
     model.load_state_dict(state_dict)
     print(f"Pytorch model loaded from {model_save_path}")
+    model.eval()
     return model
 
 
@@ -1287,24 +1299,24 @@ def plot_confusion_matrix(cm, class_names=None, title="Confusion Matrix", cmap=p
 
 class PytkModule(nn.Module):
     """
-    A class that you can inherit from to define your project's model
-    Inheriting from this class provides a Keras-like interface for training model, evaluating model's 
-    performance and for generating predictions.
-        - As usual, you must override the constructor and the forward() method in your derived class.
-        - You may provide a compile() function to set loss, optimizer and metrics at one location, else
-          you will have to provide these as parameters to the fit(), evaluate() calls
-    This class provides the following convenience methods: 
-       - compile(loss, optimizer, metrics=None) - Keras-like compile() function. Sets the loss function,
-            optimizer and metrics (if any) to use during testing. 
-       - fit() - trains the model on numpy arrays (X = data & y = labels). 
-       - fit_dataset() - trains model on torch.utils.data.Dataset instance. 
-       - evaluate() - evaluate on numpy arrays (X & y)
-       - evaluate_dataset() - evaluate on torch.utils.data.Dataset
-       - predict() - generates class predictions
-       - predict_dataset() - returns labels & predictions from dataset
-       - save() - saves model's state to disk.
-       - load() - loads the model's state from file on disk.
-       - summary() - provides a Keras like summary of model
+        A class that you can inherit from to define your project's model
+        Inheriting from this class provides a Keras-like interface for training model, evaluating model's 
+        performance and for generating predictions.
+            - As usual, you must override the constructor and the forward() method in your derived class.
+            - You may provide a compile() function to set loss, optimizer and metrics at one location, else
+            you will have to provide these as parameters to the fit(), evaluate() calls
+        This class provides the following convenience methods: 
+        - compile(loss, optimizer, metrics=None) - Keras-like compile() function. Sets the loss function,
+                optimizer and metrics (if any) to use during testing. 
+        - fit() - trains the model on numpy arrays (X = data & y = labels). 
+        - fit_dataset() - trains model on torch.utils.data.Dataset instance. 
+        - evaluate() - evaluate on numpy arrays (X & y)
+        - evaluate_dataset() - evaluate on torch.utils.data.Dataset
+        - predict() - generates class predictions
+        - predict_dataset() - returns labels & predictions from dataset
+        - save() - saves model's state to disk.
+        - load() - loads the model's state from file on disk.
+        - summary() - provides a Keras like summary of model
     """
 
     def __init__(self):
@@ -1315,13 +1327,13 @@ class PytkModule(nn.Module):
 
     def compile(self, loss, optimizer, metrics=None):
         """
-        this function sets loss, optimizer and metrics attributes of the module
-        @params:
-            - loss: instance of loss function from torch.nn package (e.g. torch.nn.CrossEntroptLoss())
-            - optimizer: instance of an optimizer from torch.optim package (e.g. torch.optim.Adam(...))
-            - metrics (optional): list of metrics that should be tracked during training. Metrics are
-                specified in a list e.g. ['acc', 'f1-score']. The 'loss' metric is always tracked,
-                and you don't have to explicitly specify this in the list of metrics to track.
+            this function sets loss, optimizer and metrics attributes of the module
+            @params:
+                - loss: instance of loss function from torch.nn package (e.g. torch.nn.CrossEntroptLoss())
+                - optimizer: instance of an optimizer from torch.optim package (e.g. torch.optim.Adam(...))
+                - metrics (optional): list of metrics that should be tracked during training. Metrics are
+                    specified in a list e.g. ['acc', 'f1-score']. The 'loss' metric is always tracked,
+                    and you don't have to explicitly specify this in the list of metrics to track.
         """
         assert loss is not None, "ERROR: loss function must be a valid loss function!"
         assert optimizer is not None, "ERROR: optimizer must be a valid optimizer function"
@@ -1337,48 +1349,48 @@ class PytkModule(nn.Module):
                     validation_dataset=None, lr_scheduler=None, epochs=25, batch_size=64, metrics=None,
                     shuffle=True, num_workers=0, early_stopping=None, verbose=2, report_interval=1):
         """ 
-        train model on instance of torch.utils.data.Dataset
-        @params:
-            - train_dataset: instance of torch.utils.data.Dataset on which the model trains
-            - loss_fn (optional, default=None): instance of one of the loss functions defined in Pytorch
-              You could pass loss functions as a parameter to this function or pre-set it using the compile function.
-              Value passed into this parameter takes precedence over value set in compile(...) call
-            - optimizer (optional, default=None): instance of any optimizer defined by Pytorch
-              You could pass optimizer as a parameter to this function or pre-set it using the compile function.
-              Value passed into this parameter takes precedence over value set in compile(...) call
-            - validation_split: Float between 0 and 1. Fraction of the training data to be used as validation data. 
-              The model will set apart this fraction of the training data, will not train on it, and will 
-              evaluate the loss and any model metrics on this data at the end of each epoch.
-            - validation_dataset (optional, default=None) - instance of torch.utils.data.Dataset used for
-            cross-validation
-              If you pass a valid instance, then model is cross-trained on train_dataset and validation_dataset,
-              else model
-              is trained on just train_dataset. As a best practice, it is advisible to use cross training.
-            - lr_scheduler (optional, default=NOne) - learning rate scheduler, used to step the learning rate across
-            epochs
-               as model trains. Instance of any scheduler defined in torch.optim.lr_scheduler package
-            - epochs (optional, default=25): no of epochs for which model is trained
-            - batch_size (optional, default=64): batch size to use
-            - metrics (optional, default=None): list of metrics to measure across epochs as model trains. 
-              Following metrics are supported (each identified by a key)
-                'acc' or 'accuracy' - accuracy
-                'prec' or 'precision' - precision
-                'rec' or 'recall' - recall
-                'f1' or 'f1_score' - f1_score
-                'roc_auc' - roc_auc_score
-                'mse' - mean squared error
-                'rmse' - root mean squared error
-               metrics are provided as a list (e.g. ['acc','f1'])
-               Loss is ALWAYS measures, even if you don't provide a list of metrics
-               NOTE: if validation_dataset is provided, each metric is also measured for the validaton dataset
-            - num_workers: no of worker threads to use to load datasets
-            - early_stopping: instance of EarlyStopping class if early stopping is to be used (default: None)
-            - verbose (integer = 0,1 or 2, default=0): sets verbosity level of progress reported during training
-                verbose=2: max verbose output, displays metrics batchwise
-                verbose=1: medium verbosity, displays batch progress, but metrics only at end of epoch
-                verbose=0: least verbose, no output is displayed until epoch completes.
-            - report_interval (default=1): interval at which training progress is reported.
-        @returns:
+            train model on instance of torch.utils.data.Dataset
+            @params:
+                - train_dataset: instance of torch.utils.data.Dataset on which the model trains
+                - loss_fn (optional, default=None): instance of one of the loss functions defined in Pytorch
+                You could pass loss functions as a parameter to this function or pre-set it using the compile function.
+                Value passed into this parameter takes precedence over value set in compile(...) call
+                - optimizer (optional, default=None): instance of any optimizer defined by Pytorch
+                You could pass optimizer as a parameter to this function or pre-set it using the compile function.
+                Value passed into this parameter takes precedence over value set in compile(...) call
+                - validation_split: Float between 0 and 1. Fraction of the training data to be used as validation data. 
+                The model will set apart this fraction of the training data, will not train on it, and will 
+                evaluate the loss and any model metrics on this data at the end of each epoch.
+                - validation_dataset (optional, default=None) - instance of torch.utils.data.Dataset used for
+                cross-validation
+                If you pass a valid instance, then model is cross-trained on train_dataset and validation_dataset,
+                else model
+                is trained on just train_dataset. As a best practice, it is advisible to use cross training.
+                - lr_scheduler (optional, default=NOne) - learning rate scheduler, used to step the learning rate across
+                epochs
+                as model trains. Instance of any scheduler defined in torch.optim.lr_scheduler package
+                - epochs (optional, default=25): no of epochs for which model is trained
+                - batch_size (optional, default=64): batch size to use
+                - metrics (optional, default=None): list of metrics to measure across epochs as model trains. 
+                Following metrics are supported (each identified by a key)
+                    'acc' or 'accuracy' - accuracy
+                    'prec' or 'precision' - precision
+                    'rec' or 'recall' - recall
+                    'f1' or 'f1_score' - f1_score
+                    'roc_auc' - roc_auc_score
+                    'mse' - mean squared error
+                    'rmse' - root mean squared error
+                metrics are provided as a list (e.g. ['acc','f1'])
+                Loss is ALWAYS measures, even if you don't provide a list of metrics
+                NOTE: if validation_dataset is provided, each metric is also measured for the validaton dataset
+                - num_workers: no of worker threads to use to load datasets
+                - early_stopping: instance of EarlyStopping class if early stopping is to be used (default: None)
+                - verbose (integer = 0,1 or 2, default=0): sets verbosity level of progress reported during training
+                    verbose=2: max verbose output, displays metrics batchwise
+                    verbose=1: medium verbosity, displays batch progress, but metrics only at end of epoch
+                    verbose=0: least verbose, no output is displayed until epoch completes.
+                - report_interval (default=1): interval at which training progress is reported.
+            @returns:
            - history object (which is a map of metrics measured across epochs).
              Each metric list is accessed as hist[metric_name] (e.g. hist['loss'] or hist['acc'])
              If validation_dataset is also provided, it will return corresponding metrics for validation dataset too
@@ -1397,46 +1409,46 @@ class PytkModule(nn.Module):
             lr_scheduler=None, epochs=25, batch_size=64, metrics=None, shuffle=True, num_workers=0,
             early_stopping=None, verbose=2, report_interval=1):
         """ 
-        train model on Numpy arrays (X_train, y_train)
-        @params:
-            - X_train: Numpy array of features from training set
-            - y_train: Numpy array of labels 
-            - loss_fn (optional, default=None): instance of one of the loss functions defined in Pytorch
-              You could pass loss functions as a parameter to this function or pre-set it using the compile function.
-              Value passed into this parameter takes precedence over value set in compile(...) call
-            - optimizer (optional, default=None): instance of any optimizer defined by Pytorch
-              You could pass optimizer as a parameter to this function or pre-set it using the compile function.
-              Value passed into this parameter takes precedence over value set in compile(...) call
-            - validation_split: Float between 0 and 1. Fraction of the training data to be used as validation data. 
-              The model will set apart this fraction of the training data, will not train on it, and will 
-              evaluate the loss and any model metrics on this data at the end of each epoch.
-            - validation_data (optional, default=None) - a tuple of validation data comprising Numpy arrays
-              of features & labels (e.g. (X_val, y_val)) - columns of X_val & y_val should match those of X_train, y_train
-              If you do not include validation_data, the model is trained on just the training data (X_train, y_train)
-            - lr_scheduler (optional, default=NOne) - learning rate scheduler, used to step the learning rate across
-              epochs as model trains. Instance of any scheduler defined in torch.optim.lr_scheduler package
-            - epochs (optional, default=25): no of epochs for which model is trained
-            - batch_size (optional, default=64): batch size to use
-            - metrics (optional, default=None): list of metrics to measure across epochs as model trains. 
-              Following metrics are supported (each identified by a key)
-                'acc' or 'accuracy' - accuracy
-                'prec' or 'precision' - precision
-                'rec' or 'recall' - recall
-                'f1' or 'f1_score' - f1_score
-                'roc_auc' - roc_auc_score
-                'mse' - mean squared error
-                'rmse' - root mean squared error
-               metrics are provided as a list (e.g. ['acc','f1'])
-               Loss is ALWAYS measures, even if you don't provide a list of metrics
-               NOTE: if validation_data is provided, each metric is also measured for the validaton data
-            - num_workers: no of worker threads to use to load datasets
-            - early_stopping: instance of EarlyStopping class if early stopping is to be used (default: None)
-            - verbose (integer = 0,1 or 2, default=0): sets verbosity level of progress reported during training
-                verbose=2: max verbose output, displays metrics batchwise
-                verbose=1: medium verbosity, displays batch progress, but metrics only at end of epoch
-                verbose=0: least verbose, no output is displayed until epoch completes.
-            - report_interval (default=1): interval at which training progress is reported.
-        @returns:
+            train model on Numpy arrays (X_train, y_train)
+            @params:
+                - X_train: Numpy array of features from training set
+                - y_train: Numpy array of labels 
+                - loss_fn (optional, default=None): instance of one of the loss functions defined in Pytorch
+                You could pass loss functions as a parameter to this function or pre-set it using the compile function.
+                Value passed into this parameter takes precedence over value set in compile(...) call
+                - optimizer (optional, default=None): instance of any optimizer defined by Pytorch
+                You could pass optimizer as a parameter to this function or pre-set it using the compile function.
+                Value passed into this parameter takes precedence over value set in compile(...) call
+                - validation_split: Float between 0 and 1. Fraction of the training data to be used as validation data. 
+                The model will set apart this fraction of the training data, will not train on it, and will 
+                evaluate the loss and any model metrics on this data at the end of each epoch.
+                - validation_data (optional, default=None) - a tuple of validation data comprising Numpy arrays
+                of features & labels (e.g. (X_val, y_val)) - columns of X_val & y_val should match those of X_train, y_train
+                If you do not include validation_data, the model is trained on just the training data (X_train, y_train)
+                - lr_scheduler (optional, default=NOne) - learning rate scheduler, used to step the learning rate across
+                epochs as model trains. Instance of any scheduler defined in torch.optim.lr_scheduler package
+                - epochs (optional, default=25): no of epochs for which model is trained
+                - batch_size (optional, default=64): batch size to use
+                - metrics (optional, default=None): list of metrics to measure across epochs as model trains. 
+                Following metrics are supported (each identified by a key)
+                    'acc' or 'accuracy' - accuracy
+                    'prec' or 'precision' - precision
+                    'rec' or 'recall' - recall
+                    'f1' or 'f1_score' - f1_score
+                    'roc_auc' - roc_auc_score
+                    'mse' - mean squared error
+                    'rmse' - root mean squared error
+                metrics are provided as a list (e.g. ['acc','f1'])
+                Loss is ALWAYS measures, even if you don't provide a list of metrics
+                NOTE: if validation_data is provided, each metric is also measured for the validaton data
+                - num_workers: no of worker threads to use to load datasets
+                - early_stopping: instance of EarlyStopping class if early stopping is to be used (default: None)
+                - verbose (integer = 0,1 or 2, default=0): sets verbosity level of progress reported during training
+                    verbose=2: max verbose output, displays metrics batchwise
+                    verbose=1: medium verbosity, displays batch progress, but metrics only at end of epoch
+                    verbose=0: least verbose, no output is displayed until epoch completes.
+                - report_interval (default=1): interval at which training progress is reported.
+            @returns:
            - history object (which is a map of metrics measured across epochs).
              Each metric list is accessed as hist[metric_name] (e.g. hist['loss'] or hist['acc'])
              If validation_dataset is also provided, it will return corresponding metrics for validation dataset too

@@ -9,7 +9,8 @@ Use at your own risk!! I am not responsible if your CPU or GPU gets fried :D
 import warnings
 warnings.filterwarnings('ignore')
 
-import os, sys
+import os
+import sys
 import random
 import numpy as np
 import pandas as pd
@@ -46,6 +47,7 @@ if torch.cuda.is_available():
 
 data_file_path = './data/wisconsin_breast_cancer.csv'
 
+
 def download_data_file():
     url = 'https://archive.ics.uci.edu/ml/machine-learning-databases/breast-cancer-wisconsin/wdbc.data'
 
@@ -71,7 +73,8 @@ def load_data(test_split=0.20):
     if not os.path.exists(data_file_path):
         download_data_file()
 
-    assert os.path.exists(data_file_path), "%s - unable to open file!" % data_file_path
+    assert os.path.exists(data_file_path), \
+        "%s - unable to open file!" % data_file_path
 
     wis_df = pd.read_csv(data_file_path, index_col=0)
     print(f"wis_df.shape: {wis_df.shape}")
@@ -79,6 +82,7 @@ def load_data(test_split=0.20):
     # diagnosis is the target col - char
     wis_df['diagnosis'] = wis_df['diagnosis'].map({'M': 1, 'B': 0})
     print(wis_df.head(5))
+    print(wis_df['diagnosis'].value_counts())
     #f_names = wis_df.columns[wis_df.columns != 'diagnosis']
 
     X = wis_df.drop(['diagnosis'], axis=1).values
@@ -87,7 +91,8 @@ def load_data(test_split=0.20):
 
     # split into train/test sets
     X_train, X_test, y_train, y_test = \
-        train_test_split(X, y, test_size=test_split, random_state=seed, stratify=y)
+        train_test_split(X, y, test_size=test_split,
+                         random_state=seed, stratify=y)
 
     # scale data
     ss = StandardScaler()
@@ -99,12 +104,14 @@ def load_data(test_split=0.20):
     return (X_train, y_train), (X_test, y_test)
 
 # our ANN
+
+
 class WBCNet(pytk.PytkModule):
-    def __init__(self, inp_size, hidden1, hidden2, num_classes):
+    def __init__(self, inp_size, num_classes):
         super(WBCNet, self).__init__()
-        self.fc1 = nn.Linear(inp_size, hidden1)
-        self.fc2 = nn.Linear(hidden1, hidden2)
-        self.out = nn.Linear(hidden2, num_classes)
+        self.fc1 = nn.Linear(inp_size, 32)
+        self.fc2 = nn.Linear(32, 32)
+        self.out = nn.Linear(32, num_classes)
 
     def forward(self, inp):
         x = F.relu(self.fc1(inp))
@@ -116,7 +123,7 @@ class WBCNet(pytk.PytkModule):
 DO_TRAINING = True
 DO_TESTING = True
 DO_PREDICTION = True
-MODEL_SAVE_PATH = './model_states/pyt_wbc_ann.pyt'
+MODEL_SAVE_PATH = './model_states/pyt_wbc_ann2.pyt'
 
 # Hyper-parameters
 NUM_FEATURES = 30
@@ -124,15 +131,18 @@ NUM_CLASSES = 1
 NUM_EPOCHS = 100
 BATCH_SIZE = 16
 LEARNING_RATE = 0.001
+METRICS_LIST = ['acc', 'f1', 'prec', 'rec']
+
 
 def build_model():
-    model = WBCNet(NUM_FEATURES, 30, 30, NUM_CLASSES)
+    model = WBCNet(NUM_FEATURES, NUM_CLASSES)
     # define the loss function & optimizer that model should
     loss_fn = nn.BCELoss()  # nn.CrossEntropyLoss()
     optimizer = torch.optim.SGD(model.parameters(), lr=LEARNING_RATE, nesterov=True,
                                 weight_decay=0.005, momentum=0.9, dampening=0)
-    model.compile(loss=loss_fn, optimizer=optimizer, metrics=['acc', 'f1'])
+    model.compile(loss=loss_fn, optimizer=optimizer, metrics=METRICS_LIST)
     return model
+
 
 def main():
 
@@ -140,7 +150,7 @@ def main():
     # NOTE: BCELoss() functions expects labels to be floats (why can't it handle integers??)
     y_train, y_test = y_train.astype(np.float), y_test.astype(np.float)
     print(X_train.shape, y_train.shape, X_test.shape, y_test.shape)
-    # sys.exit(-1)
+    sys.exit(-1)
 
     if DO_TRAINING:
         print('Building model...')
@@ -152,17 +162,28 @@ def main():
         # split training data into train/cross-val datasets in 80:20 ratio
         hist = model.fit(X_train, y_train, validation_split=0.20,
                          epochs=NUM_EPOCHS, batch_size=BATCH_SIZE)
-        pytk.show_plots(hist, metric='f1', plot_title="Performance Metrics (f1-score)")
-
-        # evaluate model performance on train/eval & test datasets
-        print('\nEvaluating model performance...')
-        loss, acc, f1 = model.evaluate(X_train, y_train)
-        print(f'  Training dataset  -> loss: {loss:.4f} - acc: {acc:.4f} - f1: {f1:.4f}')
-        loss, acc, f1 = model.evaluate(X_test, y_test)
-        print(f'  Test dataset      -> loss: {loss:.4f} - acc: {acc:.4f} - f1: {f1:.4f}')
+        pytk.show_plots(hist, metric='f1',
+                        plot_title="Performance Metrics (f1-score)")
 
         # save model state
         model.save(MODEL_SAVE_PATH)
+        del model
+
+    if DO_TESTING:
+        # evaluate model performance on train/eval & test datasets
+        print('\nEvaluating model performance...')
+        model = build_model()
+        model.load(MODEL_SAVE_PATH)
+        print(model)
+
+        loss, acc, f1, prec, rec = model.evaluate(
+            X_train, y_train, metrics=METRICS_LIST)
+        print(f'  Training dataset  -> loss: {loss:.4f} - acc: {acc:.4f} ' +
+              f'- f1: {f1:.4f} - prec: {prec:.4f} - rec: {rec:.4f}')
+        loss, acc, f1, prec, rec = model.evaluate(
+            X_test, y_test, metrics=METRICS_LIST)
+        print(f'  Test dataset      -> loss: {loss:.4f} - acc: {acc:.4f} ' +
+              f'- f1: {f1:.4f} - prec: {prec:.4f} - rec: {rec:.4f}')
         del model
 
     if DO_PREDICTION:
@@ -177,6 +198,7 @@ def main():
         print('Sample predictions: ', y_pred)
         print('We got %d/%d correct!' %
               ((y_test.flatten() == y_pred).sum(), len(y_test.flatten())))
+        del model
 
 
 if __name__ == "__main__":

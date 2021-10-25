@@ -158,6 +158,27 @@ class MNISTNet(pytk.PytkModule):
         # x = F.softmax(self.out(x), dim=1)  # -- don't do this!
         x = self.out(x)
         return x
+    
+# define our network using Linear layers only
+class MNISTNet2(pytk.PytkModule):
+    def __init__(self):
+        super(MNISTNet2, self).__init__()
+        self.flatten = nn.Flatten()
+        self.linear = nn.Sequential(
+            pytk.Linear(IMAGE_HEIGHT * IMAGE_WIDTH * NUM_CHANNELS, 128),
+            nn.ReLU(),
+            pytk.Linear(128, 64),
+            nn.ReLU(),
+            # NOTE: we'll be using nn.CrossEntropyLoss(), which includes a 
+            # logsoftmax call that applies a softmax function to outputs. 
+            # So, don't apply one yourself!
+            pytk.Linear(64, NUM_CLASSES)
+        )
+
+    def forward(self, x):
+        x = self.flatten(x)
+        x = self.linear(x)
+        return x
 
 
 # if you prefer to use Convolutional Neural Network, use the following model definition
@@ -185,10 +206,38 @@ class MNISTConvNet(pytk.PytkModule):
         # x = F.softmax(self.out(x), dim=1)  # -- don't do this!
         x = self.out(x)
         return x
+    
+    
+class MNISTConvNet2(pytk.PytkModule):
+    def __init__(self):
+        super(MNISTConvNet2, self).__init__()
+        self.convNet = nn.Sequential(
+            pytk.Conv2d(1, 128, kernel_size=3),
+            nn.ReLU(),
+            nn.MaxPool2d(2),
+            nn.Dropout(p=0.20),
+            
+            pytk.Conv2d(128, 64, kernel_size=3),
+            nn.ReLU(),
+            nn.MaxPool2d(2),
+            nn.Dropout(p=0.10),
+
+            nn.Flatten(),
+            
+            pytk.Linear(7 * 7 * 64, 512),
+            nn.ReLU(),
+            nn.Dropout(p=0.20),
+            
+            pytk.Linear(512, NUM_CLASSES)
+        )
+        
+    def forward(self, x):
+        x = self.convNet(x)
+        return x
 
 
 def build_model(use_cnn=False):
-    model = MNISTConvNet() if use_cnn else MNISTNet()
+    model = MNISTConvNet2() if use_cnn else MNISTNet2()
     # define the loss function & optimizer that model should
     loss_fn = nn.CrossEntropyLoss()
     optimizer = optim.Adam(params=model.parameters(),
@@ -200,11 +249,11 @@ def build_model(use_cnn=False):
 DO_TRAINING = True
 DO_PREDICTION = True
 SHOW_SAMPLE = True
-USE_CNN = False  # if False, will use an MLP
+USE_CNN = True  # if False, will use an MLP
 
 MODEL_SAVE_NAME = 'pyt_mnist_cnn.pyt' if USE_CNN else 'pyt_mnist_dnn.pyt'
 MODEL_SAVE_PATH = os.path.join('.', 'model_states', MODEL_SAVE_NAME)
-NUM_EPOCHS, BATCH_SIZE, LEARNING_RATE, L2_REG = 25, 32, 0.001, 0.0005
+NUM_EPOCHS, BATCH_SIZE, LEARNING_RATE, L2_REG = (25 if USE_CNN else 50), 32, 0.001, 0.0005
 
 def main():
     print('Loading datasets...')
@@ -251,6 +300,15 @@ def main():
         model.load(MODEL_SAVE_PATH)
         # model = pytk.load_model(MODEL_SAVE_PATH)
         model.summary((NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH))
+        
+        # evaluate model performance on train/eval & test datasets
+        print('Evaluating model performance...')
+        loss, acc = model.evaluate_dataset(train_dataset)
+        print('  Training dataset  -> loss: %.4f - acc: %.4f' % (loss, acc))
+        loss, acc = model.evaluate_dataset(val_dataset)
+        print('  Cross-val dataset -> loss: %.4f - acc: %.4f' % (loss, acc))
+        loss, acc = model.evaluate_dataset(test_dataset)
+        print('  Test dataset      -> loss: %.4f - acc: %.4f' % (loss, acc))
 
         y_pred, y_true = model.predict_dataset(test_dataset)
         y_pred = np.argmax(y_pred, axis=1)
