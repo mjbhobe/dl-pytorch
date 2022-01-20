@@ -374,8 +374,7 @@ class EarlyStopping:
         self.patience = patience
         self.mode = mode
         if mode not in ['min', 'max']:
-            warnings.warn(
-                'EarlyStopping mode %s is unknown. Using \'min\' instead!' % mode)
+            warnings.warn(f'EarlyStopping - \'mode\' {mode} is unknown. Using \'min\' instead!')
             self.mode = 'min'
         self.verbose = verbose
         self.save_best_weights = save_best_weights
@@ -385,12 +384,10 @@ class EarlyStopping:
         self.best_score = np.Inf if self.monitor_op == np.less else -np.Inf
         self.counter = 0
         self.best_epoch = 0
-        assert os.path.exists(
-            checkpoint_file_path), f"Error: {checkpoint_file_path} does not appear to be a valid path!"
-        self.checkpoint_file_path = os.path.join(
-            checkpoint_file_path, 'checkpoint.pt')
+        assert os.path.exists(checkpoint_file_path), \
+            f"Error: {checkpoint_file_path} does not appear to be a valid path!"
+        self.checkpoint_file_path = os.path.join(checkpoint_file_path, 'checkpoint.pt')
         self.metrics_log = []
-
         self.early_stop = False
 
     def __call__(self, model, curr_metric_val, epoch):
@@ -700,8 +697,7 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
 
         # create data structures to hold batch metrics, epoch metrics etc.
         history, batch_metrics, cum_metrics = \
-            create_hist_and_metrics_ds__(
-                metrics, validation_dataset is not None)
+            create_hist_and_metrics_ds__(metrics, validation_dataset is not None)
 
         metrics_list = ['loss']
         if metrics is not None:
@@ -720,8 +716,7 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
 
         # if batch_size == -1, then use entire training dataset as batch (not recommended
         # unless len(training_dataset) is reasonably small)
-        train_batch_size = batch_size if batch_size != - \
-            1 else len(train_dataset)
+        train_batch_size = batch_size if batch_size != -1 else len(train_dataset)
 
         for epoch in range(epochs):
             model.train()  # 'flag model as training', so batch normalization & dropouts can be applied
@@ -777,7 +772,8 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
 
                 if verbose == 2:
                     if (epoch == 0) or ((epoch + 1) % report_interval == 0):
-                        # display metrics at completion of each batch (default)
+                        # verbose == 2 -> display progress counter + metrics after each batch
+                        # e.g: Epoch (2/20): (1024/5000) -> loss: 28.45 - acc: 0.4567
                         metrics_str = get_metrics_str__(
                             metrics_list, batch_metrics, validation_dataset=False)
                         metrics_str += learning_rates
@@ -788,7 +784,8 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
                               end='', flush=True)
                 elif verbose == 1:
                     if (epoch == 0) or ((epoch + 1) % report_interval == 0):
-                        # display updating counter only - no incremental metrics
+                        # verbose == 1 -> display progress counter only, no metrics
+                        # e.g: Epoch (2/20): (1024/5000) -> ...
                         print('\rEpoch (%*d/%*d): (%*d/%*d) -> ...' %
                               (len_num_epochs, epoch + 1, len_num_epochs, epochs,
                                len_tot_samples, samples, len_tot_samples, tot_samples),
@@ -808,7 +805,7 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
                         metrics_str = get_metrics_str__(
                             metrics_list, cum_metrics, validation_dataset=False)
                         metrics_str += learning_rates
-                        print('\rEpoch (%*d/%*d): (%*d/%*d) -> %s' %
+                        print('\rEpoch (%*d/%*d): (%*d/%*d) -> %s ...' %
                               (len_num_epochs, epoch + 1, len_num_epochs, epochs,
                                len_tot_samples, samples, len_tot_samples, tot_samples,
                                metrics_str),
@@ -817,7 +814,7 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
                 if validation_dataset is not None:
                     val_batch_size = batch_size if batch_size != -1 \
                         else len(validation_dataset)
-                    model.eval()  # mark model as evaluating - don't apply any dropouts
+                    model.eval()  # mark model as evaluating - don't apply dropouts or batch norms
                     with torch.no_grad():
                         # run through the validation dataset
                         val_loader = torch.utils.data.DataLoader(validation_dataset, batch_size=val_batch_size,
@@ -849,10 +846,9 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
                             # validation loop completed for this epoch
                             # average metrics across all val-dataset batches
                             for metric_name in metrics_list:
-                                cum_metrics['val_%s' % metric_name] = cum_metrics['val_%s' %
-                                                                                  metric_name] / num_val_batches
-                                history['val_%s' % metric_name].append(
-                                    cum_metrics['val_%s' % metric_name])
+                                cum_metrics['val_%s' % metric_name] = \
+                                    cum_metrics['val_%s' % metric_name] / num_val_batches
+                                history['val_%s' % metric_name].append(cum_metrics['val_%s' % metric_name])
 
                             if (verbose in [1, 2]) and ((epoch == 0) or ((epoch + 1) % report_interval == 0)):
                                 # display train + val set metrics only if verbose =1 or 2 and at
@@ -872,7 +868,7 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
                 curr_metric_val = history[early_stopping_metric][-1]
                 early_stopping(model, curr_metric_val, epoch)
                 if early_stopping.early_stop:
-                    print("Early stopping training at epoch %d" % epoch)
+                    print(f"Early stopping training at epoch {epoch}")
                     if early_stopping.save_best_weights:
                         mod = model
                         if isinstance(model, PytkModuleWrapper):
@@ -898,20 +894,20 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
 
 def evaluate_model(model, dataset, loss_fn=None, batch_size=64, metrics=None, num_workers=0):
     """ evaluate's model performance against dataset provided
-    @params:
-        - model: instance of model derived from nn.Model (or instance of pyt.PytModel or pyt.PytSequential)
-        - dataset: instance of dataset to evaluate against (derived from torch.utils.data.Dataset)
-        - loss_fn (optional, default=None): loss function to use during evaluation
-             If not provided the model's loss function (i.e. model.loss_fn) is used
-             asserts error if both are not provided!
-        - batch_size (optional, default=64): batch size to use during evaluation
-        - metrics (optional, default=None): list of metrics to evaluate 
-            (e.g.: metrics=['acc','f1']) evaluates accuracy & f1-score
-            Loss is ALWAYS evaluated, even when metrics=None
-    @returns:
-        - value of loss across dataset, if metrics=None (single value)
-        - value of loss + list of metrics (in order provided), if metrics list is provided
-          (e.g. if metrics=['acc', 'f1'], then a list of 3 values will be returned loss, accuracy & f1-score)
+        @params:
+            - model: instance of model derived from nn.Model (or instance of pyt.PytModel or pyt.PytSequential)
+            - dataset: instance of dataset to evaluate against (derived from torch.utils.data.Dataset)
+            - loss_fn (optional, default=None): loss function to use during evaluation
+                If not provided the model's loss function (i.e. model.loss_fn) is used
+                asserts error if both are not provided!
+            - batch_size (optional, default=64): batch size to use during evaluation
+            - metrics (optional, default=None): list of metrics to evaluate 
+                (e.g.: metrics=['acc','f1']) evaluates accuracy & f1-score
+                Loss is ALWAYS evaluated, even when metrics=None
+        @returns:
+            - value of loss across dataset, if metrics=None (single value)
+            - value of loss + list of metrics (in order provided), if metrics list is provided
+            (e.g. if metrics=['acc', 'f1'], then a list of 3 values will be returned loss, accuracy & f1-score)
     """
     try:
         assert isinstance(model, nn.Module), \
@@ -994,12 +990,12 @@ def evaluate_model(model, dataset, loss_fn=None, batch_size=64, metrics=None, nu
 
 def predict_dataset(model, dataset, batch_size=64, num_workers=0):
     """ runs prediction on dataset (use for classification ONLY)
-    @params:
-        - model: instance of model derived from nn.Model (or instance of pyt.PytModel or pyt.PytSequential)
-        - dataset: instance of dataset to evaluate against (derived from torch.utils.data.Dataset)
-        - batch_size (optional, default=64): batch size to use during evaluation
-    @returns:
-        - tuple of Numpy Arrays of class predictions & labels
+        @params:
+            - model: instance of model derived from nn.Model (or instance of pyt.PytModel or pyt.PytSequential)
+            - dataset: instance of dataset to evaluate against (derived from torch.utils.data.Dataset)
+            - batch_size (optional, default=64): batch size to use during evaluation
+        @returns:
+            - tuple of Numpy Arrays of class predictions & labels
     """
     try:
         assert isinstance(model, nn.Module), \
@@ -1035,12 +1031,12 @@ def predict_dataset(model, dataset, batch_size=64, num_workers=0):
 
 def predict(model, data):
     """ runs predictions on Numpy Array (use for classification ONLY)
-    @params:
-        - model: instance of model derived from nn.Model (or instance of pyt.PytModel or pyt.PytSequential)
-        - data: Numpy array of values on which predictions should be run
-    @returns:
-        - Numpy array of class predictions (probabilities)
-        NOTE: to convert to classes use np.max(...,axis=1) after this call.
+        @params:
+            - model: instance of model derived from nn.Model (or instance of pyt.PytModel or pyt.PytSequential)
+            - data: Numpy array of values on which predictions should be run
+        @returns:
+            - Numpy array of class predictions (probabilities)
+            NOTE: to convert to classes use np.max(...,axis=1) after this call.
     """
     try:
         assert isinstance(model, nn.Module), \
@@ -1067,14 +1063,14 @@ def predict(model, data):
 
 
 def save_model(model, model_save_name, model_save_dir=os.path.join('.', 'model_states')):
-    """ saves Pytorch model to disk (file with .pt extension) 
-    @params:
-        - model: instance of model derived from nn.Model (or instance of pytk.PytModel or pytk.PytSequential)
-        - model_save_name: name of file or complete path of file to save model to 
-          (NOTE: this file is overwritten without warning!)
-        - model_save_dir (optional, defaul='./model_states'): folder to save Pytorch model to
-           used only if model_save_name is just a name of file
-           ignored if model_save_name is complete path to a file
+    """ saves Pytorch model to disk 
+        @params:
+            - model: instance of model derived from nn.Model (or instance of pytk.PytModel or pytk.PytSequential)
+            - model_save_name: name of file or complete path of file to save model to 
+            (NOTE: this file is overwritten without warning!)
+            - model_save_dir (optional, defaul='./model_states'): folder to save Pytorch model to
+            used only if model_save_name is just a name of file
+            ignored if model_save_name is complete path to a file
     """
 
     # some checks
@@ -1102,16 +1098,16 @@ def save_model(model, model_save_name, model_save_dir=os.path.join('.', 'model_s
     print(f'Pytorch model saved to {model_save_path}')
 
 
-def save_model_state(model, model_save_path):
+def save_model_state2(model, model_save_path):
     """ saves Pytorch state (state_dict) to disk  
-    @params:
-        - model: instance of model derived from nn.Model (or instance of pytk.PytModel or pytk.PytSequential)
-        - model_save_path: complete path where model should be saved 
-          (NOTE:
-             - the file is overwritten at destination without warning
-             - if `model_save_path` is just a file name, then model saved to current dir
-             - if `model_save_path` contains directory, it attempts to create directories if possible 
-          )
+        @params:
+            - model: instance of model derived from nn.Model (or instance of pytk.PytModel or pytk.PytSequential)
+            - model_save_path: complete path where model should be saved 
+              (NOTE:
+                 - the file is overwritten at destination without warning
+                 - if `model_save_path` is just a file name, then model saved to current dir
+                 - if `model_save_path` contains directory, it attempts to create directories if possible 
+              )
     """
 
     # do I have an extension? If not append '.pyt' extension
@@ -1145,14 +1141,43 @@ def save_model_state(model, model_save_path):
     print(f"Pytorch model saved to {model_save_path}")
 
 
+def save_model_state(model, model_save_path):
+    """ saves Pytorch state (state_dict) to disk  
+        @params:
+            - model: instance of model derived from nn.Model (or instance of pytk.PytModel or pytk.PytSequential)
+            - model_save_path: absolute or relative path where model's state-dict should be saved 
+              (NOTE:
+                 - the model_save_path file is overwritten at destination without warning
+                 - if `model_save_path` is just a file name, then model saved to current dir
+                 - if `model_save_path` contains directory that does not, the function attempts to create 
+                   directories if it does not exist 
+              )
+    """
+    save_dir, _ = os.path.split(model_save_path)
+
+    if not os.path.exists(save_dir):
+        # create directory from file_path, if it does not exist
+        # e.g. if model_save_path = '/home/user_name/pytorch/model_states/model.pyt' and the
+        # directory '/home/user_name/pytorch/model_states' does not exist, it is created
+        try:
+            os.mkdir(save_dir)
+        except OSError as err:
+            print(f"Unable to create folder/directory {save_dir} to save model!")
+            raise err
+
+    # now save the model to file_path
+    torch.save(model.state_dict(), model_save_path)
+    print(f"Pytorch model saved to {model_save_path}")
+
+
 def load_model(model_save_name, model_save_dir='./model_states'):
     """ loads model from disk and create a complete instance from saved state
-    @params:
-        - model_save_name: name of file or complete path of file to save model to 
-        - model_save_dir (optional, defaul='./model_states'): folder to load the Pytorch model from
-           used only if model_save_name is just a name of file; ignored if model_save_name is complete path to a file
-    @returns:
-        - 'ready-to-go' instance of model restored from saved state
+        @params:
+            - model_save_name: name of file or complete path of file to save model to 
+            - model_save_dir (optional, defaul='./model_states'): folder to load the Pytorch model from
+            used only if model_save_name is just a name of file; ignored if model_save_name is complete path to a file
+        @returns:
+            - 'ready-to-go' instance of model restored from saved state
     """
     if not model_save_name.endswith('.pt'):
         model_save_name = model_save_name + '.pt'
@@ -1174,23 +1199,42 @@ def load_model(model_save_name, model_save_dir='./model_states'):
     return model
 
 
-def load_model_state(model, model_save_path):
-    """ saves Pytorch state (state_dict) to disk
-    @params:
-        - model: instance of model derived from nn.Model (or instance of pytk.PytModel or pytk.PytSequential)
-        - model_save_path: complete/relative path where model should be loaded
+def load_model_state2(file_path):
+    """ loads model from disk and create a complete instance from saved state
+        @params:
+            - model_save_name: name of file or complete path of file to save model to 
+            - model_save_dir (optional, defaul='./model_states'): folder to load the Pytorch model from
+            used only if model_save_name is just a name of file; ignored if model_save_name is complete path to a file
+        @returns:
+            - 'ready-to-go' instance of model restored from saved state
+    """
+    if not os.path.exists(file_path):
+        raise IOError(f"Cannot load Keras model {file_path} - invalid path!")
+
+    model = torch.load(file_path)
+    model.eval()
+    print(f"Pytorch model loaded from {file_path}")
+    return model
+
+
+def load_model_state(model, model_state_dict_path):
+    """ loads model's state dict from file on disk
+        @params:
+            - model: instance of model derived from nn.Model (or instance of pytk.PytModel or pytk.PytSequential)
+            - model_state_dict_path: complete/relative path from where model's state dict should be loaded. \
+                This should be a valid path (i.e. should exist), else an IOError is raised.
     """
 
-    # do I have an extension? If not append '.pyt' extension
-    model_save_path = pathlib.Path(model_save_path).absolute()
+    # convert model_state_dict_path to absolute path
+    model_save_path = pathlib.Path(model_state_dict_path).absolute()
     if not os.path.exists(model_save_path):
         raise IOError(
-            f"ERROR: can't load model from {model_save_path} - file does not exist!")
+            f"ERROR: can't load model from {model_state_dict_path} - file does not exist!")
 
     # load state dict from path
     state_dict = torch.load(model_save_path)
     model.load_state_dict(state_dict)
-    print(f"Pytorch model loaded from {model_save_path}")
+    print(f"Pytorch model loaded from {model_state_dict_path}")
     model.eval()
     return model
 
@@ -1201,13 +1245,13 @@ def show_plots(history, metric=None, plot_title=None, fig_size=None):
     assert type(history) is dict
 
     # we must have at least loss in the history object
-    assert 'loss' in history.keys(
-    ), f"ERROR: expecting \'loss\' as one of the metrics in history object"
+    assert 'loss' in history.keys(), \
+        f"ERROR: expecting \'loss\' as one of the metrics in history object"
     if metric is not None:
-        assert isinstance(
-            metric, str), "ERROR: expecting a string value for the \'metric\' parameter"
-        assert metric in history.keys(
-        ), f"{metric} is not tracked in training history!"
+        assert isinstance(metric, str), \
+            "ERROR: expecting a string value for the \'metric\' parameter"
+        assert metric in history.keys(), \
+            f"{metric} is not tracked in training history!"
 
     loss_metrics = ['loss']
     if 'val_loss' in history.keys():
@@ -1216,8 +1260,8 @@ def show_plots(history, metric=None, plot_title=None, fig_size=None):
 
     other_metrics = []
     if metric is not None:
-        assert metric in METRICS_MAP.keys(
-        ), f"ERROR: {metric} is not a metric being tracked. Please check compile() function!"
+        assert metric in METRICS_MAP.keys(), \
+            f"ERROR: {metric} is not a metric being tracked. Please check compile() function!"
         other_metrics.append(metric)
         if f"val_{metric}" in history.keys():
             other_metrics.append(f"val_{metric}")
@@ -1266,11 +1310,11 @@ def show_plots(history, metric=None, plot_title=None, fig_size=None):
 
 def plot_confusion_matrix(cm, class_names=None, title="Confusion Matrix", cmap=plt.cm.Blues):
     """ graphical plot of the confusion matrix 
-    @params:
-        cm - the confusion matrix (value returned by the sklearn.metrics.confusion_matrix(...) call)
-        class_names (list) - names (text) of classes you want to use (list of strings)
-        title (string, default='Confusion Matrix') - title of the plot
-        cmap (matplotlib supported palette, default=plt.cm.Blues) - color palette you want to use
+        @params:
+            cm - the confusion matrix (value returned by the sklearn.metrics.confusion_matrix(...) call)
+            class_names (list) - names (text) of classes you want to use (list of strings)
+            title (string, default='Confusion Matrix') - title of the plot
+            cmap (matplotlib supported palette, default=plt.cm.Blues) - color palette you want to use
     """
 
     class_names = ['0', '1'] if class_names is None else class_names
@@ -1343,7 +1387,7 @@ class PytkModule(nn.Module):
 
     def forward(self, input):
         raise NotImplementedError("You have landed up calling PytModule.forward(). " +
-                                  "You must re-implement this menthod in your derived class!")
+                                  "You must re-implement this method in your derived class!")
 
     def fit_dataset(self, train_dataset, loss_fn=None, optimizer=None, validation_split=0.0,
                     validation_dataset=None, lr_scheduler=None, epochs=25, batch_size=64, metrics=None,
@@ -1572,8 +1616,8 @@ class PytkModuleWrapper():
         self.optimizer = optimizer
         self.metrics_list = metrics
 
-    def forward(self, input):
-        return self.model.forward(input)
+    def forward(self, inp):
+        return self.model.forward(inp)
 
     def parameters(self, recurse=True):
         return self.model.parameters(recurse)

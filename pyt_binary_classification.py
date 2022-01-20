@@ -111,8 +111,8 @@ def get_data(test_split=0.20, shuffle_it=True, balance=False, sampling_strategy=
         train_test_split(X, y, test_size=test_split, random_state=seed)
     if debug:
         print(
-                f"Split data -> X_train.shape = {X_train.shape}, y_train.shape = {y_train.shape}, "
-                f"X_test.shape = {X_test.shape}, y_test.shape = {y_test.shape}")
+            f"Split data -> X_train.shape = {X_train.shape}, y_train.shape = {y_train.shape}, "
+            f"X_test.shape = {X_test.shape}, y_test.shape = {y_test.shape}")
 
     ss = StandardScaler()
     X_train = ss.fit_transform(X_train)
@@ -133,20 +133,6 @@ def get_data(test_split=0.20, shuffle_it=True, balance=False, sampling_strategy=
 
     return (X_train, y_train), (X_test, y_test)
 
-
-# our binary classification model
-# class Net(pytk.PytkModule):
-#     def __init__(self, features):
-#         super(Net, self).__init__()
-#         self.fc1 = pytk.Linear(features, 10)
-#         self.fc2 = pytk.Linear(10, 5)
-#         self.out = pytk.Linear(5, 1)
-#
-#     def forward(self, x):
-#         x = F.relu(self.fc1(x))
-#         x = F.relu(self.fc2(x))
-#         x = F.sigmoid(self.out(x))
-#         return x
 
 class Net(pytk.PytkModule):
     def __init__(self, features):
@@ -184,7 +170,7 @@ def main():
         print(model)
 
         scheduler = torch.optim.lr_scheduler.StepLR(
-                optimizer, step_size=200, gamma=0.2)
+            optimizer, step_size=200, gamma=0.2)
         hist = model.fit(X_train, y_train, validation_split=0.2, epochs=NUM_EPOCHS,
                          batch_size=-1,
                          lr_scheduler=scheduler,

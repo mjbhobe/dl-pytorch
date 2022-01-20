@@ -70,8 +70,8 @@ def load_data():
     print("No of test records: %d" % len(test_dataset))
 
     # lets split the test dataset into val_dataset & test_dataset -> 8000:2000 records
-    val_dataset, test_dataset = torch.utils.data.random_split(test_dataset, [
-            8000, 2000])
+    val_dataset, test_dataset = \
+        torch.utils.data.random_split(test_dataset, [8000, 2000])
     print("No of cross-val records: %d" % len(val_dataset))
     print("No of test records: %d" % len(test_dataset))
 
