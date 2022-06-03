@@ -689,8 +689,7 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
             print('Training on %d samples' % len(train_dataset))
 
         if report_interval != 1:
-            print(
-                f"NOTE: training progress will be reported after every {report_interval} epochs")
+            print(f"NOTE: training progress will be reported after every {report_interval} epochs")
 
         tot_samples = len(train_dataset)
         len_tot_samples = len(str(tot_samples))
@@ -818,7 +817,7 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
                     with torch.no_grad():
                         # run through the validation dataset
                         val_loader = torch.utils.data.DataLoader(validation_dataset, batch_size=val_batch_size,
-                                                                 shuffle=False, num_workers=num_workers)
+                                                                 shuffle=shuffle, num_workers=num_workers)
                         num_val_batches = 0
 
                         for val_data, val_labels in val_loader:

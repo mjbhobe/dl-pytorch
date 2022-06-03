@@ -21,8 +21,7 @@ import seaborn as sns
 # tweaks for libraries
 np.set_printoptions(precision=6, linewidth=1024, suppress=True)
 plt.style.use('seaborn')
-sns.set_style('darkgrid')
-sns.set_context('notebook', font_scale=1.10)
+sns.set(style='darkgrid', context='notebook', font_scale=1.10)
 
 # Pytorch imports
 import torch
@@ -57,7 +56,7 @@ def load_data():
     cross-val/test datasets using 80:20 ration
     """
     transformations = transforms.Compose([
-            transforms.ToTensor(),
+        transforms.ToTensor(),
     ])
 
     train_dataset = datasets.MNIST(root='./data', train=True, download=True,
@@ -91,7 +90,7 @@ def display_sample(sample_images, sample_labels, grid_shape=(10, 10), plot_title
     with sns.axes_style("whitegrid"):
         sns.set_context("notebook", font_scale=0.90)
         sns.set_style(
-                {"font.sans-serif": ["SF UI Text", "Verdana", "Arial", "DejaVu Sans", "sans"]})
+            {"font.sans-serif": ["SF Pro Display", "SF UI Text", "Verdana", "Arial", "DejaVu Sans", "sans"]})
 
         f, ax = plt.subplots(num_rows, num_cols, figsize=(14, 10),
                              gridspec_kw={"wspace": 0.02, "hspace": 0.25}, squeeze=True)
@@ -104,8 +103,7 @@ def display_sample(sample_images, sample_labels, grid_shape=(10, 10), plot_title
                 image_index = r * num_cols + c
                 ax[r, c].axis("off")
                 # show selected image
-                ax[r, c].imshow(
-                        sample_images[image_index].numpy().squeeze(), cmap="Greys")
+                ax[r, c].imshow(sample_images[image_index].numpy().squeeze(), cmap="Greys")
 
                 if sample_predictions is None:
                     # but show the prediction in the title
@@ -158,8 +156,10 @@ class MNISTNet(pytk.PytkModule):
         # x = F.softmax(self.out(x), dim=1)  # -- don't do this!
         x = self.out(x)
         return x
-    
+
 # define our network using Linear layers only
+
+
 class MNISTNet2(pytk.PytkModule):
     def __init__(self):
         super(MNISTNet2, self).__init__()
@@ -167,10 +167,12 @@ class MNISTNet2(pytk.PytkModule):
         self.linear = nn.Sequential(
             pytk.Linear(IMAGE_HEIGHT * IMAGE_WIDTH * NUM_CHANNELS, 128),
             nn.ReLU(),
+            nn.Dropout(0.1),
             pytk.Linear(128, 64),
             nn.ReLU(),
-            # NOTE: we'll be using nn.CrossEntropyLoss(), which includes a 
-            # logsoftmax call that applies a softmax function to outputs. 
+            nn.Dropout(0.1),
+            # NOTE: we'll be using nn.CrossEntropyLoss(), which includes a
+            # logsoftmax call that applies a softmax function to outputs.
             # So, don't apply one yourself!
             pytk.Linear(64, NUM_CLASSES)
         )
@@ -206,8 +208,8 @@ class MNISTConvNet(pytk.PytkModule):
         # x = F.softmax(self.out(x), dim=1)  # -- don't do this!
         x = self.out(x)
         return x
-    
-    
+
+
 class MNISTConvNet2(pytk.PytkModule):
     def __init__(self):
         super(MNISTConvNet2, self).__init__()
@@ -216,21 +218,21 @@ class MNISTConvNet2(pytk.PytkModule):
             nn.ReLU(),
             nn.MaxPool2d(2),
             nn.Dropout(p=0.20),
-            
+
             pytk.Conv2d(128, 64, kernel_size=3),
             nn.ReLU(),
             nn.MaxPool2d(2),
             nn.Dropout(p=0.10),
 
             nn.Flatten(),
-            
+
             pytk.Linear(7 * 7 * 64, 512),
             nn.ReLU(),
             nn.Dropout(p=0.20),
-            
+
             pytk.Linear(512, NUM_CLASSES)
         )
-        
+
     def forward(self, x):
         x = self.convNet(x)
         return x
@@ -246,14 +248,15 @@ def build_model(use_cnn=False):
     return model, optimizer
 
 
-DO_TRAINING = True
+DO_TRAINING = False
 DO_PREDICTION = True
 SHOW_SAMPLE = True
-USE_CNN = True  # if False, will use an MLP
+USE_CNN = False  # if False, will use an MLP
 
 MODEL_SAVE_NAME = 'pyt_mnist_cnn.pyt' if USE_CNN else 'pyt_mnist_dnn.pyt'
 MODEL_SAVE_PATH = os.path.join('.', 'model_states', MODEL_SAVE_NAME)
 NUM_EPOCHS, BATCH_SIZE, LEARNING_RATE, L2_REG = (25 if USE_CNN else 50), 32, 0.001, 0.0005
+
 
 def main():
     print('Loading datasets...')
@@ -275,7 +278,7 @@ def main():
 
         # train model
         print(f'Training {"CNN" if USE_CNN else "ANN"} model')
-        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.2)
+        scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[10, 20, 30, 40], gamma=0.15)
         hist = model.fit_dataset(train_dataset, validation_dataset=val_dataset, lr_scheduler=scheduler,
                                  epochs=NUM_EPOCHS, batch_size=BATCH_SIZE, verbose=1)
         pytk.show_plots(hist, metric='acc', plot_title='Training metrics')
@@ -300,7 +303,7 @@ def main():
         model.load(MODEL_SAVE_PATH)
         # model = pytk.load_model(MODEL_SAVE_PATH)
         model.summary((NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH))
-        
+
         # evaluate model performance on train/eval & test datasets
         print('Evaluating model performance...')
         loss, acc = model.evaluate_dataset(train_dataset)
@@ -322,7 +325,7 @@ def main():
         data_iter = iter(trainloader)
         images, labels = data_iter.next()  # fetch a batch of 64 random images
         preds = np.argmax(model.predict(images), axis=1)
-        display_sample(images, labels, sample_predictions=preds,
+        display_sample(images, labels.numpy(), sample_predictions=preds,
                        grid_shape=(8, 8), plot_title='Sample Predictions')
 
 
@@ -331,10 +334,10 @@ if __name__ == "__main__":
 
 # --------------------------------------------------
 # Results:
-#   MLP with epochs=25, batch-size=32, LR=0.001
-#       Training  -> acc: 99.88%
-#       Cross-val -> acc: 98.45%
-#       Testing   -> acc: 97.90%
+#   MLP with epochs=50, batch-size=32, LR=0.001
+#       Training  -> acc: 99.77%
+#       Cross-val -> acc: 98.65%
+#       Testing   -> acc: 97.66%
 #   CNN with epochs=25, batch-size=32, LR=0.001
 #       Training  -> acc: 99.89%
 #       Cross-val -> acc: 99.50%

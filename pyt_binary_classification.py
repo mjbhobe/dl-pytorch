@@ -174,7 +174,8 @@ def main():
         hist = model.fit(X_train, y_train, validation_split=0.2, epochs=NUM_EPOCHS,
                          batch_size=-1,
                          lr_scheduler=scheduler,
-                         report_interval=50, verbose=2)
+                         #report_interval=50, 
+                         verbose=2)
         pytk.show_plots(hist, metric='accuracy')
 
         # evaluate performance

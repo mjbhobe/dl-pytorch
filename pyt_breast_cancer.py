@@ -150,7 +150,7 @@ def main():
     # NOTE: BCELoss() functions expects labels to be floats (why can't it handle integers??)
     y_train, y_test = y_train.astype(np.float), y_test.astype(np.float)
     print(X_train.shape, y_train.shape, X_test.shape, y_test.shape)
-    sys.exit(-1)
+    # sys.exit(-1)
 
     if DO_TRAINING:
         print('Building model...')

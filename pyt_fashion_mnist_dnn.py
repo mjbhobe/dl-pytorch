@@ -217,7 +217,7 @@ def build_model(use_cnn=False):
 DO_TRAINING = True
 DO_PREDICTION = True
 SHOW_SAMPLE = True
-USE_CNN = False  # if False, will use an ANN
+USE_CNN = True  # if False, will use an ANN
 
 MODEL_SAVE_NAME = 'pyt_mnist_cnn.pyt' if USE_CNN else 'pyt_mnist_dnn.pyt'
 MODEL_SAVE_PATH = os.path.join('.', 'model_states', MODEL_SAVE_NAME)
@@ -294,9 +294,9 @@ if __name__ == "__main__":
 # ---------------------------------------------------------
 # Results:
 #   ANN with epochs=50, batch-size=32, LR=0.001
-#       Training  -> acc: 90.42%
-#       Cross-val -> acc: 87.78%
-#       Testing   -> acc: 87.70%
+#       Training  -> acc: 90.88%
+#       Cross-val -> acc: 87.92%
+#       Testing   -> acc: 87.50%
 #   CNN with epochs=25, batch-size=32, LR=0.001
 #       Training  -> acc: 95.34%
 #       Cross-val -> acc: 92.01%
