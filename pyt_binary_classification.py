@@ -11,7 +11,6 @@ import warnings
 warnings.filterwarnings('ignore')
 
 import os
-import sys
 import random
 import numpy as np
 import pandas as pd
@@ -169,11 +168,12 @@ def main():
         model.compile(loss=criterion, optimizer=optimizer, metrics=['accuracy'])
         print(model)
 
-        scheduler = torch.optim.lr_scheduler.StepLR(
-            optimizer, step_size=200, gamma=0.2)
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=200, gamma=0.2)
+        # use CosineAnnealing learning rate
+        # Q = len(X_train)
+        # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max = Q)
         hist = model.fit(X_train, y_train, validation_split=0.2, epochs=NUM_EPOCHS,
-                         batch_size=-1,
-                         lr_scheduler=scheduler,
+                         batch_size=-1, lr_scheduler=scheduler,
                          #report_interval=50, 
                          verbose=2)
         pytk.show_plots(hist, metric='accuracy')

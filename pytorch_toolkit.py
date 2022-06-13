@@ -294,8 +294,7 @@ def rmse(predictions, actuals):
         @returns:
             computed rmse = sqrt(mse(predictions, actuals))
     """
-    rmse_err = torch.sqrt(torch.tensor(
-        mse(predictions, actuals), dtype=torch.float32))
+    rmse_err = torch.sqrt(torch.tensor(mse(predictions, actuals), dtype=torch.float32))
     return rmse_err.detach().numpy()
 
 
@@ -596,16 +595,15 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
                 when metrics = None, only loss is computed for training set (and validation set, if any)
                 when metrics not None, in addition to loss all specified metrics are computed for training
                 set (and validation set, if specified)
-            - shuffle (boolean, default = True): determines if the training dataset shuould be shuffled between
-                epochs or not. Validation dataset, if provided, is never shuffled. 
+            - shuffle (boolean, default = True): determines if the training dataset & validation dataset, if provided
+                should be shuffled between epochs or not. It's a good practice to shuffle, unless absolutely not required
             - num_workers (int, default=0): number of worker threads to use when loading datasets internally using 
                 DataLoader objects.
             - early_stopping(EarlyStopping, default=None): instance of EarlyStopping class to be passed in if training
                 has to be early-stopped based on parameters used to construct instance of EarlyStopping
             - verbose (0, 1 or 2, default=0): sets the verbosity level for reporting progress during training
                 verbose=2 - very verbose output, displays batch wise metrics
-                verbose=1 - medium verbose output, displays metrics at end of epoch, but shows incrimenting counter of
-                batches
+                verbose=1 - medium output, displays metrics at end of epoch, but shows incrimenting counter of batches
                 verbose=0 - least verbose output, does NOT display any output until the training dataset (and validation
                 dataset, if any) completes
             - report_interval (value >= 1 & < num_epochs): interval at which training progress gets updated (e.g. if
@@ -634,14 +632,12 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
             loss_fn = model.loss_fn
         if loss_fn is None:
             # still not assigned??
-            raise ValueError(
-                "Loss function is not defined. Must be passed as a parameter or defined in class")
+            raise ValueError("Loss function is not defined. Must be passed as a parameter or defined in class")
         if optimizer is None:
             optimizer = model.optimizer
         if optimizer is None:
             # still not assigned??
-            raise ValueError(
-                "Optimizer is not defined. Must be passed as a parameter or defined in class")
+            raise ValueError("Optimizer is not defined. Must be passed as a parameter or defined in class")
         if lr_scheduler is not None:
             # NOTE:  ReduceLROnPlateau is NOT derived from _LRScheduler, but from object, which
             # is odd as all other schedulers derive from _LRScheduler
