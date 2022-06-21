@@ -47,7 +47,8 @@ torch.manual_seed(seed)
 NUM_EPOCHS = 500
 BATCH_SIZE = 2
 LR = 0.01
-RUN_SKLEARN = True
+RUN_TORCH = True
+RUN_SKLEARN = False
 RUN_KERAS = False   # NOTE: model definition needs fixing!
 
 # ---------------------------------------------------------------------------
@@ -101,34 +102,36 @@ def main():
     (X_train, y_train), (X_test, y_test) = get_data()
     print(X_train.shape, y_train.shape, X_test.shape, y_test.shape)
 
-    net = Net(X_train.shape[1], 1)
-    criterion = nn.MSELoss()
-    optimizer = torch.optim.SGD(net.parameters(), lr=LR, weight_decay=0.10)
-    scheduler = torch.optim.lr_scheduler.StepLR(
-        optimizer, step_size=NUM_EPOCHS//10, gamma=0.1)
-    net.compile(loss=criterion, optimizer=optimizer)
-    print(net)
+    if RUN_TORCH:
+        net = Net(X_train.shape[1], 1)
+        criterion = nn.MSELoss()
+        optimizer = torch.optim.SGD(net.parameters(), lr=LR)  # , weight_decay=0.10)
+        scheduler = torch.optim.lr_scheduler.StepLR(
+            optimizer, step_size=NUM_EPOCHS // 10, gamma=0.1)
+        net.compile(loss=criterion, optimizer=optimizer, metrics=['mae'])
+        print(net)
 
-    hist = net.fit(X_train, y_train, validation_split=0.10, epochs=NUM_EPOCHS,
-                   batch_size=BATCH_SIZE, lr_scheduler=scheduler)
-    pytk.show_plots(hist)
+        print('Training model with Pytorch...please wait')
+        hist = net.fit(X_train, y_train, validation_split=0.05, epochs=NUM_EPOCHS,
+                       batch_size=BATCH_SIZE, lr_scheduler=scheduler, verbose=2)
+        pytk.show_plots(hist, metric='mae', plot_title='Pytorch Model performance')
 
-    # run predictions
-    y_pred = net.predict(X_test)
+        # run predictions
+        y_pred = net.predict(X_test)
 
-    # what is my r2_score?
-    r2 = r2_score(y_test, y_pred)
-    print('R2 score: %.3f' % r2)  # got 0.974
+        # what is my r2_score?
+        r2 = r2_score(y_test, y_pred)
+        print('Pytorch R2 score: %.3f' % r2)  # got 0.974
 
-    # display plot
-    # plt.figure(figsize=(8, 6))
-    # X = np.vstack([X_train, X_test])
-    # y = np.vstack([y_train, y_test])
-    # plt.scatter(X, y, s=40, c='steelblue')
-    # plt.plot(X, net.predict(X), lw=2, color='firebrick')
-    # title = 'Regression Plot: R2 Score = %.3f' % r2
-    # plt.title(title)
-    # plt.show()
+        # display plot
+        # plt.figure(figsize=(8, 6))
+        # X = np.vstack([X_train, X_test])
+        # y = np.vstack([y_train, y_test])
+        # plt.scatter(X, y, s=40, c='steelblue')
+        # plt.plot(X, net.predict(X), lw=2, color='firebrick')
+        # title = 'Regression Plot: R2 Score = %.3f' % r2
+        # plt.title(title)
+        # plt.show()
 
     if RUN_SKLEARN:
         # what does scikit-learn give me
@@ -138,11 +141,12 @@ def main():
         lr.fit(X_train, y_train)
         y_pred_skl = lr.predict(X_test)
         print(f'sklearn Logistic Regression: r2_score = {r2_score(y_test, y_pred_skl)}')
-        print('Pytorch Model: r2_score = %.3f' % r2_score(y_test, y_pred))
 
     if RUN_KERAS:
         # what does an equivalent Keras model give me?
         import tensorflow as tf
+        from tensorflow import keras
+        print(f"Using Tensorflow {tf.__version__} and Keras {keras.__version__}")
         from tensorflow.keras.models import Sequential
         from tensorflow.keras.layers import Dense, Input
         from tensorflow.keras.optimizers import SGD
@@ -151,13 +155,15 @@ def main():
         reg = l2(0.01)
 
         kr_model = Sequential([
-            Input(shape=(1,)),
+            Input(shape=(X_train.shape[1],)),
             Dense(1, activation='linear', kernel_regularizer=reg)
         ])
         opt = SGD(learning_rate=LR)
-        kr_model.compile(loss='mse', optimizer=opt)
-        hist = kr_model.fit(X_train, y_train, epochs=NUM_EPOCHS,
+        kr_model.compile(loss='mse', optimizer=opt, metrics=['mse'])
+        print('Training model with Keras....please wait')
+        hist = kr_model.fit(X_train, y_train, epochs=NUM_EPOCHS, validation_split=0.05,
                             batch_size=BATCH_SIZE, verbose=0)
+        pytk.show_plots(hist.history, metric='mae', plot_title='Keras Model performance')
         y_pred_k = kr_model.predict(X_test)
         print('Keras model: r2_score = %.3f' % r2_score(y_test, y_pred_k))
 

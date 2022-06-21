@@ -25,5 +25,12 @@ __pycache__
 # ignore pt (checkpoint) files
 *.pt
 
+# ignore checkpoint files 
+*.ckpt
+
+# for lightning logs
+*.yaml
+lightning_logs
+
 # ignore tutorial folder (for now)
 tutorial

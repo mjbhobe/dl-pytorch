@@ -18,6 +18,8 @@
 """
 import warnings
 
+from sklearn.decomposition import TruncatedSVD
+
 warnings.filterwarnings('ignore')
 
 import os
@@ -36,29 +38,20 @@ import torchmetrics
 from torchsummary import summary
 from torch.utils.data.dataset import Dataset
 
-PYTK_SEED = 41
+# to ensure that you get consistent results across runs & machines
+# @see: https://discuss.pytorch.org/t/reproducibility-over-different-machines/63047
+seed = 123
+random.seed(seed)
+os.environ['PYTHONHASHSEED'] = str(seed)
+np.random.seed(seed)
+torch.manual_seed(seed)
 
-
-def seed_all(seed=PYTK_SEED):
-    # to ensure that you get consistent results across runs & machines
-    # @see: https://discuss.pytorch.org/t/reproducibility-over-different-machines/63047
-    """seed all random number generators to get consistent results
-       across multiple runs ON SAME MACHINE - you may get different results
-       on a different machine (architecture) & that is to be expected
-       @see: https://pytorch.org/docs/stable/notes/randomness.html
-       @see: https://discuss.pytorch.org/t/reproducibility-over-different-machines/63047
-    """
-    random.seed(seed)
-    os.environ['PYTHONHASHSEED'] = str(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed(seed)
-        torch.cuda.manual_seed_all(seed)
-        torch.backends.cudnn.deterministic = True
-        torch.backends.cudnn.benchmark = False
-        torch.backends.cudnn.enabled = False
+if torch.cuda.is_available():
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    # torch.backends.cudnn.deterministic = True
+    # torch.backends.cudnn.benchmark = False
+    # torch.backends.cudnn.enabled = False
 
 
 # -----------------------------------------------------------------------------
@@ -360,7 +353,7 @@ def mae(predictions, actuals):
 
 
 def mae_new(predictions, actuals):
-    mae_score = torchmetrics.functional.mean_absolute_error(predictions, actuals).item()
+    mae_score = torchmetrics.functional.mae(predictions, actuals).item()
     return mae_score
 
 
@@ -549,55 +542,55 @@ def check_attribs__(model, loss_fn, optimizer=None, check_only_loss=False):
                 raise e
 
 
-# def compute_metrics__(logits, labels, metrics, batch_metrics, validation_dataset=False):
-#     """ internal helper functions - computes metrics in an epoch loop """
-#     for metric_name in metrics:
-#         metric_value = METRICS_MAP[metric_name](logits, labels)
-#         if validation_dataset:
-#             # .append(metric_value)
-#             batch_metrics['val_%s' % metric_name] = metric_value
-#         else:
-#             batch_metrics[metric_name] = metric_value
+def compute_metrics__(logits, labels, metrics, batch_metrics, validation_dataset=False):
+    """ internal helper functions - computes metrics in an epoch loop """
+    for metric_name in metrics:
+        metric_value = METRICS_MAP[metric_name](logits, labels)
+        if validation_dataset:
+            # .append(metric_value)
+            batch_metrics['val_%s' % metric_name] = metric_value
+        else:
+            batch_metrics[metric_name] = metric_value
 
 
-# def accumulate_metrics__(metrics, cum_metrics, batch_metrics, validation_dataset=False):
-#     """ internal helper function - "sums" metrics across batches """
-#     if metrics is not None:
-#         for metric in metrics:
-#             if validation_dataset:
-#                 cum_metrics['val_%s' % metric] += \
-#                     batch_metrics['val_%s' % metric]
-#             else:
-#                 cum_metrics[metric] += batch_metrics[metric]
+def accumulate_metrics__(metrics, cum_metrics, batch_metrics, validation_dataset=False):
+    """ internal helper function - "sums" metrics across batches """
+    if metrics is not None:
+        for metric in metrics:
+            if validation_dataset:
+                cum_metrics['val_%s' % metric] += \
+                    batch_metrics['val_%s' % metric]
+            else:
+                cum_metrics[metric] += batch_metrics[metric]
 
-#     # check for loss separately
-#     if 'loss' not in metrics:
-#         if validation_dataset:
-#             cum_metrics['val_loss'] += batch_metrics['val_loss']
-#         else:
-#             cum_metrics['loss'] += batch_metrics['loss']
-#     return cum_metrics
+    # check for loss separately
+    if 'loss' not in metrics:
+        if validation_dataset:
+            cum_metrics['val_loss'] += batch_metrics['val_loss']
+        else:
+            cum_metrics['loss'] += batch_metrics['loss']
+    return cum_metrics
 
 
-# def get_metrics_str__(metrics_list, batch_or_cum_metrics, validation_dataset=False):
-#     """ internal helper functions: formats metrics for printing to console """
-#     metrics_str = ''
+def get_metrics_str__(metrics_list, batch_or_cum_metrics, validation_dataset=False):
+    """ internal helper functions: formats metrics for printing to console """
+    metrics_str = ''
 
-#     for i, metric in enumerate(metrics_list):
-#         if i > 0:
-#             metrics_str += ' - %s: %.4f' % (
-#                 metrics_list[i], batch_or_cum_metrics[metric])
-#         else:
-#             metrics_str += '%s: %.4f' % (metrics_list[i],
-#                                          batch_or_cum_metrics[metric])
+    for i, metric in enumerate(metrics_list):
+        if i > 0:
+            metrics_str += ' - %s: %.4f' % (
+                metrics_list[i], batch_or_cum_metrics[metric])
+        else:
+            metrics_str += '%s: %.4f' % (metrics_list[i],
+                                         batch_or_cum_metrics[metric])
 
-#     # append validation metrics too
-#     if validation_dataset:
-#         for i, metric in enumerate(metrics_list):
-#             metrics_str += ' - val_%s: %.4f' % (
-#                 metrics_list[i], batch_or_cum_metrics['val_%s' % metric])
+    # append validation metrics too
+    if validation_dataset:
+        for i, metric in enumerate(metrics_list):
+            metrics_str += ' - val_%s: %.4f' % (
+                metrics_list[i], batch_or_cum_metrics['val_%s' % metric])
 
-#     return metrics_str
+    return metrics_str
 
 
 def get_lrates__(optimizer, format_str='%.8f'):
@@ -610,136 +603,34 @@ def get_lrates__(optimizer, format_str='%.8f'):
     return ' - lr: %s' % lr_rates_o
 
 
-class MetricsHistory:
-    def __init__(self, metrics_list=None, include_val_metrics=False):
-        # epoch metrics
-        self.history = {'loss': []}
-        # batch metrics
-        self.batch_metrics = {'loss': []}
-        # list of metric names
-        self.metrics_list = metrics_list
+def create_hist_and_metrics_ds__(metrics, include_val_metrics=True):
+    """ internal helper functions - create data structures to log epoch metrics, 
+        batch metrics & cumulative betch metrics """
+    history = {'loss': []}
+    batch_metrics = {'loss': 0.0}
+    cum_metrics = {'loss': 0.0}
 
-        if include_val_metrics:
-            self.history['val_loss'] = []
-            self.batch_metrics['val_loss'] = []
+    if include_val_metrics:
+        history['val_loss'] = []
+        batch_metrics['val_loss'] = 0.0
+        cum_metrics['val_loss'] = 0.0
 
-        if (metrics_list is not None) and (len(metrics_list) > 0):
-            for metric_name in metrics_list:
-                if metric_name not in METRICS_MAP.keys():
-                    raise ValueError(f"{metric_name} - unrecognized metric!")
-                else:
-                    self.history[metric_name] = []
-                    self.batch_metrics[metric_name] = []
-
-                    if include_val_metrics:
-                        self.history[f'val_{metric_name}'] = []
-                        self.batch_metrics[f'val_{metric_name}'] = []
-
-    def has_metric(self, metric_name):
-        """given name of metric (e.g. 'loss' or 'val_acc'), 
-           checks if this metric is in the metrics list
-        """
-        metric_name = metric_name.lower()
-        return metric_name in self.history.keys()
-
-    def clear_batch_metrics(self):
-        for metric_name in self.batch_metrics.keys():
-            self.batch_metrics[metric_name].clear()
-
-    def compute_batch_metrics(self, logits, labels, batch_loss, update_validation_metrics=False):
-        for metric_name in self.batch_metrics.keys():
-            if update_validation_metrics:
-                if (not metric_name.startswith('val_')):
-                    continue    # ignore metrics not like val_XXX
-                # NOTE: drop the 'val_' from metric name when call formula
-                # to calculate value of val_XXX metric - 'val_XXX'[4:] does the trick!
-                metric_val = batch_loss if metric_name.endswith('loss') \
-                    else METRICS_MAP[metric_name[4:]](logits, labels)
-                self.batch_metrics[metric_name].append(metric_val)
+    if metrics is not None and len(metrics) > 0:
+        # walk list of metric names & create one entry per metric
+        for metric_name in metrics:
+            if metric_name not in METRICS_MAP.keys():
+                raise ValueError('%s - unrecognized metric!' % metric_name)
             else:
-                # for training metrics
-                if (metric_name.startswith('val_')):
-                    continue    # ignore metrics like val_XXX
-                metric_val = batch_loss if metric_name.endswith(
-                    'loss') else METRICS_MAP[metric_name](logits, labels)
-                self.batch_metrics[metric_name].append(metric_val)
+                history[metric_name] = []
+                batch_metrics[metric_name] = 0.0
+                cum_metrics[metric_name] = 0.0
 
-    def accumulate(self, accum_validation_metrics=False):
-        for metric_name in self.batch_metrics.keys():
-            if accum_validation_metrics:
-                if (not metric_name.startswith('val_')):
-                    continue  # skip metrics not like val_XXX
-                metric_mean = np.array(self.batch_metrics[metric_name]).mean()
-            else:
-                if metric_name.startswith('val_'):
-                    continue  # skip metrics like val_XXX
-                metric_mean = np.array(self.batch_metrics[metric_name]).mean()
-            self.history[metric_name].append(metric_mean)
-            self.batch_metrics[metric_name].clear()
+                if include_val_metrics:
+                    history['val_%s' % metric_name] = []
+                    batch_metrics['val_%s' % metric_name] = 0.0
+                    cum_metrics['val_%s' % metric_name] = 0.0
 
-    def get_batch_metrics_str(self, include_validation_metrics=False):
-        metrics_str = ''
-
-        metrics_str = f"loss: {np.array(self.batch_metrics['loss']).mean():.4f}"
-        for metric_name in self.metrics_list:
-            metrics_str += f" - {metric_name}: {np.array(self.batch_metrics[metric_name]).mean():.4f}"
-
-        if include_validation_metrics:
-            assert self.has_metric('val_loss'), \
-                f"Error: 'val_loss' is not tracked in training loop"
-            metrics_str += f" - val_loss: {np.array(self.batch_metrics['val_loss']).mean():.4f}"
-            for metric_name in self.metrics_list:
-                mname = f"val_{metric_name}"
-                metrics_str += f" - {mname}: {np.array(self.batch_metrics[mname]).mean():.4f}"
-
-        return metrics_str
-
-    def get_metrics_str(self, include_validation_metrics=False):
-        metrics_str = ''
-
-        metrics_str = f"loss: {np.array(self.history['loss']).mean():.4f}"
-        for metric_name in self.metrics_list:
-            metrics_str += f" - {metric_name}: {np.array(self.history[metric_name]).mean():.4f}"
-
-        if include_validation_metrics:
-            assert self.has_metric('val_loss'), \
-                f"Error: 'val_loss' is not tracked in training loop"
-            metrics_str += f" - val_loss: {np.array(self.history['val_loss']).mean():.4f}"
-            for metric_name in self.metrics_list:
-                mname = f"val_{metric_name}"
-                metrics_str += f" - {mname}: {np.array(self.history[mname]).mean():.4f}"
-
-        return metrics_str
-
-
-# def create_hist_and_metrics_ds__(metrics, include_val_metrics=True):
-#     """ internal helper functions - create data structures to log epoch metrics,
-#         batch metrics & cumulative betch metrics """
-#     history = {'loss': []}
-#     batch_metrics = {'loss': 0.0}
-#     cum_metrics = {'loss': 0.0}
-
-#     if include_val_metrics:
-#         history['val_loss'] = []
-#         batch_metrics['val_loss'] = 0.0
-#         cum_metrics['val_loss'] = 0.0
-
-#     if metrics is not None and len(metrics) > 0:
-#         # walk list of metric names & create one entry per metric
-#         for metric_name in metrics:
-#             if metric_name not in METRICS_MAP.keys():
-#                 raise ValueError('%s - unrecognized metric!' % metric_name)
-#             else:
-#                 history[metric_name] = []
-#                 batch_metrics[metric_name] = 0.0
-#                 cum_metrics[metric_name] = 0.0
-
-#                 if include_val_metrics:
-#                     history['val_%s' % metric_name] = []
-#                     batch_metrics['val_%s' % metric_name] = 0.0
-#                     cum_metrics['val_%s' % metric_name] = 0.0
-
-#     return history, batch_metrics, cum_metrics
+    return history, batch_metrics, cum_metrics
 
 
 def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_split=0.0,
@@ -876,22 +767,19 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
         len_tot_samples = len(str(tot_samples))
 
         # create data structures to hold batch metrics, epoch metrics etc.
-        # history, batch_metrics, cum_metrics = \
-        #     create_hist_and_metrics_ds__(metrics, validation_dataset is not None)
+        history, batch_metrics, cum_metrics = \
+            create_hist_and_metrics_ds__(metrics, validation_dataset is not None)
 
-        # metrics_list = ['loss']
-        # if metrics is not None:
-        #     metrics_list = metrics_list + metrics
-        #     if early_stopping_metric is not None:
-        #         metrics_list_check = []
-        #         for metric in metrics_list:
-        #             metrics_list_check.append(metric)
-        #             metrics_list_check.append('val_%s' % metric)
-        #         assert early_stopping_metric in metrics_list_check, \
-        #             "early stopping metric (%s) is not logged during training!" % early_stopping_metric
-
-        # create data structures to hold batch metrics, epoch metrics etc.
-        metrics_history = MetricsHistory(metrics, validation_dataset is not None)
+        metrics_list = ['loss']
+        if metrics is not None:
+            metrics_list = metrics_list + metrics
+            if early_stopping_metric is not None:
+                metrics_list_check = []
+                for metric in metrics_list:
+                    metrics_list_check.append(metric)
+                    metrics_list_check.append('val_%s' % metric)
+                assert early_stopping_metric in metrics_list_check, \
+                    "early stopping metric (%s) is not logged during training!" % early_stopping_metric
 
         len_num_epochs = len(str(epochs))
 
@@ -909,12 +797,12 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
             samples = 0
 
             # zero out batch & cum metrics for next epoch
-            # for metric_name in metrics_list:
-            #     batch_metrics[metric_name] = 0.0
-            #     cum_metrics[metric_name] = 0.0
-            #     if validation_dataset is not None:
-            #         batch_metrics['val_%s' % metric_name] = 0.0
-            #         cum_metrics['val_%s' % metric_name] = 0.0
+            for metric_name in metrics_list:
+                batch_metrics[metric_name] = 0.0
+                cum_metrics[metric_name] = 0.0
+                if validation_dataset is not None:
+                    batch_metrics['val_%s' % metric_name] = 0.0
+                    cum_metrics['val_%s' % metric_name] = 0.0
 
             # learning rates used by the optimizer (as a string)
             learning_rates = ''
@@ -938,17 +826,14 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
                 batch_loss = loss_tensor.item()
 
                 # compute metrics for batch + accumulate metrics across batches
-                # batch_metrics['loss'] = batch_loss
-                # if metrics is not None:
-                #     # compute metrics for training dataset only!
-                #     compute_metrics__(logits, labels, metrics,
-                #                       batch_metrics, validation_dataset=False)
-                # # same as cum_metrics[metric_name] += batch_metric[metric_name] across all metrics
-                # cum_metrics = accumulate_metrics__(
-                #     metrics_list, cum_metrics, batch_metrics, validation_dataset=False)
-
-                # compute training metrics for this batch
-                metrics_history.compute_batch_metrics(logits, labels, batch_loss, update_validation_metrics=False)
+                batch_metrics['loss'] = batch_loss
+                if metrics is not None:
+                    # compute metrics for training dataset only!
+                    compute_metrics__(logits, labels, metrics,
+                                      batch_metrics, validation_dataset=False)
+                # same as cum_metrics[metric_name] += batch_metric[metric_name] across all metrics
+                cum_metrics = accumulate_metrics__(
+                    metrics_list, cum_metrics, batch_metrics, validation_dataset=False)
 
                 samples += len(labels)
                 num_batches += 1
@@ -960,9 +845,8 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
                     if (epoch == 0) or ((epoch + 1) % report_interval == 0):
                         # verbose == 2 -> display progress counter + metrics after each batch
                         # e.g: Epoch (2/20): (1024/5000) -> loss: 28.45 - acc: 0.4567
-                        # metrics_str = get_metrics_str__(
-                        #     metrics_list, batch_metrics, validation_dataset=False)
-                        metrics_str = metrics_history.get_batch_metrics_str(include_validation_metrics=False)
+                        metrics_str = get_metrics_str__(
+                            metrics_list, batch_metrics, validation_dataset=False)
                         metrics_str += learning_rates
                         print('\rEpoch (%*d/%*d): (%*d/%*d) -> %s' %
                               (len_num_epochs, epoch + 1, len_num_epochs, epochs,
@@ -981,22 +865,16 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
                 # all batches in train_loader dataset are complete...
 
                 # compute average metrics across all batches of train_loader
-                # for metric_name in metrics_list:
-                #     cum_metrics[metric_name] = cum_metrics[metric_name] / num_batches
-                #     history[metric_name].append(cum_metrics[metric_name])
-
-                # compute average metrics across all batches of train_loader
-                metrics_history.accumulate(accum_validation_metrics=False)
+                for metric_name in metrics_list:
+                    cum_metrics[metric_name] = cum_metrics[metric_name] / num_batches
+                    history[metric_name].append(cum_metrics[metric_name])
 
                 # display average training metrics for this epoch if verbose = 1 or 2
                 # learning_rates = get_lrates__(optimizer)
                 if ((verbose in [1, 2]) or (validation_dataset is None)):
                     if (epoch == 0) or ((epoch + 1) % report_interval == 0):
-                        # metrics_str = get_metrics_str__(
-                        #     metrics_list, cum_metrics, validation_dataset=False)
-
-                        metrics_str = metrics_history.get_metrics_str(include_validation_metrics=False)
-
+                        metrics_str = get_metrics_str__(
+                            metrics_list, cum_metrics, validation_dataset=False)
                         metrics_str += learning_rates
                         print('\rEpoch (%*d/%*d): (%*d/%*d) -> %s ...' %
                               (len_num_epochs, epoch + 1, len_num_epochs, epochs,
@@ -1026,38 +904,28 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
                             batch_loss = loss_tensor.item()
 
                             # calculate all metrics for validation dataset batch
-                            # batch_metrics['val_loss'] = batch_loss
-                            # if metrics is not None:
-                            #     compute_metrics__(val_logits, val_labels, metrics,
-                            #                       batch_metrics, validation_dataset=True)
-                            # # same as cum_metrics[val_metric_name] += batch_metrics[val_metric_name] for all metrics
-                            # cum_metrics = accumulate_metrics__(metrics_list, cum_metrics,
-                            #                                    batch_metrics, validation_dataset=True)
-
-                            # calculate all metrics for validation dataset batch
-                            metrics_history.compute_batch_metrics(
-                                val_logits, val_labels, batch_loss, update_validation_metrics=True)
+                            batch_metrics['val_loss'] = batch_loss
+                            if metrics is not None:
+                                compute_metrics__(val_logits, val_labels, metrics,
+                                                  batch_metrics, validation_dataset=True)
+                            # same as cum_metrics[val_metric_name] += batch_metrics[val_metric_name] for all metrics
+                            cum_metrics = accumulate_metrics__(metrics_list, cum_metrics,
+                                                               batch_metrics, validation_dataset=True)
 
                             num_val_batches += 1
                         else:
                             # validation loop completed for this epoch
                             # average metrics across all val-dataset batches
-                            # for metric_name in metrics_list:
-                            #     cum_metrics['val_%s' % metric_name] = \
-                            #         cum_metrics['val_%s' % metric_name] / num_val_batches
-                            #     history['val_%s' % metric_name].append(cum_metrics['val_%s' % metric_name])
-
-                            # average metrics across all val-dataset batches
-                            metrics_history.accumulate(accum_validation_metrics=True)
+                            for metric_name in metrics_list:
+                                cum_metrics['val_%s' % metric_name] = \
+                                    cum_metrics['val_%s' % metric_name] / num_val_batches
+                                history['val_%s' % metric_name].append(cum_metrics['val_%s' % metric_name])
 
                             if (verbose in [1, 2]) and ((epoch == 0) or ((epoch + 1) % report_interval == 0)):
                                 # display train + val set metrics only if verbose =1 or 2 and at
                                 # reporting interval epoch
-                                # metrics_str = get_metrics_str__(
-                                #     metrics_list, cum_metrics, validation_dataset=True)
-
-                                metrics_str = metrics_history.get_metrics_str(include_validation_metrics=True)
-
+                                metrics_str = get_metrics_str__(
+                                    metrics_list, cum_metrics, validation_dataset=True)
                                 # learning_rates = get_lrates__(optimizer)
                                 metrics_str += learning_rates
                                 print('\rEpoch (%*d/%*d): (%*d/%*d) -> %s' %
@@ -1068,9 +936,7 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
 
             # check for early stopping
             if early_stopping is not None:
-                assert early_stopping_metric in metrics_history.history.keys(), \
-                    f"Early stopping metric {early_stopping_metric} not tracked during training!"
-                curr_metric_val = metrics_history.history[early_stopping_metric][-1]
+                curr_metric_val = history[early_stopping_metric][-1]
                 early_stopping(model, curr_metric_val, epoch)
                 if early_stopping.early_stop:
                     print(f"Early stopping training at epoch {epoch}")
@@ -1080,21 +946,19 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
                             mod = model.model
                         mod.load_state_dict(torch.load(
                             early_stopping.checkpoint_file_path))
-                    return metrics_history.history
+                    return history
 
             # step the learning rate scheduler at end of epoch
             if (lr_scheduler is not None) and (epoch < epochs - 1):
                 # have to go to these hoops as ReduceLROnPlateau requires a metric for step()
                 if isinstance(lr_scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
-                    # lr_metric = cum_metrics['val_loss'] if validation_dataset is not None \
-                    #     else cum_metrics['loss']
-                    lr_metric = metrics_history.history['val_loss'][-1] if validation_dataset is not None \
-                        else metrics_history.history['loss'][-1]
+                    lr_metric = cum_metrics['val_loss'] if validation_dataset is not None \
+                        else cum_metrics['loss']
                     lr_scheduler.step(lr_metric)
                 else:
                     lr_scheduler.step()
 
-        return metrics_history.history
+        return history
     finally:
         model = model.cpu()
 
@@ -1130,19 +994,17 @@ def evaluate_model(model, dataset, loss_fn=None, batch_size=64, metrics=None, nu
         model = model.cuda() if gpu_available else model.cpu()
 
         samples, num_batches = 0, 0
-        loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
+        loader = torch.utils.data.DataLoader(
+            dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
         tot_samples = len(dataset)
         len_tot_samples = len(str(tot_samples))
 
-        # history, batch_metrics, cum_metrics = \
-        #     create_hist_and_metrics_ds__(metrics, dataset is not None)
+        history, batch_metrics, cum_metrics = \
+            create_hist_and_metrics_ds__(metrics, dataset is not None)
 
-        # metrics_list = ['loss']
-        # if metrics is not None:
-        #     metrics_list = metrics_list + metrics
-
-        # NOTE: we are not tracking 'validation' metrics
-        metrics_history = MetricsHistory(metrics)  # ataset is not None)
+        metrics_list = ['loss']
+        if metrics is not None:
+            metrics_list = metrics_list + metrics
 
         with torch.no_grad():
             model.eval()
@@ -1157,58 +1019,41 @@ def evaluate_model(model, dataset, loss_fn=None, batch_size=64, metrics=None, nu
                 batch_loss = loss_tensor.item()
 
                 # compute all metrics for this batch
-                # compute_metrics__(logits, labels, metrics,
-                #                   batch_metrics, validation_dataset=False)
-                # batch_metrics['loss'] = batch_loss
-                # # same as cum_metrics[metric_name] += batch_metrics[metric_name] for all metrics
-                # cum_metrics = accumulate_metrics__(
-                #     metrics_list, cum_metrics, batch_metrics, validation_dataset=False)
-
-                # compute all metrics for this batch
-                metrics_history.compute_batch_metrics(logits, labels, batch_loss,
-                                                      update_validation_metrics=False)
+                compute_metrics__(logits, labels, metrics,
+                                  batch_metrics, validation_dataset=False)
+                batch_metrics['loss'] = batch_loss
+                # same as cum_metrics[metric_name] += batch_metrics[metric_name] for all metrics
+                cum_metrics = accumulate_metrics__(
+                    metrics_list, cum_metrics, batch_metrics, validation_dataset=False)
 
                 samples += len(labels)
                 num_batches += 1
 
                 # display progress for this batch
-                # metrics_str = get_metrics_str__(
-                #     metrics_list, batch_metrics, validation_dataset=False)
-
-                # display progress for this batch
-                metrics_str = metrics_history.get_batch_metrics_str(include_validation_metrics=False)
-
+                metrics_str = get_metrics_str__(
+                    metrics_list, batch_metrics, validation_dataset=False)
                 print('\rEvaluating (%*d/%*d) -> %s' %
                       (len_tot_samples, samples, len_tot_samples, tot_samples,
                        metrics_str),
                       end='', flush=True)
             else:
                 # compute average of all metrics provided in metrics list
-                # for metric_name in metrics_list:
-                #     cum_metrics[metric_name] = cum_metrics[metric_name] / num_batches
+                for metric_name in metrics_list:
+                    cum_metrics[metric_name] = cum_metrics[metric_name] / num_batches
 
-                # compute average of all metrics provided in metrics list
-                metrics_history.accumulate(accum_validation_metrics=False)
-
-                # metrics_str = get_metrics_str__(
-                #     metrics_list, cum_metrics, validation_dataset=False)
-
-                metrics_str = metrics_history.get_metrics_str(include_validation_metrics=False)
-
+                metrics_str = get_metrics_str__(
+                    metrics_list, cum_metrics, validation_dataset=False)
                 print('\rEvaluating (%*d/%*d) -> %s' %
                       (len_tot_samples, tot_samples, len_tot_samples, tot_samples,
                        metrics_str),
                       flush=True)
 
         if metrics is None:
-            # return cum_metrics['loss']
-            return metrics_history.history['loss']
+            return cum_metrics['loss']
         else:
             ret_metrics = []
-            # for metric_name in metrics_list:
-            #     ret_metrics.append(cum_metrics[metric_name])
-            for metric_name in metrics_history.history.keys():
-                ret_metrics.append(metrics_history.history[metric_name][0])
+            for metric_name in metrics_list:
+                ret_metrics.append(cum_metrics[metric_name])
             return ret_metrics
     finally:
         model = model.cpu()
@@ -1256,8 +1101,7 @@ def predict_dataset(model, dataset, batch_size=64, num_workers=0):
 
 
 def predict(model, data):
-    """ 
-        runs predictions on Numpy Array (use for classification ONLY)
+    """ runs predictions on Numpy Array (use for classification ONLY)
         @params:
             - model: instance of model derived from nn.Model (or instance of pyt.PytModel or pyt.PytSequential)
             - data: Numpy array of values on which predictions should be run
@@ -1278,6 +1122,7 @@ def predict(model, data):
         with torch.no_grad():
             model.eval()
             if isinstance(data, np.ndarray):
+                # data = data.astype(np.float32)
                 data = torch.tensor(data, dtype=torch.float32)
             data = data.cuda() if gpu_available else data.cpu()
             # forward pass
@@ -1305,16 +1150,17 @@ def save_model(model, model_save_name, model_save_dir=os.path.join('.', 'model_s
 
     # model_save_name could be just a file name or complete path
     if not (len(os.path.dirname(model_save_name)) == 0):
-        # model_save_name is a complete path (e.g. ./model_save_dir/model_name.pt)
-        # extract dir & file name
-        model_save_dir, model_save_name = os.path.split(model_save_name)
+        # model_save_name is a complete path (e.g. ./model_save_dir/model_name.pt
+        model_save_dir, model_save_name = os.path.split(
+            model_save_name)  # extract dir & file name
 
     # create model_save_dir if it does not exist
     if not os.path.exists(model_save_dir):
         try:
             os.mkdir(model_save_dir)
         except OSError as err:
-            print(f"FATAL: Unable to create folder {model_save_dir} to save Pytorch model!")
+            print(
+                f"FATAL ERROR: Unable to create folder {model_save_dir} to save Pytorch model!")
             raise err
 
     model_save_path = os.path.join(model_save_dir, model_save_name)
@@ -1357,7 +1203,8 @@ def save_model_state2(model, model_save_path):
                 os.mkdir(model_save_path_dir)
                 # print(f"{model_save_path_dir} created successfully!")
             except OSError as err:
-                print(f"FATAL: cannot create dir {model_save_path_dir}! Will abort")
+                print(
+                    f"FATAL ERROR: cannot create dir {model_save_path_dir}! Will abort")
                 raise err
 
     # save model to model_save_path
@@ -1784,10 +1631,12 @@ class PytkModule(nn.Module):
             else:
                 y_val_dtype = np.float32
 
-            torch_X_val = torch.from_numpy(validation_data[0]).type(torch.FloatTensor)
+            torch_X_val = torch.from_numpy(
+                validation_data[0]).type(torch.FloatTensor)
             torch_y_val = torch.from_numpy(validation_data[1]).type(
                 torch.LongTensor if y_val_dtype == np.long else torch.FloatTensor)
-            validation_dataset = torch.utils.data.TensorDataset(torch_X_val, torch_y_val)
+            validation_dataset = torch.utils.data.TensorDataset(
+                torch_X_val, torch_y_val)
 
         p_loss_fn = self.loss_fn if loss_fn is None else loss_fn
         p_optimizer = self.optimizer if optimizer is None else optimizer

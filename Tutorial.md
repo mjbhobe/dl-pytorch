@@ -3,6 +3,8 @@ Thank you for your interest in the `Pytorch Toolkit`. I wrote this as a set of u
 
 I am **releasing this code as-is with no warranties of any kind under the MIT license**. Please feel free to use this in your projects, should you find it useful. Should you use it, please give me a mention :).
 
+I wrote this library much before I discovered `Pytorch Lightning`. If you are looking for a professional maintained library that can help you train your model efficiently on multiple GPUs/TPUs, then Lightning is the way to go. Mine is a very humble attempt to 'replicate' the Keras interface for training.
+
 |**NOTE**|
 |:---|
 |<font color='firebrick'>This tutorial is **work-in-progress** and is expected to change to some extend, especially if I enhance the `Pytorch Toolkit` with more functions. Do keep checking back for changes - I don't expect the API to change drastically henceforth</font>|
@@ -15,14 +17,26 @@ I am assuming that you have already installed the pre-requisites and have done t
 |:---|
 |<font color='firebrick'>This is **NOT an ML tutorial** - I don't _teach_ you how to create the best model, training techniques, data loading & preparation techniques etc. This tutorial is _strictly aimed_ at showing you how the `Pytorch Toolkit` can be used to write much lesser code during the phase of training & evaluating model...and nothing more! I cover various scenarios below.</font>|
 
- With that perspective, let's get started.
+With that perspective, let's get started.
+
+## Dependencies
+`Pytorch Toolkit` relies on the following Python libraries, which must be installed using `pip` or `conda`. It has been tested on Python 3.8+ on Windows and Linux - I don't own a Mac :(.
+
+* pathlib 
+* numpy
+* pandas
+* matplotlib & seaborn
+* sklearn
+* torch (Pytorch, of course!)
+* torchsummary
+* torchmetrics
 
 ## Training model when data available in 2D Numpy arrays
 Often data & labels are available in Numpy arrays. This is true especially for structured datasets (e.g. datasets available with the `scikit-learn` package, like the Iris dataset, the Boston Housing dataset, the Wisconsin Breast Cancer dataset etc.) and in several repositories on Kaggle and UCI. 
 
 |**Tip**|
 |:---|
-|<font color='green'>This scenario will most probably apply to cases when your data is available in columnar format.</font>|
+|<font color='green'>This scenario will most probably apply to cases when your data is available in a structured columnar format (e.g. a CSV file).</font>|
 
 We'll start with one such example, specifically a _binary classification problem_ on the Wisconsin Breast Cancer dataset. I'll be downloading the data from the [UCI Repository link](https://archive.ics.uci.edu/ml/datasets/Breast+Cancer+Wisconsin+(Diagnostic)), but you can load it from the `scikit-learn datasets` module as well.
 
@@ -59,7 +73,7 @@ y = df['diagnosis'].values
 
 # split into train/test sets
 X_train, X_test, y_train, y_test = \
-    train_test_split(X, y, test_size=0.20, random_state=42)
+    train_test_split(X, y, test_size=0.20, random_state=41)
 
 # scale data using Standard scaling
 ss = StandardScaler()
@@ -124,7 +138,7 @@ model = WBCNet(32, 32, 10)
 
 Notice that **the only change you made was the base class from which your model is derived!**. You constructor `__init__(...)` and the `forward(...)` method _are exactly the same as before_! 
 
-Before you can start training the module, you'll need to specify the `loss` function, the `optimizer` and `metrics` to track during the training epochs (Yes! The `Pytorch Toolkit` provides several common metrics that you can use out-of the box - like `Accuracy`, `F1-Score`, `MSE`, `MAE` etc., which you can use). 
+Before you can start training the module, you'll need to specify the `loss` function, the `optimizer` and `metrics` to track during the training epochs (Yes! The `Pytorch Toolkit` provides several common metrics that you can use out-of the box - like `Accuracy`, `F1-Score`, `MSE`, `MAE` etc., which you can use).
 
 |**NOTE**|
 |:---|
