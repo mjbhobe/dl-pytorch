@@ -36,10 +36,10 @@ import torchmetrics
 from torchsummary import summary
 from torch.utils.data.dataset import Dataset
 
-PYTK_SEED = 41
+PYTK_FAV_SEED = 41
 
 
-def seed_all(seed=PYTK_SEED):
+def seed_all(seed=None):
     # to ensure that you get consistent results across runs & machines
     # @see: https://discuss.pytorch.org/t/reproducibility-over-different-machines/63047
     """seed all random number generators to get consistent results
@@ -48,6 +48,9 @@ def seed_all(seed=PYTK_SEED):
        @see: https://pytorch.org/docs/stable/notes/randomness.html
        @see: https://discuss.pytorch.org/t/reproducibility-over-different-machines/63047
     """
+    if seed is None:
+        # pick a random unsignedinteger
+        seed = random.randint(np.iinfo(np.uint32).min, np.iinfo(np.uint32).max)
     random.seed(seed)
     os.environ['PYTHONHASHSEED'] = str(seed)
     np.random.seed(seed)
@@ -59,6 +62,8 @@ def seed_all(seed=PYTK_SEED):
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
         torch.backends.cudnn.enabled = False
+
+    return seed
 
 
 # -----------------------------------------------------------------------------
@@ -956,27 +961,43 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
                 # display incremental progress
                 learning_rates = get_lrates__(optimizer)
 
-                if verbose == 2:
-                    if (epoch == 0) or ((epoch + 1) % report_interval == 0):
-                        # verbose == 2 -> display progress counter + metrics after each batch
-                        # e.g: Epoch (2/20): (1024/5000) -> loss: 28.45 - acc: 0.4567
-                        # metrics_str = get_metrics_str__(
-                        #     metrics_list, batch_metrics, validation_dataset=False)
-                        metrics_str = metrics_history.get_batch_metrics_str(include_validation_metrics=False)
-                        metrics_str += learning_rates
-                        print('\rEpoch (%*d/%*d): (%*d/%*d) -> %s' %
-                              (len_num_epochs, epoch + 1, len_num_epochs, epochs,
-                               len_tot_samples, samples, len_tot_samples, tot_samples,
-                               metrics_str),
-                              end='', flush=True)
-                elif verbose == 1:
-                    if (epoch == 0) or ((epoch + 1) % report_interval == 0):
-                        # verbose == 1 -> display progress counter only, no metrics
-                        # e.g: Epoch (2/20): (1024/5000) -> ...
-                        print('\rEpoch (%*d/%*d): (%*d/%*d) -> ...' %
-                              (len_num_epochs, epoch + 1, len_num_epochs, epochs,
-                               len_tot_samples, samples, len_tot_samples, tot_samples),
-                              end='', flush=True)
+                # if verbose == 2:
+                #     if (epoch == 0) or ((epoch + 1) % report_interval == 0):
+                #         # verbose == 2 -> display progress counter + metrics after each batch
+                #         # e.g: Epoch (2/20): (1024/5000) -> loss: 28.45 - acc: 0.4567
+                #         # metrics_str = get_metrics_str__(
+                #         #     metrics_list, batch_metrics, validation_dataset=False)
+                #         metrics_str = metrics_history.get_batch_metrics_str(include_validation_metrics=False)
+                #         metrics_str += learning_rates
+                #         print('\rEpoch (%*d/%*d): (%*d/%*d) -> %s' %
+                #               (len_num_epochs, epoch + 1, len_num_epochs, epochs,
+                #                len_tot_samples, samples, len_tot_samples, tot_samples,
+                #                metrics_str),
+                #               end='', flush=True)
+                # elif verbose == 1:
+                #     if (epoch == 0) or ((epoch + 1) % report_interval == 0):
+                #         # verbose == 1 -> display progress counter only, no metrics
+                #         # e.g: Epoch (2/20): (1024/5000) -> ...
+                #         print('\rEpoch (%*d/%*d): (%*d/%*d) -> ...' %
+                #               (len_num_epochs, epoch + 1, len_num_epochs, epochs,
+                #                len_tot_samples, samples, len_tot_samples, tot_samples),
+                #               end='', flush=True)
+
+                if (verbose in [1, 2] and ((epoch == 0) or ((epoch + 1) % report_interval == 0))):
+                    # report progress on epoch 0 and every report_interval thereafter if verbose in [1,2]
+                    # fetch metrics only if verbose == 2, else set metrics = '...'
+                    # if verbose == 0, there is no output whatsoever!
+                    metrics_str = "..." if verbose == 1 else \
+                        metrics_history.get_batch_metrics_str(include_validation_metrics=False) + learning_rates
+                    # if verbose == 1 -> display progress counter only, no metrics
+                    #    e.g.: Epoch (2/20): (1024/5000) -> ...
+                    # if verbose == 2 -> display progress counter + metrics after each batch
+                    #    e.g.: Epoch (2/20): (1024/5000) -> loss: 28.45 - acc: 0.4567
+                    print('\rEpoch (%*d/%*d): (%*d/%*d) -> %s' %
+                          (len_num_epochs, epoch + 1, len_num_epochs, epochs,
+                           len_tot_samples, samples, len_tot_samples, tot_samples,
+                           metrics_str),
+                          end='', flush=True)
             else:
                 # all batches in train_loader dataset are complete...
 
@@ -985,7 +1006,7 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
                 #     cum_metrics[metric_name] = cum_metrics[metric_name] / num_batches
                 #     history[metric_name].append(cum_metrics[metric_name])
 
-                # compute average metrics across all batches of train_loader
+                # compute average of training metrics across all batches of train_loader
                 metrics_history.accumulate(accum_validation_metrics=False)
 
                 # display average training metrics for this epoch if verbose = 1 or 2
@@ -1005,6 +1026,7 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
                               end='' if validation_dataset is not None else '\n', flush=True)
 
                 if validation_dataset is not None:
+                    # perform validation over validation dataset
                     val_batch_size = batch_size if batch_size != -1 \
                         else len(validation_dataset)
                     model.eval()  # mark model as evaluating - don't apply dropouts or batch norms
