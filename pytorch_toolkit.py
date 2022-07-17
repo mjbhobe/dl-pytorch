@@ -20,6 +20,11 @@ import warnings
 
 warnings.filterwarnings('ignore')
 
+import sys
+
+if sys.version_info < (3,):
+    raise Exception("pytorch_toolkit does not support Python 2. Please use a Python 3+ interpreter!")
+
 import os
 import random
 import pathlib
@@ -27,6 +32,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+from datetime import datetime
 from sklearn.metrics import roc_auc_score
 
 # torch imports
@@ -38,6 +44,9 @@ from torch.utils.data.dataset import Dataset
 
 PYTK_FAV_SEED = 41
 
+__version__ = "1.5.0"
+__author__ = "Manish Bhobe"
+
 
 def seed_all(seed=None):
     # to ensure that you get consistent results across runs & machines
@@ -47,9 +56,17 @@ def seed_all(seed=None):
        on a different machine (architecture) & that is to be expected
        @see: https://pytorch.org/docs/stable/notes/randomness.html
        @see: https://discuss.pytorch.org/t/reproducibility-over-different-machines/63047
+
+       @params:
+            - seed (optional): seed value that you choose to see everything. Can be None 
+              (default value). If None, the code chooses a random uint between np.uint32.min
+              & np.unit32.max
+        @returns:
+            - if parameter seed=None, then function returns the randomly chosen seed, else it
+              returns value of the parameter passed to the function
     """
     if seed is None:
-        # pick a random unsignedinteger
+        # pick a random uint32 seed
         seed = random.randint(np.iinfo(np.uint32).min, np.iinfo(np.uint32).max)
     random.seed(seed)
     os.environ['PYTHONHASHSEED'] = str(seed)
@@ -76,7 +93,7 @@ def Conv2d(in_channels, out_channels, kernel_size=3, stride=1, padding=1,
     """
         (convenience function)
         Creates a nn.Conv2d layer, with weights initiated using xavier_uniform initializer
-        and bias, if set, initialized using zeros initializer as is the default in Keras.
+        and bias, if set, initialized using zeros initializer. This is similar to Keras.
         @params:
             - same as nn.Conv2d params
         @returns:
@@ -439,7 +456,7 @@ class EarlyStopping:
     """
 
     def __init__(self, monitor='val_loss', min_delta=0, patience=5, mode='min', verbose=False,
-                 save_best_weights=False, checkpoint_file_path='.'):
+                 save_best_weights=True, checkpoint_file_path=None):
         """
             Args:
                 monitor (str): which metric should be monitored (default: 'val_loss')
@@ -468,15 +485,23 @@ class EarlyStopping:
         self.best_score = np.Inf if self.monitor_op == np.less else -np.Inf
         self.counter = 0
         self.best_epoch = 0
-        assert os.path.exists(checkpoint_file_path), \
-            f"Error: {checkpoint_file_path} does not appear to be a valid path!"
-        self.checkpoint_file_path = os.path.join(checkpoint_file_path, 'checkpoint.pt')
+
+        if (checkpoint_file_path is None) or (not os.path.exists(checkpoint_file_path)):
+            # create our own directory for logging -> ./chkplogs%Y%m%d%H%M%S
+            now = datetime.now()
+            dir_name = os.path.join(os.getcwd(), f"chkplogs{now.strftime('%Y%m%d%H%M%S')}")
+            self.checkpoint_file_path = dir_name
+        os.mkdir(self.checkpoint_file_path)
+        assert os.path.exists(self.checkpoint_file_path), \
+            "FATAL: could not create dir {self.checkpoint_file_path} for checkpoints"
+        # self.checkpoint_file_path = None # os.path.join(checkpoint_file_path, 'checkpoint.pt')
+        self.best_model_path = None
         self.metrics_log = []
         self.early_stop = False
 
     def __call__(self, model, curr_metric_val, epoch):
-        # if not (isinstance(model, PytModule) or isinstance(model, PytkModuleWrapper)):
-        #     raise TypeError("model should be derived from PytModule or PytkModuleWrapper")
+        if not (isinstance(model, PytkModule) or isinstance(model, PytkModuleWrapper)):
+            raise TypeError("model should be derived from PytModule or PytkModuleWrapper")
 
         # self.is_wrapped = isinstance(model, PytkModuleWrapper)
         if self.monitor_op(curr_metric_val - self.min_delta, self.best_score):
@@ -511,10 +536,15 @@ class EarlyStopping:
         if self.verbose:
             print('   EarlyStopping (log): \'%s\' metric has \'improved\' - from %.4f to %.4f. Saving checkpoint...' % (
                 metric_name, self.best_score, curr_metric_val))
-        mod = model
-        if isinstance(model, PytkModuleWrapper):
-            mod = model.model
-        torch.save(mod.state_dict(), self.checkpoint_file_path)
+        best_model_file_path = os.path.join(self.checkpoint_file_path,
+                                            f"checkpoint{datetime.now().strftime('%Y%m%d%H%M%S')}.pt")
+        model.save(best_model_file_path, verbose=0)
+        self.best_model_path = best_model_file_path
+        # mod = model
+        # if isinstance(model, PytkModuleWrapper):
+        #     mod = model.model
+        # # torch.save(mod.state_dict(), self.checkpoint_file_path)
+        # mod.save(self.checkpoint_file_path)
 
 
 # -------------------------------------------------------------------------------------
@@ -621,7 +651,7 @@ class MetricsHistory:
         self.history = {'loss': []}
         # batch metrics
         self.batch_metrics = {'loss': []}
-        # list of metric names
+        # list of metric names, excluding loss
         self.metrics_list = metrics_list
 
         if include_val_metrics:
@@ -630,6 +660,7 @@ class MetricsHistory:
 
         if (metrics_list is not None) and (len(metrics_list) > 0):
             for metric_name in metrics_list:
+                # NOTE: we do not have support for custom metrics yet!!
                 if metric_name not in METRICS_MAP.keys():
                     raise ValueError(f"{metric_name} - unrecognized metric!")
                 else:
@@ -655,7 +686,7 @@ class MetricsHistory:
         for metric_name in self.batch_metrics.keys():
             if update_validation_metrics:
                 if (not metric_name.startswith('val_')):
-                    continue    # ignore metrics not like val_XXX
+                    continue  # ignore metrics not like val_XXX
                 # NOTE: drop the 'val_' from metric name when call formula
                 # to calculate value of val_XXX metric - 'val_XXX'[4:] does the trick!
                 metric_val = batch_loss if metric_name.endswith('loss') \
@@ -664,7 +695,7 @@ class MetricsHistory:
             else:
                 # for training metrics
                 if (metric_name.startswith('val_')):
-                    continue    # ignore metrics like val_XXX
+                    continue  # ignore metrics like val_XXX
                 metric_val = batch_loss if metric_name.endswith(
                     'loss') else METRICS_MAP[metric_name](logits, labels)
                 self.batch_metrics[metric_name].append(metric_val)
@@ -747,7 +778,7 @@ class MetricsHistory:
 #     return history, batch_metrics, cum_metrics
 
 
-def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_split=0.0,
+def train_model(model, train_dataset, collate_fn=None, loss_fn=None, optimizer=None, validation_split=0.0,
                 validation_dataset=None, lr_scheduler=None, epochs=25, batch_size=64,
                 metrics=None, shuffle=True, num_workers=0, early_stopping=None,
                 verbose=2, report_interval=1):
@@ -853,8 +884,7 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
             train_count = int((1.0 - validation_split) * num_recs)
             val_count = num_recs - train_count
             train_dataset, validation_dataset = \
-                torch.utils.data.random_split(
-                    train_dataset, [train_count, val_count])
+                torch.utils.data.random_split(train_dataset, [train_count, val_count])
             assert (train_dataset is not None) and (len(train_dataset) == train_count), \
                 "Something is wrong with validation_split - getting incorrect train_dataset counts!!"
             assert (validation_dataset is not None) and (len(validation_dataset) == val_count), \
@@ -909,7 +939,7 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
         for epoch in range(epochs):
             model.train()  # 'flag model as training', so batch normalization & dropouts can be applied
             train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=train_batch_size,
-                                                       shuffle=shuffle, num_workers=num_workers)
+                                                       collate_fn=collate_fn, shuffle=shuffle, num_workers=num_workers)
             num_batches = 0
             samples = 0
 
@@ -1033,7 +1063,8 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
                     with torch.no_grad():
                         # run through the validation dataset
                         val_loader = torch.utils.data.DataLoader(validation_dataset, batch_size=val_batch_size,
-                                                                 shuffle=shuffle, num_workers=num_workers)
+                                                                 collate_fn=collate_fn, shuffle=shuffle,
+                                                                 num_workers=num_workers)
                         num_val_batches = 0
 
                         for val_data, val_labels in val_loader:
@@ -1121,7 +1152,7 @@ def train_model(model, train_dataset, loss_fn=None, optimizer=None, validation_s
         model = model.cpu()
 
 
-def evaluate_model(model, dataset, loss_fn=None, batch_size=64, metrics=None, num_workers=0):
+def evaluate_model(model, dataset, collate_fn=None, loss_fn=None, batch_size=64, metrics=None, num_workers=0):
     """ evaluate's model performance against dataset provided
         @params:
             - model: instance of model derived from nn.Model (or instance of pyt.PytModel or pyt.PytSequential)
@@ -1152,7 +1183,8 @@ def evaluate_model(model, dataset, loss_fn=None, batch_size=64, metrics=None, nu
         model = model.cuda() if gpu_available else model.cpu()
 
         samples, num_batches = 0, 0
-        loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
+        loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size,
+                                             collate_fn=collate_fn, shuffle=False, num_workers=num_workers)
         tot_samples = len(dataset)
         len_tot_samples = len(str(tot_samples))
 
@@ -1310,7 +1342,8 @@ def predict(model, data):
         model = model.cpu()
 
 
-def save_model(model, model_save_name, model_save_dir=os.path.join('.', 'model_states')):
+def save_model(model, model_save_name,
+               model_save_dir=os.path.join('.', 'model_states'), verbose=1):
     """ saves Pytorch model to disk 
         @params:
             - model: instance of model derived from nn.Model (or instance of pytk.PytModel or pytk.PytSequential)
@@ -1342,10 +1375,11 @@ def save_model(model, model_save_name, model_save_dir=os.path.join('.', 'model_s
     model_save_path = os.path.join(model_save_dir, model_save_name)
 
     torch.save(model, model_save_path)
-    print(f'Pytorch model saved to {model_save_path}')
+    if verbose == 1:
+        print(f'Pytorch model saved to {model_save_path}')
 
 
-def save_model_state2(model, model_save_path):
+def save_model_state2(model, model_save_path, verbose=1):
     """ saves Pytorch state (state_dict) to disk  
         @params:
             - model: instance of model derived from nn.Model (or instance of pytk.PytModel or pytk.PytSequential)
@@ -1384,10 +1418,11 @@ def save_model_state2(model, model_save_path):
 
     # save model to model_save_path
     torch.save(model.state_dict(), model_save_path)
-    print(f"Pytorch model saved to {model_save_path}")
+    if verbose == 1:
+        print(f"Pytorch model saved to {model_save_path}")
 
 
-def save_model_state(model, model_save_path):
+def save_model_state(model, model_save_path, verbose=1):
     """ saves Pytorch state (state_dict) to disk  
         @params:
             - model: instance of model derived from nn.Model (or instance of pytk.PytModel or pytk.PytSequential)
@@ -1395,8 +1430,8 @@ def save_model_state(model, model_save_path):
               (NOTE:
                  - the model_save_path file is overwritten at destination without warning
                  - if `model_save_path` is just a file name, then model saved to current dir
-                 - if `model_save_path` contains directory that does not, the function attempts to create 
-                   directories if it does not exist 
+                 - if `model_save_path` contains directory that does not exist, the function attempts to create 
+                   the directories
               )
     """
     save_dir, _ = os.path.split(model_save_path)
@@ -1413,10 +1448,11 @@ def save_model_state(model, model_save_path):
 
     # now save the model to file_path
     torch.save(model.state_dict(), model_save_path)
-    print(f"Pytorch model saved to {model_save_path}")
+    if verbose == 1:
+        print(f"Pytorch model saved to {model_save_path}")
 
 
-def load_model(model_save_name, model_save_dir='./model_states'):
+def load_model(model_save_name, model_save_dir='./model_states', verbose=1):
     """ loads model from disk and create a complete instance from saved state
         @params:
             - model_save_name: name of file or complete path of file to save model to 
@@ -1441,11 +1477,12 @@ def load_model(model_save_name, model_save_dir='./model_states'):
 
     model = torch.load(model_save_path)
     model.eval()
-    print('Pytorch model loaded from %s' % model_save_path)
+    if verbose == 1:
+        print('Pytorch model loaded from %s' % model_save_path)
     return model
 
 
-def load_model_state2(file_path):
+def load_model_state2(file_path, verbose=1):
     """ loads model from disk and create a complete instance from saved state
         @params:
             - model_save_name: name of file or complete path of file to save model to 
@@ -1459,11 +1496,12 @@ def load_model_state2(file_path):
 
     model = torch.load(file_path)
     model.eval()
-    print(f"Pytorch model loaded from {file_path}")
+    if verbose == 1:
+        print(f"Pytorch model loaded from {file_path}")
     return model
 
 
-def load_model_state(model, model_state_dict_path):
+def load_model_state(model, model_state_dict_path, verbose=1):
     """ loads model's state dict from file on disk
         @params:
             - model: instance of model derived from nn.Model (or instance of pytk.PytModel or pytk.PytSequential)
@@ -1474,13 +1512,13 @@ def load_model_state(model, model_state_dict_path):
     # convert model_state_dict_path to absolute path
     model_save_path = pathlib.Path(model_state_dict_path).absolute()
     if not os.path.exists(model_save_path):
-        raise IOError(
-            f"ERROR: can't load model from {model_state_dict_path} - file does not exist!")
+        raise IOError(f"ERROR: can't load model from {model_state_dict_path} - file does not exist!")
 
     # load state dict from path
     state_dict = torch.load(model_save_path)
     model.load_state_dict(state_dict)
-    print(f"Pytorch model loaded from {model_state_dict_path}")
+    if verbose == 1:
+        print(f"Pytorch model loaded from {model_state_dict_path}")
     model.eval()
     return model
 
@@ -1669,7 +1707,7 @@ class PytkModule(nn.Module):
         raise NotImplementedError("You have landed up calling PytModule.forward(). " +
                                   "You must re-implement this method in your derived class!")
 
-    def fit_dataset(self, train_dataset, loss_fn=None, optimizer=None, validation_split=0.0,
+    def fit_dataset(self, train_dataset, collate_fn=None, loss_fn=None, optimizer=None, validation_split=0.0,
                     validation_dataset=None, lr_scheduler=None, epochs=25, batch_size=64, metrics=None,
                     shuffle=True, num_workers=0, early_stopping=None, verbose=2, report_interval=1):
         """ 
@@ -1723,13 +1761,14 @@ class PytkModule(nn.Module):
         p_loss_fn = self.loss_fn if loss_fn is None else loss_fn
         p_optimizer = self.optimizer if optimizer is None else optimizer
         p_metrics_list = self.metrics_list if metrics is None else metrics
-        return train_model(self, train_dataset, loss_fn=p_loss_fn, optimizer=p_optimizer,
+        return train_model(self, train_dataset, collate_fn=collate_fn, loss_fn=p_loss_fn, optimizer=p_optimizer,
                            validation_split=validation_split, validation_dataset=validation_dataset,
                            lr_scheduler=lr_scheduler, epochs=epochs, batch_size=batch_size,
                            metrics=p_metrics_list, shuffle=shuffle, num_workers=num_workers,
                            early_stopping=early_stopping, verbose=verbose, report_interval=report_interval)
 
-    def fit(self, X_train, y_train, loss_fn=None, optimizer=None, validation_split=0.0, validation_data=None,
+    def fit(self, X_train, y_train, collate_fn=None, loss_fn=None, optimizer=None, validation_split=0.0,
+            validation_data=None,
             lr_scheduler=None, epochs=25, batch_size=64, metrics=None, shuffle=True, num_workers=0,
             early_stopping=None, verbose=2, report_interval=1):
         """ 
@@ -1814,20 +1853,21 @@ class PytkModule(nn.Module):
         p_loss_fn = self.loss_fn if loss_fn is None else loss_fn
         p_optimizer = self.optimizer if optimizer is None else optimizer
         p_metrics_list = self.metrics_list if metrics is None else metrics
-        return self.fit_dataset(train_dataset, loss_fn=p_loss_fn, optimizer=p_optimizer,
+        return self.fit_dataset(train_dataset, collate_fn=collate_fn, loss_fn=p_loss_fn, optimizer=p_optimizer,
                                 validation_split=validation_split, validation_dataset=validation_dataset,
                                 lr_scheduler=lr_scheduler,
                                 epochs=epochs, batch_size=batch_size, metrics=p_metrics_list,
                                 shuffle=shuffle, num_workers=num_workers, early_stopping=early_stopping,
                                 verbose=verbose, report_interval=report_interval)
 
-    def evaluate_dataset(self, dataset, loss_fn=None, batch_size=64, metrics=None, num_workers=0):
+    def evaluate_dataset(self, dataset, collate_fn=None, loss_fn=None, batch_size=64, metrics=None, num_workers=0):
         p_loss_fn = self.loss_fn if loss_fn is None else loss_fn
         p_metrics_list = self.metrics_list if metrics is None else metrics
-        return evaluate_model(self, dataset, loss_fn=p_loss_fn, batch_size=batch_size, metrics=p_metrics_list,
+        return evaluate_model(self, dataset, collate_fn=collate_fn, loss_fn=p_loss_fn, batch_size=batch_size,
+                              metrics=p_metrics_list,
                               num_workers=num_workers)
 
-    def evaluate(self, X, y, loss_fn=None, batch_size=64, metrics=None, num_workers=0):
+    def evaluate(self, X, y, collate_fn=None, loss_fn=None, batch_size=64, metrics=None, num_workers=0):
         assert ((X is not None) and (isinstance(X, np.ndarray))), \
             "Parameter error: X is None or is NOT an instance of np.ndarray"
         assert ((y is not None) and (isinstance(y, np.ndarray))), \
@@ -1842,7 +1882,7 @@ class PytkModule(nn.Module):
         torch_y = torch.from_numpy(y).type(
             torch.LongTensor if y_dtype == np.long else torch.FloatTensor)
         p_dataset = torch.utils.data.TensorDataset(torch_X, torch_y)
-        return self.evaluate_dataset(p_dataset, loss_fn=loss_fn, batch_size=batch_size,
+        return self.evaluate_dataset(p_dataset, collate_fn=collate_fn, loss_fn=loss_fn, batch_size=batch_size,
                                      metrics=metrics, num_workers=num_workers)
 
     def predict_dataset(self, dataset, batch_size=32, num_workers=0):
@@ -1900,21 +1940,50 @@ class PytkModuleWrapper():
     def parameters(self, recurse=True):
         return self.model.parameters(recurse)
 
-    def fit_dataset(self, train_dataset, loss_fn=None, optimizer=None, validation_split=0.0,
-                    validation_dataset=None, lr_scheduler=None, epochs=25, batch_size=64, metrics=None,
-                    shuffle=True, num_workers=0, early_stopping=None, verbose=2, report_interval=1):
+    def fit_dataset(
+        self,
+        train_dataset,
+        collate_fn=None, 
+        loss_fn=None,
+        optimizer=None,
+        validation_split=0.0,
+        validation_dataset=None,
+        lr_scheduler=None,
+        epochs=25,
+        batch_size=64,
+        metrics=None,
+        shuffle=True,
+        num_workers=0,
+        early_stopping=None,
+        verbose=2,
+        report_interval=1
+    ):
+
         p_loss_fn = self.loss_fn if loss_fn is None else loss_fn
         p_optimizer = self.optimizer if optimizer is None else optimizer
         p_metrics_list = self.metrics_list if metrics is None else metrics
 
-        return train_model(self.model, train_dataset, loss_fn=p_loss_fn, optimizer=p_optimizer,
-                           validation_split=validation_split, validation_dataset=validation_dataset,
-                           lr_scheduler=lr_scheduler,
-                           epochs=epochs, batch_size=batch_size, metrics=p_metrics_list, shuffle=shuffle,
-                           num_workers=num_workers,
-                           early_stopping=early_stopping, verbose=verbose, report_interval=report_interval)
+        return train_model(
+            self.model, 
+            train_dataset, 
+            collate_fn=collate_fn, 
+            loss_fn=p_loss_fn, 
+            optimizer=p_optimizer,
+            validation_split=validation_split, 
+            validation_dataset=validation_dataset,
+            lr_scheduler=lr_scheduler,
+            epochs=epochs, 
+            batch_size=batch_size, 
+            metrics=p_metrics_list, 
+            shuffle=shuffle,
+            num_workers=num_workers,
+            early_stopping=early_stopping, 
+            verbose=verbose, 
+            report_interval=report_interval
+        )
 
-    def fit(self, X_train, y_train, loss_fn=None, optimizer=None, validation_split=0.0, validation_data=None,
+    def fit(self, X_train, y_train, collate_fn=None, loss_fn=None, optimizer=None, validation_split=0.0,
+            validation_data=None,
             lr_scheduler=None, epochs=25, batch_size=64, metrics=None, shuffle=True, num_workers=0,
             early_stopping=None, verbose=2, report_interval=1):
 
@@ -1956,19 +2025,31 @@ class PytkModuleWrapper():
         p_loss_fn = self.loss_fn if loss_fn is None else loss_fn
         p_optimizer = self.optimizer if optimizer is None else optimizer
         p_metrics_list = self.metrics_list if metrics is None else metrics
-        return self.fit_dataset(train_dataset, loss_fn=p_loss_fn, optimizer=p_optimizer,
-                                validation_split=validation_split, validation_dataset=validation_dataset,
-                                lr_scheduler=lr_scheduler, epochs=epochs, batch_size=batch_size, metrics=p_metrics_list,
-                                shuffle=shuffle, num_workers=num_workers, early_stopping=early_stopping,
-                                verbose=verbose, report_interval=report_interval)
+        return self.fit_dataset(
+            train_dataset, 
+            collate_fn=collate_fn, 
+            loss_fn=p_loss_fn, 
+            optimizer=p_optimizer,
+            validation_split=validation_split, 
+            validation_dataset=validation_dataset,
+            lr_scheduler=lr_scheduler, 
+            epochs=epochs, 
+            batch_size=batch_size, 
+            metrics=p_metrics_list,
+            shuffle=shuffle, 
+            num_workers=num_workers, 
+            early_stopping=early_stopping,
+            verbose=verbose, 
+            report_interval=report_interval
+        )
 
-    def evaluate_dataset(self, dataset, loss_fn=None, batch_size=64, metrics=None, num_workers=0):
+    def evaluate_dataset(self, dataset, collate_fn=None, loss_fn=None, batch_size=64, metrics=None, num_workers=0):
         p_loss_fn = self.loss_fn if loss_fn is None else loss_fn
         p_metrics_list = self.metrics_list if metrics is None else metrics
-        return evaluate_model(self.model, dataset, loss_fn=p_loss_fn, batch_size=batch_size,
+        return evaluate_model(self.model, dataset, collate_fn=collate_fn, loss_fn=p_loss_fn, batch_size=batch_size,
                               metrics=p_metrics_list, num_workers=num_workers)
 
-    def evaluate(self, X, y, loss_fn=None, batch_size=64, metrics=None, num_workers=0):
+    def evaluate(self, X, y, collate_fn=None, loss_fn=None, batch_size=64, metrics=None, num_workers=0):
         assert ((X is not None) and (isinstance(X, np.ndarray))), \
             "Parameter error: X is None or is NOT an instance of np.ndarray"
         assert ((y is not None) and (isinstance(y, np.ndarray))), \
@@ -1982,7 +2063,7 @@ class PytkModuleWrapper():
         torch_y = torch.from_numpy(y).type(
             torch.LongTensor if y_dtype == np.long else torch.FloatTensor)
         p_dataset = torch.utils.data.TensorDataset(torch_X, torch_y)
-        return self.evaluate_dataset(p_dataset, loss_fn=loss_fn, batch_size=batch_size,
+        return self.evaluate_dataset(p_dataset, collate_fn=collate_fn, loss_fn=loss_fn, batch_size=batch_size,
                                      metrics=metrics, num_workers=num_workers)
 
     def predict_dataset(self, dataset, batch_size=32, num_workers=0):
@@ -2010,3 +2091,5 @@ class PytkModuleWrapper():
             summary(self.model.cuda(), input_shape)
         else:
             summary(self.model.cpu(), input_shape)
+
+
