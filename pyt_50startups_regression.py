@@ -48,8 +48,8 @@ NUM_EPOCHS = 500
 BATCH_SIZE = 2
 LR = 0.01
 RUN_TORCH = True
-RUN_SKLEARN = False
-RUN_KERAS = False   # NOTE: model definition needs fixing!
+RUN_SKLEARN = True
+RUN_KERAS = True   # NOTE: model definition needs fixing!
 
 # ---------------------------------------------------------------------------
 # Example:1 - with synthesized data
@@ -58,7 +58,9 @@ RUN_KERAS = False   # NOTE: model definition needs fixing!
 
 def get_data(test_split=0.20, shuffle_it=True):
 
-    df = pd.read_csv('./csv_files/50_startups.csv')
+    data_file_path = os.path.join(os.path.dirname(__file__), "csv_files", "50_startups.csv")
+    assert os.path.exists(data_file_path), f"FATAL: data file {data_file_path} not found!"
+    df = pd.read_csv(data_file_path)
     # one-hot encode the State column
     df = pd.get_dummies(df, prefix='State')
 
@@ -111,9 +113,9 @@ def main():
         net.compile(loss=criterion, optimizer=optimizer, metrics=['mae'])
         print(net)
 
-        print('Training model with Pytorch...please wait')
+        print('Training model with Pytorch...please wait', flush=True)
         hist = net.fit(X_train, y_train, validation_split=0.05, epochs=NUM_EPOCHS,
-                       batch_size=BATCH_SIZE, lr_scheduler=scheduler, verbose=2)
+                       batch_size=BATCH_SIZE, lr_scheduler=scheduler, verbose=0)
         pytk.show_plots(hist, metric='mae', plot_title='Pytorch Model performance')
 
         # run predictions
@@ -140,7 +142,7 @@ def main():
         lr = LinearRegression()
         lr.fit(X_train, y_train)
         y_pred_skl = lr.predict(X_test)
-        print(f'sklearn Logistic Regression: r2_score = {r2_score(y_test, y_pred_skl)}')
+        print(f'sklearn Logistic Regression: r2_score = {r2_score(y_test, y_pred_skl):.3f}')
 
     if RUN_KERAS:
         # what does an equivalent Keras model give me?
@@ -159,8 +161,8 @@ def main():
             Dense(1, activation='linear', kernel_regularizer=reg)
         ])
         opt = SGD(learning_rate=LR)
-        kr_model.compile(loss='mse', optimizer=opt, metrics=['mse'])
-        print('Training model with Keras....please wait')
+        kr_model.compile(loss='mse', optimizer=opt, metrics=['mae'])
+        print('Training model with Keras....please wait', flush=True)
         hist = kr_model.fit(X_train, y_train, epochs=NUM_EPOCHS, validation_split=0.05,
                             batch_size=BATCH_SIZE, verbose=0)
         pytk.show_plots(hist.history, metric='mae', plot_title='Keras Model performance')

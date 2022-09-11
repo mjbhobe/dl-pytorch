@@ -6,7 +6,9 @@ My experiments with Python, Machine Learning & Deep Learning.
 This code is meant for education purposes only & is not intended for commercial/production use!
 Use at your own risk!! I am not responsible if your CPU or GPU gets fried :D
 """
+# %% https://code.visualstudio.com/docs/python/jupyter-support-py
 import warnings
+
 warnings.filterwarnings('ignore')
 
 import os
@@ -24,6 +26,7 @@ sns.set(style='darkgrid', context='notebook', font_scale=1.10)
 
 # Pytorch imports
 import torch
+
 print('Using Pytorch version: ', torch.__version__)
 import torch.nn as nn
 import torch.nn.functional as F
@@ -83,7 +86,7 @@ def load_data(test_split=0.20):
     wis_df['diagnosis'] = wis_df['diagnosis'].map({'M': 1, 'B': 0})
     print(wis_df.head(5))
     print(wis_df['diagnosis'].value_counts())
-    #f_names = wis_df.columns[wis_df.columns != 'diagnosis']
+    # f_names = wis_df.columns[wis_df.columns != 'diagnosis']
 
     X = wis_df.drop(['diagnosis'], axis=1).values
     y = wis_df['diagnosis'].values
@@ -98,10 +101,11 @@ def load_data(test_split=0.20):
     ss = StandardScaler()
     X_train = ss.fit_transform(X_train)
     X_test = ss.transform(X_test)
-    y_train = y_train[:, np.newaxis]
-    y_test = y_test[:, np.newaxis]
+    # y_train = y_train[:, np.newaxis]
+    # y_test = y_test[:, np.newaxis]
 
     return (X_train, y_train), (X_test, y_test)
+
 
 # our ANN
 
@@ -109,14 +113,28 @@ def load_data(test_split=0.20):
 class WBCNet(pytk.PytkModule):
     def __init__(self, inp_size, num_classes):
         super(WBCNet, self).__init__()
-        self.fc1 = nn.Linear(inp_size, 32)
-        self.fc2 = nn.Linear(32, 32)
-        self.out = nn.Linear(32, num_classes)
+        # self.fc1 = nn.Linear(inp_size, 32)
+        # self.fc2 = nn.Linear(32, 32)
+        # self.out = nn.Linear(32, num_classes)
+        self.net = nn.Sequential(
+            nn.Linear(inp_size, 16),
+            nn.ReLU(),
+            nn.Dropout(p=0.10),
+            nn.Linear(16, 32),
+            nn.ReLU(),
+            nn.Dropout(p=0.10),
+            # nn.Linear(32, 64),
+            # nn.ReLU(),
+            # nn.Dropout(p=0.30),
+            nn.Linear(32, num_classes)
+        )
 
     def forward(self, inp):
-        x = F.relu(self.fc1(inp))
-        x = F.relu(self.fc2(x))
-        x = F.sigmoid(self.out(x))
+        # x = F.relu(self.fc1(inp))
+        # x = F.relu(self.fc2(x))
+        # # x = F.sigmoid(self.out(x))
+        # x = self.out(x)
+        x = self.net(inp)
         return x
 
 
@@ -127,28 +145,29 @@ MODEL_SAVE_PATH = './model_states/pyt_wbc_ann2.pyt'
 
 # Hyper-parameters
 NUM_FEATURES = 30
-NUM_CLASSES = 1
-NUM_EPOCHS = 100
+NUM_CLASSES = 2
+NUM_EPOCHS = 750
 BATCH_SIZE = 16
 LEARNING_RATE = 0.001
 METRICS_LIST = ['acc', 'f1', 'prec', 'rec']
+DECAY = 0.015
 
 
 def build_model():
     model = WBCNet(NUM_FEATURES, NUM_CLASSES)
     # define the loss function & optimizer that model should
-    loss_fn = nn.BCELoss()  # nn.CrossEntropyLoss()
-    optimizer = torch.optim.SGD(model.parameters(), lr=LEARNING_RATE, nesterov=True,
-                                weight_decay=0.005, momentum=0.9, dampening=0)
+    # loss_fn = nn.BCELoss()
+    loss_fn = nn.CrossEntropyLoss()
+    optimizer = torch.optim.SGD(model.parameters(), lr=LEARNING_RATE, weight_decay=DECAY)
+    # optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE, weight_decay=DECAY)
     model.compile(loss=loss_fn, optimizer=optimizer, metrics=METRICS_LIST)
     return model
 
 
 def main():
-
     (X_train, y_train), (X_test, y_test) = load_data()
     # NOTE: BCELoss() functions expects labels to be floats (why can't it handle integers??)
-    y_train, y_test = y_train.astype(np.float), y_test.astype(np.float)
+    # y_train, y_test = y_train.astype(np.float), y_test.astype(np.float)
     print(X_train.shape, y_train.shape, X_test.shape, y_test.shape)
     # sys.exit(-1)
 
@@ -161,9 +180,8 @@ def main():
         print('Training model...')
         # split training data into train/cross-val datasets in 80:20 ratio
         hist = model.fit(X_train, y_train, validation_split=0.20,
-                         epochs=NUM_EPOCHS, batch_size=BATCH_SIZE)
-        pytk.show_plots(hist, metric='f1',
-                        plot_title="Performance Metrics (f1-score)")
+                         epochs=NUM_EPOCHS, batch_size=BATCH_SIZE, report_interval=50)
+        pytk.show_plots(hist, metric='f1', plot_title="Performance Metrics (f1-score)")
 
         # save model state
         model.save(MODEL_SAVE_PATH)
@@ -176,12 +194,10 @@ def main():
         model.load(MODEL_SAVE_PATH)
         print(model)
 
-        loss, acc, f1, prec, rec = model.evaluate(
-            X_train, y_train, metrics=METRICS_LIST)
+        loss, acc, f1, prec, rec = model.evaluate(X_train, y_train, metrics=METRICS_LIST)
         print(f'  Training dataset  -> loss: {loss:.4f} - acc: {acc:.4f} ' +
               f'- f1: {f1:.4f} - prec: {prec:.4f} - rec: {rec:.4f}')
-        loss, acc, f1, prec, rec = model.evaluate(
-            X_test, y_test, metrics=METRICS_LIST)
+        loss, acc, f1, prec, rec = model.evaluate(X_test, y_test, metrics=METRICS_LIST)
         print(f'  Test dataset      -> loss: {loss:.4f} - acc: {acc:.4f} ' +
               f'- f1: {f1:.4f} - prec: {prec:.4f} - rec: {rec:.4f}')
         del model
@@ -192,7 +208,8 @@ def main():
         model.load(MODEL_SAVE_PATH)
         print(model)
 
-        y_pred = np.round(model.predict(X_test)).reshape(-1)
+        # y_pred = np.round(model.predict(X_test)).reshape(-1)
+        y_pred = np.argmax(model.predict(X_test), axis=1)
         # display output
         print('Sample labels: ', y_test.flatten())
         print('Sample predictions: ', y_pred)

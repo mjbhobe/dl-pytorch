@@ -1768,9 +1768,8 @@ class PytkModule(nn.Module):
                            early_stopping=early_stopping, verbose=verbose, report_interval=report_interval)
 
     def fit(self, X_train, y_train, collate_fn=None, loss_fn=None, optimizer=None, validation_split=0.0,
-            validation_data=None,
-            lr_scheduler=None, epochs=25, batch_size=64, metrics=None, shuffle=True, num_workers=0,
-            early_stopping=None, verbose=2, report_interval=1):
+            validation_data=None, lr_scheduler=None, epochs=25, batch_size=64, metrics=None, shuffle=True,
+            num_workers=0, early_stopping=None, verbose=2, report_interval=1):
         """ 
             train model on Numpy arrays (X_train, y_train)
             @params:
@@ -1830,8 +1829,7 @@ class PytkModule(nn.Module):
         torch_X_train = torch.from_numpy(X_train).type(torch.FloatTensor)
         torch_y_train = torch.from_numpy(y_train).type(
             torch.LongTensor if y_dtype == np.long else torch.FloatTensor)
-        train_dataset = torch.utils.data.TensorDataset(
-            torch_X_train, torch_y_train)
+        train_dataset = torch.utils.data.TensorDataset(torch_X_train, torch_y_train)
 
         validation_dataset = None
         if validation_data is not None:

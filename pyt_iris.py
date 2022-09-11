@@ -95,7 +95,6 @@ NUM_EPOCHS = 250
 BATCH_SIZE = 32
 
 def main():
-
     (X_train, y_train), (X_val, y_val), (X_test, y_test) = load_data()
     print("X_train.shape = {}, y_train.shape = {}, X_val.shape = {}, y_val.shape = {}, X_test.shape = {}, y_test.shape = {}".format(
             X_train.shape, y_train.shape, X_val.shape, y_val.shape, X_test.shape, y_test.shape))

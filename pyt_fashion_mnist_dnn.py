@@ -232,8 +232,7 @@ def main():
     if SHOW_SAMPLE:
         # display sample from test dataset
         print('Displaying sample from train dataset...')
-        trainloader = torch.utils.data.DataLoader(
-            test_dataset, batch_size=64, shuffle=True)
+        trainloader = torch.utils.data.DataLoader(test_dataset, batch_size=64, shuffle=True)
         data_iter = iter(trainloader)
         images, labels = data_iter.next()  # fetch first batch of 64 images & labels
         display_sample(images.cpu().numpy(), labels.cpu().numpy(),

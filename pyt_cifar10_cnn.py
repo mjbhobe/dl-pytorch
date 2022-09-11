@@ -173,28 +173,51 @@ IMAGE_HEIGHT, IMAGE_WIDTH, NUM_CHANNELS, NUM_CLASSES = 32, 32, 3, 10
 class Cifar10ConvNet(pytk.PytkModule):
     def __init__(self):
         super(Cifar10ConvNet, self).__init__()
-        self.conv1 = pytk.Conv2d(3, 32, 3, padding=1)
-        self.conv2 = pytk.Conv2d(32, 64, 3, padding=1)
-        self.conv3 = pytk.Conv2d(64, 128, 3, padding=1)
-        self.fc1 = pytk.Linear(4 * 4 * 128, 512)
-        self.out = pytk.Linear(512, NUM_CLASSES)
+        self.net = nn.Sequential(
+            nn.Conv2d(3, 32, 3, padding=1),
+            nn.ReLU(),
+            nn.MaxPool2d(2),
+
+            nn.Conv2d(32, 64, 3, padding=1),
+            nn.ReLU(),
+            nn.MaxPool2d(2),
+
+            nn.Conv2d(64, 128, 3, padding=1),
+            nn.ReLU(),
+            nn.MaxPool2d(2),
+
+            nn.Flatten(),
+            nn.Dropout(0.30),
+
+            nn.Linear(4 * 4 * 128, 512),
+            nn.ReLU(),
+            nn.Dropout(0.30),
+
+            nn.Linear(512, NUM_CLASSES)
+        )
+        # self.conv1 = pytk.Conv2d(3, 32, 3, padding=1)
+        # self.conv2 = pytk.Conv2d(32, 64, 3, padding=1)
+        # self.conv3 = pytk.Conv2d(64, 128, 3, padding=1)
+        # self.fc1 = pytk.Linear(4 * 4 * 128, 512)
+        # self.out = pytk.Linear(512, NUM_CLASSES)
 
     def forward(self, x):
-        x = F.max_pool2d(F.relu(self.conv1(x)), 2)
-        #x = F.dropout(x, p=0.20, training=self.training)
-        x = F.max_pool2d(F.relu(self.conv2(x)), 2)
-        #x = F.dropout(x, p=0.10, training=self.training)
-        x = F.max_pool2d(F.relu(self.conv3(x)), 2)
-        # flatten input (for DNN)
-        x = pytk.Flatten(x)
-        x = F.dropout(x, p=0.30, training=self.training)
-        x = F.relu(self.fc1(x))
-        x = F.dropout(x, p=0.30, training=self.training)
-        # NOTE: nn.CrossEntropyLoss() includes a logsoftmax call, which applies a softmax
-        # function to outputs. So, don't apply one yourself!
-        # x = F.softmax(self.out(x), dim=1)  # -- don't do this!
-        x = self.out(x)
-        return x
+        # x = F.max_pool2d(F.relu(self.conv1(x)), 2)
+        # #x = F.dropout(x, p=0.20, training=self.training)
+        # x = F.max_pool2d(F.relu(self.conv2(x)), 2)
+        # #x = F.dropout(x, p=0.10, training=self.training)
+        # x = F.max_pool2d(F.relu(self.conv3(x)), 2)
+        # # flatten input (for DNN)
+        # x = pytk.Flatten(x)
+        # x = F.dropout(x, p=0.30, training=self.training)
+        # x = F.relu(self.fc1(x))
+        # x = F.dropout(x, p=0.30, training=self.training)
+        # # NOTE: nn.CrossEntropyLoss() includes a logsoftmax call, which applies a softmax
+        # # function to outputs. So, don't apply one yourself!
+        # # x = F.softmax(self.out(x), dim=1)  # -- don't do this!
+        # x = self.out(x)
+        # return x
+        return self.net(x)
 
 
 def build_model():
@@ -208,6 +231,7 @@ def build_model():
 
 
 DO_TRAINING = False
+DO_EVALUATION = False
 DO_PREDICTION = True
 SHOW_SAMPLE = True
 
@@ -223,8 +247,7 @@ def main():
     if SHOW_SAMPLE:
         # display sample from test dataset
         print('Displaying sample from train dataset...')
-        testloader = torch.utils.data.DataLoader(
-            test_dataset, batch_size=64, shuffle=True)
+        testloader = torch.utils.data.DataLoader(test_dataset, batch_size=64, shuffle=True)
         data_iter = iter(testloader)
         images, labels = data_iter.next()  # fetch first batch of 64 images & labels
         display_sample(images.cpu().numpy(), labels.cpu().numpy(),
@@ -239,6 +262,15 @@ def main():
         hist = model.fit_dataset(train_dataset, validation_dataset=val_dataset,
                                  epochs=NUM_EPOCHS, batch_size=BATCH_SIZE)
         pytk.show_plots(hist, metric='acc', plot_title='Training metrics')
+
+        # save model state
+        model.save(MODEL_SAVE_PATH)
+        del model
+
+    if DO_EVALUATION:
+        # load model state from .pt file
+        model = build_model()
+        model.load(MODEL_SAVE_PATH)
 
         # evaluate model performance on train/eval & test datasets
         print('Evaluating model performance...')
@@ -293,8 +325,8 @@ if __name__ == "__main__":
 # ------------------------------------------------------------------
 # Results:
 #   CNN with epochs=25, batch-size=32, LR=0.001
-#       Training  -> acc: 79.40%
-#       Cross-val -> acc: 76.26%
-#       Testing   -> acc: 76.81%
+#       Training  -> acc: 80.78%
+#       Cross-val -> acc: 80.21%
+#       Testing   -> acc: 80.62%
 # Model is slightly over-fitting, overall performance could be much better!
 # -------------------------------------------------------------------
