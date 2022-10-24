@@ -161,7 +161,7 @@ def build_model(lr=LEARNING_RATE):
     model.compile(loss=loss_fn, optimizer=optimizer, metrics=['acc'])
     return model, optimizer
 
-TRAIN_MODEL = False
+TRAIN_MODEL = True
 PREDICT_MODEL = True
 DISPLAY_SAMPLE = False
 

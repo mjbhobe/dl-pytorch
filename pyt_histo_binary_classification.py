@@ -1,4 +1,5 @@
 import warnings
+
 warnings.filterwarnings('ignore')
 
 import sys, os
@@ -12,15 +13,16 @@ import glob
 from PIL import Image, ImageDraw
 
 # tweaks for libraries
-np.set_printoptions(precision=6, linewidth=1024, suppress=True)
+np.set_printoptions(precision = 6, linewidth = 1024, suppress = True)
 plt.style.use('seaborn')
 sns.set_style('darkgrid')
-sns.set_context('notebook',font_scale=1.10)
+sns.set_context('notebook', font_scale = 1.10)
 
 # Pytorch imports
 import torch
+
 gpu_available = torch.cuda.is_available()
-#print('Using Pytorch version %s. GPU %s available' % (torch.__version__, "IS" if gpu_available else "IS **NOT**"))
+# print('Using Pytorch version %s. GPU %s available' % (torch.__version__, "IS" if gpu_available else "IS **NOT**"))
 import torch.nn as nn
 import torch.nn.functional as F
 from torchvision import datasets, transforms
@@ -44,7 +46,7 @@ if torch.cuda.is_available():
     torch.backends.cudnn.benchmark = False
     torch.backends.cudnn.enabled = True
 
-DATA_FOLDER = os.path.join('.','data','Kaggle','histo')
+DATA_FOLDER = os.path.join('.', 'data', 'Kaggle', 'histo')
 DATA_FILE_NAME = 'train_labels.csv'
 DATA_FILE_PATH = os.path.join(DATA_FOLDER, DATA_FILE_NAME)
 IMAGE_WIDTH, IMAGE_HEIGHT, NUM_CHANNELS, NUM_CLASSES = 96, 96, 3, 2
@@ -52,17 +54,18 @@ NUM_EPOCHS, BATCH_SIZE, LR_RATE, L2_REG = 100, 64, 3e-4, 5e-5
 MODEL_SAVE_DIR = './model_states'
 MODEL_SAVE_PATH = os.path.join(MODEL_SAVE_DIR, "pyt_hosto.pt")
 
+
 def get_data():
     print(f"Loading data from {DATA_FILE_PATH}")
     df = pd.read_csv(DATA_FILE_PATH)
-    #df['label'].value_counts().plot(kind='bar', title="Diagnosis Distribution")
+    # df['label'].value_counts().plot(kind='bar', title="Diagnosis Distribution")
     plt.show()
 
     # shuffle the dataframe
-    df = df.sample(frac=1).reset_index(drop=True)
+    df = df.sample(frac = 1).reset_index(drop = True)
     # split into train/cross-val/test datasets
-    X_train, X_test, y_train, y_test = train_test_split(df['id'], df['label'], test_size=0.20, random_state=seed)
-    X_val, X_test, y_val, y_test = train_test_split(X_test, y_test, test_size=0.10, random_state=seed)
+    X_train, X_test, y_train, y_test = train_test_split(df['id'], df['label'], test_size = 0.20, random_state = seed)
+    X_val, X_test, y_val, y_test = train_test_split(X_test, y_test, test_size = 0.10, random_state = seed)
     print(X_train.shape, y_train.shape, X_val.shape, y_val.shape, X_test.shape, y_test.shape)
 
     X_train_image_paths = [os.path.join(DATA_FOLDER, 'train', image_id + '.tif') for image_id in X_train.values]
@@ -73,8 +76,8 @@ def get_data():
            (X_test_image_paths, y_test.values)
 
 
-def display_sample(sample_images, sample_labels, sample_predictions=None, grid_shape=(8, 8),
-                   plot_title=None, fig_size=None):
+def display_sample(sample_images, sample_labels, sample_predictions = None, grid_shape = (8, 8),
+                   plot_title = None, fig_size = None):
     """ display a random selection of images & corresponding labels, optionally with predictions
         The display is laid out in a grid of num_rows x num_col cells
         If sample_predictions are provided, then each cell's title displays the prediction
@@ -94,14 +97,14 @@ def display_sample(sample_images, sample_labels, sample_predictions=None, grid_s
     }
 
     with sns.axes_style("whitegrid"):
-        sns.set_context("notebook", font_scale=1.1)
+        sns.set_context("notebook", font_scale = 1.1)
         sns.set_style({"font.sans-serif": ["Verdana", "Arial", "Calibri", "DejaVu Sans"]})
 
-        f, ax = plt.subplots(num_rows, num_cols, figsize=((20, 20) if fig_size is None else fig_size),
-                             gridspec_kw={"wspace": 0.02, "hspace": 0.25}, squeeze=True)
+        f, ax = plt.subplots(num_rows, num_cols, figsize = ((20, 20) if fig_size is None else fig_size),
+                             gridspec_kw = {"wspace": 0.02, "hspace": 0.25}, squeeze = True)
         # fig = ax[0].get_figure()
         f.tight_layout()
-        f.subplots_adjust(top=0.95)
+        f.subplots_adjust(top = 0.95)
 
         for r in range(num_rows):
             for c in range(num_cols):
@@ -113,7 +116,7 @@ def display_sample(sample_images, sample_labels, sample_predictions=None, grid_s
                 # got image as (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)
                 sample_image = sample_image.transpose((1, 2, 0))
                 sample_image = sample_image * 0.5 + 0.5  # since we applied this normalization
-                #sample_image *= 255.0
+                # sample_image *= 255.0
 
                 ax[r, c].imshow(sample_image)
 
@@ -135,7 +138,7 @@ def display_sample(sample_images, sample_labels, sample_predictions=None, grid_s
                         title_color = 'r'
                     # display cell title
                     title = ax[r, c].set_title(title)
-                    plt.setp(title, color=title_color)
+                    plt.setp(title, color = title_color)
         # set plot title, if one specified
         if plot_title is not None:
             f.suptitle(plot_title)
@@ -143,8 +146,10 @@ def display_sample(sample_images, sample_labels, sample_predictions=None, grid_s
         plt.show()
         plt.close()
 
+
 # define the custom dataset
 from torch.utils.data.dataset import Dataset
+
 
 class HistoDataset(Dataset):
     def __init__(self, image_paths, labels, transforms):
@@ -165,19 +170,20 @@ class HistoDataset(Dataset):
         img = Image.open(image_path)
         if self.transforms is not None:
             img = self.transforms(img)
-        #img = np.array(img).astype(np.float32)
-        #img /= 255.0
-        #label = int(self.labels[index])
+        # img = np.array(img).astype(np.float32)
+        # img /= 255.0
+        # label = int(self.labels[index])
         label = torch.LongTensor(self.labels[index])
         return (img, label)
+
 
 # we are scaling all images to same size + converting them to tensors & normalizing data
 xforms = {
     'train': transforms.Compose([
-        transforms.RandomHorizontalFlip(p=0.5),
-        transforms.RandomVerticalFlip(p=0.5),
+        transforms.RandomHorizontalFlip(p = 0.5),
+        transforms.RandomVerticalFlip(p = 0.5),
         transforms.RandomRotation(45),
-        transforms.RandomResizedCrop(96, scale=(0.8, 1.0), ratio=(1.0, 1.0)),
+        transforms.RandomResizedCrop(96, scale = (0.8, 1.0), ratio = (1.0, 1.0)),
         transforms.ToTensor(),
     ]),
     'eval': transforms.Compose([
@@ -188,27 +194,28 @@ xforms = {
     ]),
 }
 
+
 def build_model():
     cnn_model = nn.Sequential(
-        nn.Conv2d(NUM_CHANNELS, 8, 3, padding=1),
+        nn.Conv2d(NUM_CHANNELS, 8, 3, padding = 1),
         nn.ReLU(),
         nn.BatchNorm2d(8),
-        nn.MaxPool2d(kernel_size=2, stride=2),
+        nn.MaxPool2d(kernel_size = 2, stride = 2),
 
-        nn.Conv2d(8, 16, 3, padding=1),
+        nn.Conv2d(8, 16, 3, padding = 1),
         nn.ReLU(),
         nn.BatchNorm2d(16),
-        nn.MaxPool2d(kernel_size=2, stride=2),
+        nn.MaxPool2d(kernel_size = 2, stride = 2),
 
-        nn.Conv2d(16, 32, 3, padding=0),
+        nn.Conv2d(16, 32, 3, padding = 0),
         nn.ReLU(),
         nn.BatchNorm2d(32),
-        nn.MaxPool2d(kernel_size=2, stride=2),
+        nn.MaxPool2d(kernel_size = 2, stride = 2),
 
-        nn.Conv2d(32, 64, 3, padding=0),
+        nn.Conv2d(32, 64, 3, padding = 0),
         nn.ReLU(),
         nn.BatchNorm2d(64),
-        nn.MaxPool2d(kernel_size=2, stride=2),
+        nn.MaxPool2d(kernel_size = 2, stride = 2),
 
         nn.Flatten(),
         nn.ReLU(),
@@ -227,15 +234,17 @@ def build_model():
 
     model = pytk.PytkModuleWrapper(cnn_model)
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(params=model.parameters(), lr=LR_RATE, weight_decay=L2_REG)
-    model.compile(loss=criterion, optimizer=optimizer, metrics=['acc'])
+    optimizer = optim.Adam(params = model.parameters(), lr = LR_RATE, weight_decay = L2_REG)
+    model.compile(loss = criterion, optimizer = optimizer, metrics = ['acc'])
     return model
+
 
 SHOW_SAMPLE = True
 
+
 def main():
     (X_train_image_paths, y_train), (X_val_image_paths, y_val), \
-        (X_test_image_paths, y_test) = get_data()
+    (X_test_image_paths, y_test) = get_data()
 
     # define our datasets
     train_dataset = HistoDataset(X_train_image_paths, y_train, xforms['train'])
@@ -246,11 +255,11 @@ def main():
 
     if SHOW_SAMPLE:
         # display a sample of 64 images/labels from the test dataset
-        loader = torch.utils.data.DataLoader(test_dataset, batch_size=64, shuffle=True)
+        loader = torch.utils.data.DataLoader(test_dataset, batch_size = 64, shuffle = True)
         data_iter = iter(loader)
         sample_images, sample_labels = data_iter.next()  # fetch first batch of 64 images & labels
         print(f'Dataset: image.shape = {sample_images.shape}, labels.shape = {sample_labels.shape}')
-        display_sample(sample_images.cpu().numpy(), sample_labels.cpu().numpy(), plot_title="Sample Test Images")
+        display_sample(sample_images.cpu().numpy(), sample_labels.cpu().numpy(), plot_title = "Sample Test Images")
 
     # define our model
     # model = pytk.PytkModuleWrapper(cnn_model)
@@ -262,12 +271,12 @@ def main():
 
     # train the model
     from torch.optim.lr_scheduler import ReduceLROnPlateau, StepLR
-    #lr_scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=10, verbose=1)
-    lr_scheduler = StepLR(optimizer, step_size=20, gamma=0.5, verbose=1)
+    # lr_scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=10, verbose=1)
+    lr_scheduler = StepLR(optimizer, step_size = 20, gamma = 0.5, verbose = 1)
 
-    hist = model.fit_dataset(train_dataset, validation_dataset=eval_dataset, epochs=NUM_EPOCHS,
-                             batch_size=BATCH_SIZE, num_workers=3, verbose=1)
-    pytk.show_plots(hist, metric='acc')
+    hist = model.fit_dataset(train_dataset, validation_dataset = eval_dataset, epochs = NUM_EPOCHS,
+                             batch_size = BATCH_SIZE, num_workers = 3, verbose = 1)
+    pytk.show_plots(hist, metric = 'acc')
 
     # evaluate performance
     print('Evaluating model performance after training...')
@@ -293,7 +302,7 @@ def main():
     # run predictions
     # display sample from test dataset
     print('Running predictions....')
-    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=True)
+    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size = BATCH_SIZE, shuffle = True)
 
     actuals, predictions = [], []
 
@@ -301,7 +310,7 @@ def main():
         # images, labels = data_iter.next()  # fetch first batch of 64 images & labels
         preds = model.predict(images)
         actuals.extend(labels.cpu().numpy().ravel())
-        predictions.extend(np.argmax(preds, axis=1).ravel())
+        predictions.extend(np.argmax(preds, axis = 1).ravel())
 
     actuals = np.array(actuals)
     predictions = np.array(predictions)
@@ -317,16 +326,16 @@ def main():
     print(classification_report(actuals, predictions))
 
     # display predictions
-    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=True)
+    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size = BATCH_SIZE, shuffle = True)
     data_iter = iter(test_loader)
     images, labels = data_iter.next()
 
     preds = model.predict(images)
-    preds = np.argmax(preds, axis=1)
+    preds = np.argmax(preds, axis = 1)
 
     print(images.shape, labels.shape, preds.shape)
-    display_sample(images.cpu().numpy(), labels.cpu().numpy(), sample_predictions=preds,
-                   grid_shape=(8, 8), fig_size=(16, 20), plot_title='Sample Predictions')
+    display_sample(images.cpu().numpy(), labels.cpu().numpy(), sample_predictions = preds,
+                   grid_shape = (8, 8), fig_size = (16, 20), plot_title = 'Sample Predictions')
 
     del model
 
