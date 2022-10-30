@@ -13,7 +13,6 @@ import warnings
 
 warnings.filterwarnings('ignore')
 
-import sys
 import os
 import random
 import numpy as np
@@ -27,7 +26,7 @@ import torch
 
 print('Using Pytorch version: ', torch.__version__)
 import torch.nn as nn
-from torchvision import datasets, transforms
+from torchvision import transforms
 from torch.utils.data import Dataset
 from torch import optim
 
@@ -82,6 +81,7 @@ def show_sample(images_path=TRAIN_IMAGES_PATH, num_count=10, num_rows=2):
     plt.suptitle(f"Random sample of {num_count} images")
     plt.show()
 
+
 def display_sample(images, labels, predictions=None, fig_size=None, num_cols=10, plot_title=None):
     num_images = len(images)
     num_rows = num_images // num_cols
@@ -112,7 +112,7 @@ def display_sample(images, labels, predictions=None, fig_size=None, num_cols=10,
                 index = row * num_cols + col
                 if index < num_images:
                     image = images[index]
-                    image = image.transpose((1,2,0))
+                    image = image.transpose((1, 2, 0))
                     ax[row, col].imshow(image)
                     if predictions is not None:
                         title = label_lookup[labels[index]] if predictions[index] == labels[index] \
@@ -125,6 +125,7 @@ def display_sample(images, labels, predictions=None, fig_size=None, num_cols=10,
 
     plt.show()
     plt.close()
+
 
 xforms = {
     'train': transforms.Compose([
@@ -154,7 +155,7 @@ class CatOrDogDataset(Dataset):
         self.labels = [int(fpath.split(os.path.sep)[-1].startswith('dog')) for fpath in self.fpaths]
         # print(self.labels[:10], flush=True)
         self.transforms = transforms
-        assert (self.transforms is not None)
+        # assert (self.transforms is not None)
 
     def __len__(self):
         return len(self.labels)
@@ -168,7 +169,8 @@ class CatOrDogDataset(Dataset):
         return image, label
 
 
-def get_data(test_perc=0.2):
+def get_datasets(test_perc=0.2):
+    assert (xforms['train'] is not None)
     assert (xforms['val_or_test'] is not None)
     train_dataset = CatOrDogDataset(TRAIN_IMAGES_PATH, transforms=xforms['train'])
     test_dataset = CatOrDogDataset(TEST_IMAGES_PATH, transforms=xforms['val_or_test'])
@@ -207,12 +209,22 @@ def build_model(lr=LEARNING_RATE):
     model.compile(loss=loss_fn, optimizer=optimizer, metrics=['acc'])
     return model, optimizer
 
-TRAIN_MODEL = True
-PREDICT_MODEL = False
+
+TRAIN_MODEL = False
+PREDICT_MODEL = True
 DISPLAY_SAMPLE = False
 
+"""
+Model performance:
+    Training:
+        > Training data   -> loss: 19.1744 - acc: 0.5549
+        > Validation data -> loss: 18.1420 - acc: 0.5961
+        > Test data       -> loss: 20.0158 - acc: 0.6034
+"""
+
+
 def main():
-    train_dataset, val_dataset, test_dataset = get_data()
+    train_dataset, val_dataset, test_dataset = get_datasets()
 
     if DISPLAY_SAMPLE:
         # show random sample from test_dataset
@@ -280,6 +292,7 @@ def main():
         display_sample(images.cpu().numpy(), labels.cpu().numpy(), predictions=preds,
                        num_cols=8, plot_title='Sample Images & predictions from test dataset')
         del model
+
 
 if __name__ == "__main__":
     main()

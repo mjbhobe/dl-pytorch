@@ -140,22 +140,31 @@ IMAGE_HEIGHT, IMAGE_WIDTH, NUM_CHANNELS, NUM_CLASSES = 28, 28, 1, 10
 class MNISTNet(pytk.PytkModule):
     def __init__(self):
         super(MNISTNet, self).__init__()
-        self.fc1 = pytk.Linear(IMAGE_HEIGHT * IMAGE_WIDTH * NUM_CHANNELS, 128)
-        self.fc2 = pytk.Linear(128, 64)
-        self.out = pytk.Linear(64, NUM_CLASSES)
-        self.dropout = nn.Dropout(0.10)
+        # self.fc1 = pytk.Linear(IMAGE_HEIGHT * IMAGE_WIDTH * NUM_CHANNELS, 128)
+        # self.fc2 = pytk.Linear(128, 64)
+        # self.out = pytk.Linear(64, NUM_CLASSES)
+        # self.dropout = nn.Dropout(0.10)
+        self.net = nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(IMAGE_HEIGHT * IMAGE_WIDTH * NUM_CHANNELS, 128),
+            nn.ReLU(),
+            nn.Linear(128, 64),
+            nn.ReLU(),
+            nn.Linear(64, NUM_CLASSES)
+        )
 
     def forward(self, x):
         # flatten input (for DNN)
-        x = pytk.Flatten(x)
-        x = F.relu(self.fc1(x))
-        # x = self.dropout(x)
-        x = F.relu(self.fc2(x))
-        # x = self.dropout(x)
-        # NOTE: nn.CrossEntropyLoss() includes a logsoftmax call, which applies a softmax
-        # function to outputs. So, don't apply one yourself!
-        # x = F.softmax(self.out(x), dim=1)  # -- don't do this!
-        x = self.out(x)
+        # x = pytk.Flatten(x)
+        # x = F.relu(self.fc1(x))
+        # # x = self.dropout(x)
+        # x = F.relu(self.fc2(x))
+        # # x = self.dropout(x)
+        # # NOTE: nn.CrossEntropyLoss() includes a logsoftmax call, which applies a softmax
+        # # function to outputs. So, don't apply one yourself!
+        # # x = F.softmax(self.out(x), dim=1)  # -- don't do this!
+        # x = self.out(x)
+        x = self.net(x)
         return x
 
 # define our network using Linear layers only
