@@ -835,7 +835,6 @@ def train_model(model, train_dataset, collate_fn=None, loss_fn=None, optimizer=N
                 Validation metrics are available ONLY if validation set is provided during training
     """
     try:
-
         # checks for parameters
         assert isinstance(model, nn.Module), \
             "train_model() works with instances of nn.Module only!"
@@ -1941,7 +1940,7 @@ class PytkModuleWrapper():
     def fit_dataset(
         self,
         train_dataset,
-        collate_fn=None, 
+        collate_fn=None,
         loss_fn=None,
         optimizer=None,
         validation_split=0.0,
@@ -1962,21 +1961,21 @@ class PytkModuleWrapper():
         p_metrics_list = self.metrics_list if metrics is None else metrics
 
         return train_model(
-            self.model, 
-            train_dataset, 
-            collate_fn=collate_fn, 
-            loss_fn=p_loss_fn, 
+            self.model,
+            train_dataset,
+            collate_fn=collate_fn,
+            loss_fn=p_loss_fn,
             optimizer=p_optimizer,
-            validation_split=validation_split, 
+            validation_split=validation_split,
             validation_dataset=validation_dataset,
             lr_scheduler=lr_scheduler,
-            epochs=epochs, 
-            batch_size=batch_size, 
-            metrics=p_metrics_list, 
+            epochs=epochs,
+            batch_size=batch_size,
+            metrics=p_metrics_list,
             shuffle=shuffle,
             num_workers=num_workers,
-            early_stopping=early_stopping, 
-            verbose=verbose, 
+            early_stopping=early_stopping,
+            verbose=verbose,
             report_interval=report_interval
         )
 
@@ -2024,20 +2023,20 @@ class PytkModuleWrapper():
         p_optimizer = self.optimizer if optimizer is None else optimizer
         p_metrics_list = self.metrics_list if metrics is None else metrics
         return self.fit_dataset(
-            train_dataset, 
-            collate_fn=collate_fn, 
-            loss_fn=p_loss_fn, 
+            train_dataset,
+            collate_fn=collate_fn,
+            loss_fn=p_loss_fn,
             optimizer=p_optimizer,
-            validation_split=validation_split, 
+            validation_split=validation_split,
             validation_dataset=validation_dataset,
-            lr_scheduler=lr_scheduler, 
-            epochs=epochs, 
-            batch_size=batch_size, 
+            lr_scheduler=lr_scheduler,
+            epochs=epochs,
+            batch_size=batch_size,
             metrics=p_metrics_list,
-            shuffle=shuffle, 
-            num_workers=num_workers, 
+            shuffle=shuffle,
+            num_workers=num_workers,
             early_stopping=early_stopping,
-            verbose=verbose, 
+            verbose=verbose,
             report_interval=report_interval
         )
 
@@ -2089,5 +2088,3 @@ class PytkModuleWrapper():
             summary(self.model.cuda(), input_shape)
         else:
             summary(self.model.cpu(), input_shape)
-
-

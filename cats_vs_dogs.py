@@ -23,7 +23,6 @@ from PIL import Image
 
 # Pytorch imports
 import torch
-
 print('Using Pytorch version: ', torch.__version__)
 import torch.nn as nn
 from torchvision import transforms
@@ -42,7 +41,7 @@ SEED = pytk.seed_all()
 
 # hyper parameters
 IMAGE_HEIGHT, IMAGE_WIDTH, NUM_CHANNELS, NUM_CLASSES = 224, 224, 3, 2
-NUM_EPOCHS, BATCH_SIZE, LEARNING_RATE, L2_REG = 5, 32, 1e-3, 0.001
+NUM_EPOCHS, BATCH_SIZE, LEARNING_RATE, L2_REG = 5, 64, 1e-3, 0.001
 MODEL_SAVE_NAME = 'cat_or_dog.pyt'
 MODEL_SAVE_PATH = os.path.join('./model_states', MODEL_SAVE_NAME)
 
@@ -51,8 +50,9 @@ NOTE: data for this example has been downloaded from Kaggle
     $> kaggle datasets download -d tongpython/cat-and-dog -p ./data
     $> unzip ./data/cat-and-dog.zip
 """
-TRAIN_IMAGES_PATH = os.path.join('./data', 'cats-vs-dogs', 'training_set')
-TEST_IMAGES_PATH = os.path.join('./data', 'cats-vs-dogs', 'test_set')
+THIS_DIR = os.path.dirname(__file__)
+TRAIN_IMAGES_PATH = os.path.join(THIS_DIR, 'data', 'cats-vs-dogs', 'training_set')
+TEST_IMAGES_PATH = os.path.join(THIS_DIR, 'data', 'cats-vs-dogs', 'test_set')
 
 
 def show_sample(images_path=TRAIN_IMAGES_PATH, num_count=10, num_rows=2):
@@ -170,6 +170,8 @@ class CatOrDogDataset(Dataset):
 
 
 def get_datasets(test_perc=0.2):
+    assert os.path.exists(TRAIN_IMAGES_PATH), f"FATAL: Training images path {TRAIN_IMAGES_PATH} does not exist!"
+    assert os.path.exists(TEST_IMAGES_PATH), f"FATAL: Test images path {TEST_IMAGES_PATH} does not exist!"
     assert (xforms['train'] is not None)
     assert (xforms['val_or_test'] is not None)
     train_dataset = CatOrDogDataset(TRAIN_IMAGES_PATH, transforms=xforms['train'])
@@ -210,7 +212,7 @@ def build_model(lr=LEARNING_RATE):
     return model, optimizer
 
 
-TRAIN_MODEL = False
+TRAIN_MODEL = True
 PREDICT_MODEL = True
 DISPLAY_SAMPLE = False
 
