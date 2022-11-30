@@ -34,3 +34,9 @@ lightning_logs
 
 # ignore tutorial folder (for now)
 tutorial
+
+# any tar & zip files
+*.zip
+*.tgz
+*.tar
+*.tar.gz
