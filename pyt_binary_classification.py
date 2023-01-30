@@ -11,60 +11,59 @@ import warnings
 warnings.filterwarnings('ignore')
 
 import os
-import random
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report, confusion_matrix, r2_score
+from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.utils import shuffle
+from imblearn.over_sampling import SMOTE
 
 # tweaks for libraries
-np.set_printoptions(precision=6, linewidth=1024, suppress=True)
+np.set_printoptions(precision = 6, linewidth = 1024, suppress = True)
 plt.style.use('seaborn')
-sns.set(style='whitegrid', font_scale=1.1, palette='muted')
+sns.set(style = 'whitegrid', font_scale = 1.1, palette = 'muted')
 
 # Pytorch imports
 import torch
 
 print('Using Pytorch version: ', torch.__version__)
 import torch.nn as nn
-import torch.nn.functional as F
-from torch import optim
-from torchsummary import summary
+import torchmetrics
+from torchmetrics.classification import (
+    BinaryAccuracy, BinaryF1Score,
+    BinaryAUROC
+)
+
+print(f"Using torchmetrics: {torchmetrics.__version__}")
 
 # My helper functions for training/evaluating etc.
-import pytorch_toolkit as pytk
+import pytorch_training_toolkit as t3
 
-seed = 42
-random.seed(seed)
-os.environ['PYTHONHASHSEED'] = str(seed)
-np.random.seed(seed)
-torch.manual_seed(seed)
+SEED = t3.seed_all()
 
-if torch.cuda.is_available():
-    torch.cuda.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
-    # torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = True
-    # torch.backends.cudnn.enabled = False
-
-NUM_EPOCHS = 2500
-BATCH_SIZE = 1024 * 4
-LR = 0.001
+NUM_EPOCHS = 25
+BATCH_SIZE = 1024
+LR = 0.01
 
 DATA_FILE = os.path.join('.', 'csv_files', 'weatherAUS.csv')
 print(f"Data file: {DATA_FILE}")
 MODEL_SAVE_PATH = os.path.join('.', 'model_states', 'weather_model.pt')
+DEVICE = torch.device("cuda:0") if torch.cuda.is_available() else torch.device(
+    "cpu"
+)
 
 
 # ---------------------------------------------------------------------------
 # load data, select fields & apply scaling
 # ---------------------------------------------------------------------------
-def get_data(test_split=0.20, shuffle_it=True, balance=False, sampling_strategy=0.85,
-             debug=False):
+def get_data(
+    test_split = 0.20, shuffle_it = True, balance = False,
+    sampling_strategy = 0.85,
+    debug = False
+):
     from imblearn.over_sampling import SMOTE
 
     df = pd.read_csv(DATA_FILE)
@@ -72,46 +71,55 @@ def get_data(test_split=0.20, shuffle_it=True, balance=False, sampling_strategy=
     if shuffle_it:
         df = shuffle(df)
 
-    cols = ['Rainfall', 'Humidity3pm',
-            'Pressure9am', 'RainToday', 'RainTomorrow']
+    cols = ['Rainfall', 'Humidity3pm', 'Pressure9am', 'RainToday',
+            'RainTomorrow']
     df = df[cols]
 
     # convert categorical cols - RainToday & RainTomorrow to numeric
-    df['RainToday'].replace({"No": 0, "Yes": 1}, inplace=True)
-    df['RainTomorrow'].replace({"No": 0, "Yes": 1}, inplace=True)
+    df['RainToday'].replace({"No": 0, "Yes": 1}, inplace = True)
+    df['RainTomorrow'].replace({"No": 0, "Yes": 1}, inplace = True)
 
     # drop all rows where any cols == Null
-    df = df.dropna(how='any')
+    df = df.dropna(how = 'any')
 
     # display plot of target
-    sns.countplot(df.RainTomorrow)
+    sns.countplot(data = df, x = df.RainTomorrow)
     plt.title("RainTomorrow: existing counts")
     plt.show()
 
-    X = df.drop(['RainTomorrow'], axis=1).values
+    X = df.drop(['RainTomorrow'], axis = 1).values
     y = df['RainTomorrow'].values
     if debug:
-        print(f"{'Before balancing ' if balance else ''} X.shape = {X.shape}, "
-              f"y.shape = {y.shape}, y-count = {np.bincount(y)}")
+        print(
+            f"{'Before balancing ' if balance else ''} X.shape = {X.shape}, "
+            f"y.shape = {y.shape}, y-count = {np.bincount(y)}"
+        )
 
     if balance:
-        ros = SMOTE(sampling_strategy=sampling_strategy, random_state=seed)
+        ros = SMOTE(sampling_strategy = sampling_strategy, random_state = SEED)
         X, y = ros.fit_resample(X, y)
         if debug:
-            print(f"Resampled -> X.shape = {X.shape}, y.shape = {y.shape}, "
-                  f"y-count = {np.bincount(y)}")
+            print(
+                f"Resampled -> X.shape = {X.shape}, y.shape = {y.shape}, "
+                f"y-count = {np.bincount(y)}"
+            )
 
     # display plot of target
-    sns.countplot(y)
+    df2 = pd.DataFrame(
+        X, columns = ['Rainfall', 'Humidity3pm', 'Pressure9am', 'RainToday']
+    )
+    df2['RainTomorrow'] = y
+    sns.countplot(data = df2, x = df2.RainTomorrow)
     plt.title("RainTomorrow: after re-balancing")
     plt.show()
 
     X_train, X_test, y_train, y_test = \
-        train_test_split(X, y, test_size=test_split, random_state=seed)
+        train_test_split(X, y, test_size = test_split, random_state = seed)
     if debug:
         print(
             f"Split data -> X_train.shape = {X_train.shape}, y_train.shape = {y_train.shape}, "
-            f"X_test.shape = {X_test.shape}, y_test.shape = {y_test.shape}")
+            f"X_test.shape = {X_test.shape}, y_test.shape = {y_test.shape}"
+        )
 
     ss = StandardScaler()
     X_train = ss.fit_transform(X_train)
@@ -124,8 +132,8 @@ def get_data(test_split=0.20, shuffle_it=True, balance=False, sampling_strategy=
     # y_test = np.expand_dims(y_test, axis=1)
 
     # NOTE: BCELoss() expects labels to be floats - why???
-    y_train = y_train.astype('float32')
-    y_test = y_test.astype('float32')
+    # y_train = y_train.astype(np.float32)
+    # y_test = y_test.astype(np.float32)
 
     y_train = y_train[:, np.newaxis]
     y_test = y_test[:, np.newaxis]
@@ -133,75 +141,141 @@ def get_data(test_split=0.20, shuffle_it=True, balance=False, sampling_strategy=
     return (X_train, y_train), (X_test, y_test)
 
 
-class Net(pytk.PytkModule):
-    def __init__(self, features):
+class WeatherDataset(torch.utils.data.Dataset):
+    def __init__(
+        self, data_file_path, shuffle_it = True, balance = True,
+        sampling_strategy = 0.85, seed = SEED
+    ):
+        assert os.path.exists(data_file_path), \
+            f"FATAL: {data_file_path} - file does not exist!"
+        df = pd.read_csv(data_file_path)
+        if shuffle_it: df = shuffle(df)
+        cols = ['Rainfall', 'Humidity3pm', 'Pressure9am', 'RainToday',
+                'RainTomorrow']
+        df = df[cols]
+        # convert categorical cols - RainToday & RainTomorrow to numeric
+        df['RainToday'].replace({"No": 0, "Yes": 1}, inplace = True)
+        df['RainTomorrow'].replace({"No": 0, "Yes": 1}, inplace = True)
+        # drop all rows where any cols == Null
+        df = df.dropna(how = 'any')
+
+        # assign X & y
+        self.X = df.drop(['RainTomorrow'], axis = 1).values
+        self.y = df['RainTomorrow'].values
+        if balance:
+            ros = SMOTE(
+                sampling_strategy = sampling_strategy, random_state = seed
+            )
+            self.X, self.y = ros.fit_resample(self.X, self.y)
+        ss = StandardScaler()
+        self.X = ss.fit_transform(self.X)
+        self.X = torch.tensor(self.X, dtype = torch.float32)
+        self.y = torch.tensor(self.y, dtype = torch.float32).reshape(-1, 1)
+
+    def __len__(self):
+        return len(self.X)
+
+    def __getitem__(self, idx):
+        features = self.X[idx, :]
+        label = self.y[idx, :]
+        return (features, label)
+
+
+class Net(nn.Module):
+    def __init__(self, num_features):
         super(Net, self).__init__()
-        self.fc1 = pytk.Linear(features, 32)
-        self.fc2 = pytk.Linear(32, 16)
-        self.fc3 = pytk.Linear(16, 8)
-        self.out = pytk.Linear(8, 1)
+        self.net = nn.Sequential(
+            t3.Linear(num_features, 16),
+            nn.ReLU(),
+            # t3.Linear(32, 16),
+            # nn.ReLU(),
+            t3.Linear(16, 8),
+            nn.ReLU(),
+            t3.Linear(8, 1),
+            nn.Sigmoid()
+        )
 
     def forward(self, x):
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        x = F.relu(self.fc3(x))
-        x = F.sigmoid(self.out(x))
-        return x
+        return self.net(x)
 
 
 DO_TRAINING = True
+DO_EVAL = True
 DO_PREDICTION = True
 
 
 def main():
-    # load & preprocess data
-    (X_train, y_train), (X_test, y_test) = get_data(balance=True, sampling_strategy=0.90,
-                                                    debug=True)
-    print(X_train.shape, y_train.shape, X_test.shape, y_test.shape)
+    # # load & preprocess data
+    # (X_train, y_train), (X_test, y_test) = get_data(balance = True, sampling_strategy = 0.90,
+    #                                                 debug = True)
+    # print(X_train.shape, y_train.shape, X_test.shape, y_test.shape)
+
+    dataset = WeatherDataset(DATA_FILE)
+    print(f"Loaded {len(dataset)} records", flush = True)
+    # set aside 10% as test dataset
+    train_dataset, test_dataset = t3.split_dataset(dataset, split_perc = 0.1)
+    print(
+        f"train_dataset: {len(train_dataset)} recs, test_dataset: {len(test_dataset)} recs"
+    )
+    metrics_map = {
+        "acc": BinaryAccuracy(),
+        "f1": BinaryF1Score(),
+        "roc_auc": BinaryAUROC(thresholds = None)
+    }
+
+    loss_fn = nn.BCELoss()
 
     if DO_TRAINING:
         # build model
-        model = Net(X_train.shape[1])
-        criterion = nn.BCELoss()
-        optimizer = optim.Adam(model.parameters(), lr=LR)
-        # optimizer = optim.SGD(model.parameters(), lr=LR)
-        model.compile(loss=criterion, optimizer=optimizer, metrics=['accuracy'])
+        model = Net(4)
         print(model)
+        optimizer = torch.optim.Adam(model.parameters(), lr = LR)
+        hist = t3.cross_train_model(
+            model, train_dataset, loss_fn, optimizer, device = DEVICE,
+            validation_split = 0.2, epochs = NUM_EPOCHS,
+            batch_size = BATCH_SIZE, metrics_map = metrics_map
+        )
+        hist.plot_metrics(title = "Model Performance", fig_size = (16, 8))
+        t3.save_model(model, MODEL_SAVE_PATH)
+        del model
 
-        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=200, gamma=0.2)
-        # use CosineAnnealing learning rate
-        # Q = len(X_train)
-        # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max = Q)
-        hist = model.fit(X_train, y_train, validation_split=0.2, epochs=NUM_EPOCHS,
-                         batch_size=-1, lr_scheduler=scheduler,
-                         #report_interval=50, 
-                         verbose=2)
-        pytk.show_plots(hist, metric='accuracy')
-
+    if DO_EVAL:
+        model = Net(4)
+        model = t3.load_model(model, MODEL_SAVE_PATH)
+        print(model)
         # evaluate performance
         print('Evaluating performance...')
-        loss, acc = model.evaluate(X_train, y_train, batch_size=2048)
-        print(f'  - Train dataset -> loss: {loss:.3f} acc: {acc:.3f}')
-        loss, acc = model.evaluate(X_test, y_test)
-        print(f'  - Test dataset  -> loss: {loss:.3f} acc: {acc:.3f}')
-
-        model.save(MODEL_SAVE_PATH)
+        print('Training dataset')
+        metrics = t3.evaluate_model(
+            model, train_dataset, loss_fn, device = DEVICE,
+            metrics_map = metrics_map,
+            batch_size = BATCH_SIZE
+        )
+        print(f"Training metrics: {metrics}")
+        print("Testing dataset")
+        metrics = t3.evaluate_model(
+            model, test_dataset, loss_fn, device = DEVICE,
+            metrics_map = metrics_map
+        )
+        print(f"Testing metrics: {metrics}")
         del model
 
     if DO_PREDICTION:
-        if not os.path.exists(MODEL_SAVE_PATH):
-            raise ValueError(f"Could not find saved model at {MODEL_SAVE_PATH}. Did you train model?")
-        # run predictions
-        # model = pytk.load_model(MODEL_SAVE_PATH)
-        model = Net(X_train.shape[1])
-        model.load(MODEL_SAVE_PATH)
+        model = Net(4)
+        model = t3.load_model(model, MODEL_SAVE_PATH)
         print(model)
 
-        y_pred = (model.predict(X_test) >= 0.5).astype('int32').ravel()
-        y_test = y_test.astype('int32').reshape(-1)
-        print(classification_report(y_test, y_pred))
-        pytk.plot_confusion_matrix(confusion_matrix(y_test, y_pred), ["No Rain", "Rain"],
-                                   title="Rain Prediction for Tomorrow")
+        preds, actuals = t3.predict_dataset(model, test_dataset, device = DEVICE)
+        preds = np.round(preds).ravel()
+        actuals = actuals.ravel()
+        incorrect_counts = (preds != actuals).sum()
+        print(f"We got {incorrect_counts} of {len(actuals)} predictions wrong!")
+        print(classification_report(actuals, preds))
+        t3.plot_confusion_matrix(
+            confusion_matrix(actuals, preds),
+            class_names = ["No Rain", "Rain"],
+            title = "Rain prediction for tomorrow"
+        )
         del model
 
 

@@ -8,6 +8,8 @@ Use at your own risk!! I am not responsible if your CPU or GPU gets fried :D
 """
 import warnings
 
+import torchmetrics.classification
+
 warnings.filterwarnings('ignore')
 
 import os
@@ -25,13 +27,15 @@ import torch
 
 print('Using Pytorch version: ', torch.__version__)
 import torch.nn as nn
-import torch.nn.functional as F
 from torchvision import datasets, transforms
-from torch import optim
+import torchsummary
 # My helper functions for training/evaluating etc.
-import pytorch_toolkit as pytk
+import pytorch_training_toolkit as t3
 
-pytk.seed_all(41)
+SEED = t3.seed_all()
+DEVICE = torch.device("cuda:0") \
+    if torch.cuda.is_available() else torch.device("cpu")
+print(f"Training model on {DEVICE}")
 
 
 def load_data():
@@ -137,42 +141,21 @@ IMAGE_HEIGHT, IMAGE_WIDTH, NUM_CHANNELS, NUM_CLASSES = 28, 28, 1, 10
 
 
 # define our network using Linear layers only
-class MNISTNet(pytk.PytkModule):
-    def __init__(self):
-        super(MNISTNet, self).__init__()
-
-        self.net = nn.Sequential(
-            nn.Flatten(),
-            nn.Linear(IMAGE_HEIGHT * IMAGE_WIDTH * NUM_CHANNELS, 128),
-            nn.ReLU(),
-            nn.Linear(128, 64),
-            nn.ReLU(),
-            nn.Linear(64, NUM_CLASSES)
-        )
-
-    def forward(self, x):
-        x = self.net(x)
-        return x
-
-
-# define our network using Linear layers only
-
-
-class MNISTNet2(pytk.PytkModule):
+class MNISTNet2(nn.Module):
     def __init__(self):
         super(MNISTNet2, self).__init__()
         self.flatten = nn.Flatten()
         self.linear = nn.Sequential(
-            pytk.Linear(IMAGE_HEIGHT * IMAGE_WIDTH * NUM_CHANNELS, 128),
+            t3.Linear(IMAGE_HEIGHT * IMAGE_WIDTH * NUM_CHANNELS, 128),
             nn.ReLU(),
             nn.Dropout(0.1),
-            pytk.Linear(128, 64),
+            t3.Linear(128, 64),
             nn.ReLU(),
             nn.Dropout(0.1),
             # NOTE: we'll be using nn.CrossEntropyLoss(), which includes a
             # logsoftmax call that applies a softmax function to outputs.
             # So, don't apply one yourself!
-            pytk.Linear(64, NUM_CLASSES)
+            t3.Linear(64, NUM_CLASSES)
         )
 
     def forward(self, x):
@@ -181,54 +164,28 @@ class MNISTNet2(pytk.PytkModule):
         return x
 
 
-# if you prefer to use Convolutional Neural Network, use the following model definition
-
-
-class MNISTConvNet(pytk.PytkModule):
-    def __init__(self):
-        super(MNISTConvNet, self).__init__()
-        self.conv1 = pytk.Conv2d(1, 128, kernel_size = 3)
-        self.conv2 = pytk.Conv2d(128, 64, kernel_size = 3)
-        self.fc1 = pytk.Linear(7 * 7 * 64, 512)
-        self.out = pytk.Linear(512, NUM_CLASSES)
-
-    def forward(self, x):
-        x = F.max_pool2d(F.relu(self.conv1(x)), 2)
-        x = F.dropout(x, p = 0.20, training = self.training)
-        x = F.max_pool2d(F.relu(self.conv2(x)), 2)
-        x = F.dropout(x, p = 0.10, training = self.training)
-        # flatten input (for DNN)
-        x = pytk.Flatten(x)
-        x = F.relu(self.fc1(x))
-        x = F.dropout(x, p = 0.20, training = self.training)
-        # NOTE: nn.CrossEntropyLoss() includes a logsoftmax call, which applies a softmax
-        # function to outputs. So, don't apply one yourself!
-        # x = F.softmax(self.out(x), dim=1)  # -- don't do this!
-        x = self.out(x)
-        return x
-
-
-class MNISTConvNet2(pytk.PytkModule):
+# network using Convnets
+class MNISTConvNet2(nn.Module):
     def __init__(self):
         super(MNISTConvNet2, self).__init__()
         self.convNet = nn.Sequential(
-            pytk.Conv2d(1, 128, kernel_size = 3),
+            t3.Conv2d(1, 128, kernel_size = 3),
             nn.ReLU(),
             nn.MaxPool2d(2),
             nn.Dropout(p = 0.20),
 
-            pytk.Conv2d(128, 64, kernel_size = 3),
+            t3.Conv2d(128, 64, kernel_size = 3),
             nn.ReLU(),
             nn.MaxPool2d(2),
             nn.Dropout(p = 0.10),
 
             nn.Flatten(),
 
-            pytk.Linear(7 * 7 * 64, 512),
+            t3.Linear(7 * 7 * 64, 512),
             nn.ReLU(),
             nn.Dropout(p = 0.20),
 
-            pytk.Linear(512, NUM_CLASSES)
+            t3.Linear(512, NUM_CLASSES)
         )
 
     def forward(self, x):
@@ -236,33 +193,26 @@ class MNISTConvNet2(pytk.PytkModule):
         return x
 
 
-def build_model(use_cnn = False):
-    model = MNISTConvNet2() if use_cnn else MNISTNet2()
-    # define the loss function & optimizer that model should
-    loss_fn = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(
-        params = model.parameters(),
-        lr = LEARNING_RATE, weight_decay = L2_REG
-    )
-    model.compile(loss = loss_fn, optimizer = optimizer, metrics = ['acc'])
-    return model, optimizer
-
-
 DO_TRAINING = True
 DO_PREDICTION = True
-SHOW_SAMPLE = True
-USE_CNN = False  # if False, will use an MLP
+SHOW_SAMPLE = False
+USE_CNN = True  # if False, will use an MLP
 
 MODEL_SAVE_NAME = 'pyt_mnist_cnn.pyt' if USE_CNN else 'pyt_mnist_dnn.pyt'
-MODEL_SAVE_PATH = os.path.join('.', 'model_states', MODEL_SAVE_NAME)
-NUM_EPOCHS, BATCH_SIZE, LEARNING_RATE, L2_REG = (
-    15 if USE_CNN else 20), 128, 0.001, 0.0005
+MODEL_SAVE_PATH = os.path.join(os.path.dirname(__file__), 'model_states', MODEL_SAVE_NAME)
+NUM_EPOCHS, BATCH_SIZE, LEARNING_RATE, L2_REG = \
+    (15 if USE_CNN else 20), 128, 0.001, 0.0005
 
 
 def main():
     print('Loading datasets...')
 
     train_dataset, val_dataset, test_dataset = load_data()
+
+    loss_fn = nn.CrossEntropyLoss()
+    metrics_map = {
+        "acc": torchmetrics.classification.MulticlassAccuracy(num_classes = NUM_CLASSES)
+    }
 
     if SHOW_SAMPLE:
         # display sample from test dataset
@@ -277,52 +227,72 @@ def main():
 
     if DO_TRAINING:
         print(f'Using {"CNN" if USE_CNN else "ANN"} model...')
-        model, optimizer = build_model(USE_CNN)
-        # display Keras like summary
-        model.summary((NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH))
+        model = MNISTConvNet2() if USE_CNN else MNISTNet2()
+        optimizer = torch.optim.Adam(
+            params = model.parameters(),
+            lr = LEARNING_RATE, weight_decay = L2_REG
+        )
+        # display model structure a-la-Keras
+        print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
 
         # train model
         print(f'Training {"CNN" if USE_CNN else "ANN"} model')
         scheduler = torch.optim.lr_scheduler.MultiStepLR(
             optimizer, milestones = [10, 20, 30, 40], gamma = 0.15
         )
-        hist = model.fit_dataset(
-            train_dataset, validation_dataset = val_dataset, lr_scheduler = scheduler,
-            epochs = NUM_EPOCHS, batch_size = BATCH_SIZE, verbose = 1
+        hist = t3.cross_train_model(
+            model, train_dataset, loss_fn, optimizer, device = DEVICE,
+            validation_dataset = val_dataset, metrics_map = metrics_map,
+            lr_scheduler = scheduler,
+            epochs = NUM_EPOCHS, batch_size = BATCH_SIZE
         )
-        pytk.show_plots(hist, metric = 'acc', plot_title = 'Training metrics')
+        hist.plot_metrics(title = "Model Training Metrics", fig_size = (8, 6))
 
         # evaluate model performance on train/eval & test datasets
         print('Evaluating model performance...')
-        loss, acc = model.evaluate_dataset(train_dataset)
-        print('  Training dataset  -> loss: %.4f - acc: %.4f' % (loss, acc))
-        loss, acc = model.evaluate_dataset(val_dataset)
-        print('  Cross-val dataset -> loss: %.4f - acc: %.4f' % (loss, acc))
-        loss, acc = model.evaluate_dataset(test_dataset)
-        print('  Test dataset      -> loss: %.4f - acc: %.4f' % (loss, acc))
+        metrics = t3.evaluate_model(
+            model, train_dataset, loss_fn, device = DEVICE, metrics_map = metrics_map
+        )
+        print(f"Training metrics -> {metrics}")
+        metrics = t3.evaluate_model(
+            model, val_dataset, loss_fn, device = DEVICE, metrics_map = metrics_map
+        )
+        print(f"Cross-val metrics -> {metrics}")
+        metrics = t3.evaluate_model(
+            model, test_dataset, loss_fn, device = DEVICE, metrics_map = metrics_map
+        )
+        print(f"Testing metrics   -> {metrics}")
 
         # save model state
-        model.save(MODEL_SAVE_PATH)
+        t3.save_model(model, MODEL_SAVE_PATH)
         del model
 
     if DO_PREDICTION:
         print('Running predictions...')
+        model = MNISTConvNet2() if USE_CNN else MNISTNet2()
         # load model state from .pt file
-        model, _ = build_model(USE_CNN)
-        model.load(MODEL_SAVE_PATH)
+        t3.load_model(model, MODEL_SAVE_PATH)
+        print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
+
         # model = pytk.load_model(MODEL_SAVE_PATH)
-        model.summary((NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH))
+        torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH))
 
         # evaluate model performance on train/eval & test datasets
         print('Evaluating model performance...')
-        loss, acc = model.evaluate_dataset(train_dataset)
-        print('  Training dataset  -> loss: %.4f - acc: %.4f' % (loss, acc))
-        loss, acc = model.evaluate_dataset(val_dataset)
-        print('  Cross-val dataset -> loss: %.4f - acc: %.4f' % (loss, acc))
-        loss, acc = model.evaluate_dataset(test_dataset)
-        print('  Test dataset      -> loss: %.4f - acc: %.4f' % (loss, acc))
+        metrics = t3.evaluate_model(
+            model, train_dataset, loss_fn, device = DEVICE, metrics_map = metrics_map
+        )
+        print(f"Training metrics -> {metrics}")
+        metrics = t3.evaluate_model(
+            model, val_dataset, loss_fn, device = DEVICE, metrics_map = metrics_map
+        )
+        print(f"Cross-val metrics -> {metrics}")
+        metrics = t3.evaluate_model(
+            model, test_dataset, loss_fn, device = DEVICE, metrics_map = metrics_map
+        )
+        print(f"Testing metrics   -> {metrics}")
 
-        y_pred, y_true = model.predict_dataset(test_dataset)
+        y_pred, y_true = t3.predict_dataset(model, test_dataset, device = DEVICE)
         y_pred = np.argmax(y_pred, axis = 1)
         print('Sample labels (50): ', y_true[:50])
         print('Sample predictions: ', y_true[:50])
@@ -334,8 +304,9 @@ def main():
             test_dataset, batch_size = 64, shuffle = True
         )
         data_iter = iter(trainloader)
-        images, labels = data_iter.next()  # fetch a batch of 64 random images
-        preds = np.argmax(model.predict(images), axis = 1)
+        images, labels = next(data_iter)  # fetch a batch of 64 random images
+        preds = t3.predict(model, images, device = DEVICE)
+        preds = np.argmax(preds, axis = 1)
         display_sample(
             images, labels.numpy(), sample_predictions = preds,
             grid_shape = (8, 8), plot_title = 'Sample Predictions'

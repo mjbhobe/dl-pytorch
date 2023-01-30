@@ -23,7 +23,8 @@ warnings.filterwarnings('ignore')
 import sys
 
 if sys.version_info < (3,):
-    raise Exception("pytorch_toolkit does not support Python 2. Please use a Python 3+ interpreter!")
+    raise Exception(
+        "pytorch_toolkit does not support Python 2. Please use a Python 3+ interpreter!")
 
 import os
 import random
@@ -44,11 +45,11 @@ from torch.utils.data.dataset import Dataset
 
 PYTK_FAV_SEED = 41
 
-__version__ = "1.5.0"
+__v0rsion__ = "1.5.0"
 __author__ = "Manish Bhobe"
 
 
-def seed_all(seed=None):
+def seed_all(seed = None):
     # to ensure that you get consistent results across runs & machines
     # @see: https://discuss.pytorch.org/t/reproducibility-over-different-machines/63047
     """seed all random number generators to get consistent results
@@ -88,8 +89,8 @@ def seed_all(seed=None):
 # -----------------------------------------------------------------------------
 
 
-def Conv2d(in_channels, out_channels, kernel_size=3, stride=1, padding=1,
-           dilation=1, groups=1, bias=True, padding_mode='zeros'):
+def Conv2d(in_channels, out_channels, kernel_size = 3, stride = 1, padding = 1,
+           dilation = 1, groups = 1, bias = True, padding_mode = 'zeros'):
     """
         (convenience function)
         Creates a nn.Conv2d layer, with weights initiated using xavier_uniform initializer
@@ -99,9 +100,9 @@ def Conv2d(in_channels, out_channels, kernel_size=3, stride=1, padding=1,
         @returns:
             - instance of nn.Conv2d layer
     """
-    layer = nn.Conv2d(in_channels, out_channels, kernel_size=kernel_size,
-                      stride=stride, padding=padding, dilation=dilation,
-                      groups=groups, bias=bias, padding_mode=padding_mode)
+    layer = nn.Conv2d(in_channels, out_channels, kernel_size = kernel_size,
+                      stride = stride, padding = padding, dilation = dilation,
+                      groups = groups, bias = bias, padding_mode = padding_mode)
     # @see: https://msdn.microsoft.com/en-us/magazine/mt833293.aspx for example
     torch.nn.init.xavier_uniform_(layer.weight)
     if bias:
@@ -109,7 +110,7 @@ def Conv2d(in_channels, out_channels, kernel_size=3, stride=1, padding=1,
     return layer
 
 
-def Linear(in_nodes, out_nodes, bias=True):
+def Linear(in_nodes, out_nodes, bias = True):
     """
         (convenience function)
         creates a nn.Linear layer, with weights initiated using xavier_uniform initializer 
@@ -128,7 +129,7 @@ def Linear(in_nodes, out_nodes, bias=True):
     return layer
 
 
-def Dense(in_nodes, out_nodes, bias=True):
+def Dense(in_nodes, out_nodes, bias = True):
     """
         another shortcut for Linear(in_nodes, out_nodes)
     """
@@ -144,7 +145,7 @@ def Flatten(x):
     return x.view(x.shape[0], -1)
 
 
-def getConv2dFlattenShape(image_height, image_width, conv2d_layer, pool=2):
+def getConv2dFlattenShape(image_height, image_width, conv2d_layer, pool = 2):
     kernel_size = conv2d_layer.kernel_size
     padding = conv2d_layer.padding
     stride = conv2d_layer.stride
@@ -154,9 +155,11 @@ def getConv2dFlattenShape(image_height, image_width, conv2d_layer, pool=2):
     # Andrew Ng's formula without dilation -> out = (f + 2p - (k-1))/s) + 1
     # with dilation, out = ((f + 2p - d * ((k-1) - 1)) / s)  + 1
     out_height = np.floor(
-        (image_height + 2 * padding[0] - dilation[0] * (kernel_size[0] - 1) - 1) / stride[0] + 1)
+        (image_height + 2 * padding[0] - dilation[0] * (kernel_size[0] - 1) - 1) / stride[
+            0] + 1)
     out_width = np.floor(
-        (image_width + 2 * padding[1] - dilation[1] * (kernel_size[1] - 1) - 1) / stride[1] + 1)
+        (image_width + 2 * padding[1] - dilation[1] * (kernel_size[1] - 1) - 1) / stride[
+            1] + 1)
     if pool > 0:
         out_height /= pool
         out_width /= pool
@@ -359,12 +362,13 @@ def rmse(predictions, actuals):
         @returns:
             computed rmse = sqrt(mse(predictions, actuals))
     """
-    rmse_err = torch.sqrt(torch.tensor(mse(predictions, actuals), dtype=torch.float32))
+    rmse_err = torch.sqrt(torch.tensor(mse(predictions, actuals), dtype = torch.float32))
     return rmse_err.detach().numpy()
 
 
 def rmse_new(predictions, actuals):
-    rmse_score = torch.sqrt(torchmetrics.functional.mean_squared_error(predictions, actuals)).item()
+    rmse_score = torch.sqrt(
+        torchmetrics.functional.mean_squared_error(predictions, actuals)).item()
     return rmse_score
 
 
@@ -455,8 +459,9 @@ class EarlyStopping:
        after a given patience (or no of epochs).
     """
 
-    def __init__(self, monitor='val_loss', min_delta=0, patience=5, mode='min', verbose=False,
-                 save_best_weights=True, checkpoint_file_path=None):
+    def __init__(self, monitor = 'val_loss', min_delta = 0, patience = 5, mode = 'min',
+                 verbose = False,
+                 save_best_weights = True, checkpoint_file_path = None):
         """
             Args:
                 monitor (str): which metric should be monitored (default: 'val_loss')
@@ -475,7 +480,8 @@ class EarlyStopping:
         self.patience = patience
         self.mode = mode
         if mode not in ['min', 'max']:
-            warnings.warn(f'EarlyStopping - \'mode\' {mode} is unknown. Using \'min\' instead!')
+            warnings.warn(
+                f'EarlyStopping - \'mode\' {mode} is unknown. Using \'min\' instead!')
             self.mode = 'min'
         self.verbose = verbose
         self.save_best_weights = save_best_weights
@@ -489,7 +495,8 @@ class EarlyStopping:
         if (checkpoint_file_path is None) or (not os.path.exists(checkpoint_file_path)):
             # create our own directory for logging -> ./chkplogs%Y%m%d%H%M%S
             now = datetime.now()
-            dir_name = os.path.join(os.getcwd(), f"chkplogs{now.strftime('%Y%m%d%H%M%S')}")
+            dir_name = os.path.join(os.getcwd(),
+                                    f"chkplogs{now.strftime('%Y%m%d%H%M%S')}")
             self.checkpoint_file_path = dir_name
         os.mkdir(self.checkpoint_file_path)
         assert os.path.exists(self.checkpoint_file_path), \
@@ -513,32 +520,36 @@ class EarlyStopping:
             self.metrics_log = []
             self.best_epoch = epoch + 1
             if self.verbose:
-                print(f'   EarlyStopping (log): patience counter reset to 0 at epoch {epoch}' +
-                      f'where best score of \'{self.monitor}\' is {self.best_score:.3f}')
+                print(
+                    f'   EarlyStopping (log): patience counter reset to 0 at epoch {epoch}' +
+                    f'where best score of \'{self.monitor}\' is {self.best_score:.3f}')
         else:
             self.counter += 1
             if self.verbose:
-                print(f'   EarlyStopping (log): patience counter increased to {self.counter}' +
-                      f' - best_score of \'{self.monitor}\' is {self.best_score:.3f} at' +
-                      f' epoch {self.best_epoch}')
+                print(
+                    f'   EarlyStopping (log): patience counter increased to {self.counter}' +
+                    f' - best_score of \'{self.monitor}\' is {self.best_score:.3f} at' +
+                    f' epoch {self.best_epoch}')
             if self.counter >= self.patience:
                 self.early_stop = True
                 print(
                     '   EarlyStopping: Early stopping training at epoch %d. \'%s\' has not improved for past %d '
                     'epochs.' % (epoch, self.monitor, self.patience))
                 print('     - Best score: %.4f at epoch %d. Last %d scores -> %s' % (
-                    self.best_score, self.best_epoch, len(self.metrics_log), self.metrics_log))
+                    self.best_score, self.best_epoch, len(self.metrics_log),
+                    self.metrics_log))
             else:
                 self.metrics_log.append(curr_metric_val)
 
     def save_checkpoint(self, model, metric_name, curr_metric_val):
         """Saves model when validation loss decrease."""
         if self.verbose:
-            print('   EarlyStopping (log): \'%s\' metric has \'improved\' - from %.4f to %.4f. Saving checkpoint...' % (
-                metric_name, self.best_score, curr_metric_val))
+            print(
+                '   EarlyStopping (log): \'%s\' metric has \'improved\' - from %.4f to %.4f. Saving checkpoint...' % (
+                    metric_name, self.best_score, curr_metric_val))
         best_model_file_path = os.path.join(self.checkpoint_file_path,
                                             f"checkpoint{datetime.now().strftime('%Y%m%d%H%M%S')}.pt")
-        model.save(best_model_file_path, verbose=0)
+        model.save(best_model_file_path, verbose = 0)
         self.best_model_path = best_model_file_path
         # mod = model
         # if isinstance(model, PytkModuleWrapper):
@@ -552,7 +563,7 @@ class EarlyStopping:
 # -------------------------------------------------------------------------------------
 
 
-def check_attribs__(model, loss_fn, optimizer=None, check_only_loss=False):
+def check_attribs__(model, loss_fn, optimizer = None, check_only_loss = False):
     """ internal helper function - checks various attributes of "model" """
     if loss_fn is None:
         # model instance must have self.loss_fn attribute defined
@@ -560,12 +571,14 @@ def check_attribs__(model, loss_fn, optimizer=None, check_only_loss=False):
             l = model.loss_fn
             if l is None:
                 # defined in model, but set to None
-                raise ValueError('FATAL ERROR: it appears that you have not set a value for loss_fn ' +
-                                 'Detected None value for both the loss_fn parameter and module.loss_fn attribute!')
+                raise ValueError(
+                    'FATAL ERROR: it appears that you have not set a value for loss_fn ' +
+                    'Detected None value for both the loss_fn parameter and module.loss_fn attribute!')
         except AttributeError as e:
-            print("FATAL ERROR: when loss_fn parameter is None, the model's instance is expected " +
-                  "to have the loss function defined with attribute self.loss_fn!\n" +
-                  "This model's instance does not have a self.loss_fn attribute defined.")
+            print(
+                "FATAL ERROR: when loss_fn parameter is None, the model's instance is expected " +
+                "to have the loss function defined with attribute self.loss_fn!\n" +
+                "This model's instance does not have a self.loss_fn attribute defined.")
             raise e
 
     if not check_only_loss:
@@ -574,13 +587,15 @@ def check_attribs__(model, loss_fn, optimizer=None, check_only_loss=False):
             try:
                 o = model.optimizer
                 if o is None:
-                    raise ValueError('FATAL ERROR: it appears that you have not set a value ' +
-                                     'for optimizer. Detected None value for both the optimizer parameter and ' +
-                                     'module.optimizer attribute!')
+                    raise ValueError(
+                        'FATAL ERROR: it appears that you have not set a value ' +
+                        'for optimizer. Detected None value for both the optimizer parameter and ' +
+                        'module.optimizer attribute!')
             except AttributeError as e:
-                print("FATAL ERROR: when optimizer parameter is None, the model's instance is expected " +
-                      "to have the optimizer function defined with attribute self.optimizer!\n" +
-                      "This model's instance does not have a self.optimizer attribute defined.")
+                print(
+                    "FATAL ERROR: when optimizer parameter is None, the model's instance is expected " +
+                    "to have the optimizer function defined with attribute self.optimizer!\n" +
+                    "This model's instance does not have a self.optimizer attribute defined.")
                 raise e
 
 
@@ -635,7 +650,7 @@ def check_attribs__(model, loss_fn, optimizer=None, check_only_loss=False):
 #     return metrics_str
 
 
-def get_lrates__(optimizer, format_str='%.8f'):
+def get_lrates__(optimizer, format_str = '%.8f'):
     """given the optimizer, returns the current learning rates as a string
        (to be used to report metrics per epoch only!) """
     lr_rates_o = []
@@ -646,7 +661,7 @@ def get_lrates__(optimizer, format_str='%.8f'):
 
 
 class MetricsHistory:
-    def __init__(self, metrics_list=None, include_val_metrics=False):
+    def __init__(self, metrics_list = None, include_val_metrics = False):
         # epoch metrics
         self.history = {'loss': []}
         # batch metrics
@@ -682,7 +697,8 @@ class MetricsHistory:
         for metric_name in self.batch_metrics.keys():
             self.batch_metrics[metric_name].clear()
 
-    def compute_batch_metrics(self, logits, labels, batch_loss, update_validation_metrics=False):
+    def compute_batch_metrics(self, logits, labels, batch_loss,
+                              update_validation_metrics = False):
         for metric_name in self.batch_metrics.keys():
             if update_validation_metrics:
                 if (not metric_name.startswith('val_')):
@@ -700,7 +716,7 @@ class MetricsHistory:
                     'loss') else METRICS_MAP[metric_name](logits, labels)
                 self.batch_metrics[metric_name].append(metric_val)
 
-    def accumulate(self, accum_validation_metrics=False):
+    def accumulate(self, accum_validation_metrics = False):
         for metric_name in self.batch_metrics.keys():
             if accum_validation_metrics:
                 if (not metric_name.startswith('val_')):
@@ -713,7 +729,7 @@ class MetricsHistory:
             self.history[metric_name].append(metric_mean)
             self.batch_metrics[metric_name].clear()
 
-    def get_batch_metrics_str(self, include_validation_metrics=False):
+    def get_batch_metrics_str(self, include_validation_metrics = False):
         metrics_str = ''
 
         metrics_str = f"loss: {np.array(self.batch_metrics['loss']).mean():.4f}"
@@ -730,7 +746,7 @@ class MetricsHistory:
 
         return metrics_str
 
-    def get_metrics_str(self, include_validation_metrics=False):
+    def get_metrics_str(self, include_validation_metrics = False):
         metrics_str = ''
 
         metrics_str = f"loss: {np.array(self.history['loss']).mean():.4f}"
@@ -778,10 +794,12 @@ class MetricsHistory:
 #     return history, batch_metrics, cum_metrics
 
 
-def train_model(model, train_dataset, collate_fn=None, loss_fn=None, optimizer=None, validation_split=0.0,
-                validation_dataset=None, lr_scheduler=None, epochs=25, batch_size=64,
-                metrics=None, shuffle=True, num_workers=0, early_stopping=None,
-                verbose=2, report_interval=1):
+def train_model(model, train_dataset, collate_fn = None, loss_fn = None, optimizer = None,
+                validation_split = 0.0,
+                validation_dataset = None, lr_scheduler = None, epochs = 25,
+                batch_size = 64,
+                metrics = None, shuffle = True, num_workers = 0, early_stopping = None,
+                verbose = 2, report_interval = 1):
     """
         Trains model (derived from nn.Module) across epochs using specified loss function,
         optimizer, validation dataset (if any), learning rate scheduler, epochs and batch size etc.
@@ -850,12 +868,14 @@ def train_model(model, train_dataset, collate_fn=None, loss_fn=None, optimizer=N
             loss_fn = model.loss_fn
         if loss_fn is None:
             # still not assigned??
-            raise ValueError("Loss function is not defined. Must be passed as a parameter or defined in class")
+            raise ValueError(
+                "Loss function is not defined. Must be passed as a parameter or defined in class")
         if optimizer is None:
             optimizer = model.optimizer
         if optimizer is None:
             # still not assigned??
-            raise ValueError("Optimizer is not defined. Must be passed as a parameter or defined in class")
+            raise ValueError(
+                "Optimizer is not defined. Must be passed as a parameter or defined in class")
         if lr_scheduler is not None:
             # NOTE:  ReduceLROnPlateau is NOT derived from _LRScheduler, but from object, which
             # is odd as all other schedulers derive from _LRScheduler
@@ -886,7 +906,8 @@ def train_model(model, train_dataset, collate_fn=None, loss_fn=None, optimizer=N
                 torch.utils.data.random_split(train_dataset, [train_count, val_count])
             assert (train_dataset is not None) and (len(train_dataset) == train_count), \
                 "Something is wrong with validation_split - getting incorrect train_dataset counts!!"
-            assert (validation_dataset is not None) and (len(validation_dataset) == val_count), \
+            assert (validation_dataset is not None) and (
+                    len(validation_dataset) == val_count), \
                 "Something is wrong with validation_split - getting incorrect validation_dataset counts!!"
 
         # train on GPU if available
@@ -904,7 +925,8 @@ def train_model(model, train_dataset, collate_fn=None, loss_fn=None, optimizer=N
                 print('Training on %d samples' % len(train_dataset))
 
         if (verbose != 0) and (report_interval != 1):
-            print(f"NOTE: training progress will be reported after every {report_interval} epochs")
+            print(
+                f"NOTE: training progress will be reported after every {report_interval} epochs")
 
         tot_samples = len(train_dataset)
         len_tot_samples = len(str(tot_samples))
@@ -937,8 +959,11 @@ def train_model(model, train_dataset, collate_fn=None, loss_fn=None, optimizer=N
 
         for epoch in range(epochs):
             model.train()  # 'flag model as training', so batch normalization & dropouts can be applied
-            train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=train_batch_size,
-                                                       collate_fn=collate_fn, shuffle=shuffle, num_workers=num_workers)
+            train_loader = torch.utils.data.DataLoader(train_dataset,
+                                                       batch_size = train_batch_size,
+                                                       collate_fn = collate_fn,
+                                                       shuffle = shuffle,
+                                                       num_workers = num_workers)
             num_batches = 0
             samples = 0
 
@@ -947,7 +972,7 @@ def train_model(model, train_dataset, collate_fn=None, loss_fn=None, optimizer=N
             #     batch_metrics[metric_name] = 0.0
             #     cum_metrics[metric_name] = 0.0
             #     if validation_dataset is not None:
-            #         batch_metrics['val_%s' % metric_name] = 0.0
+            #         batch_metrics['val_%s' % metric_name] = 0.
             #         cum_metrics['val_%s' % metric_name] = 0.0
 
             # learning rates used by the optimizer (as a string)
@@ -982,7 +1007,8 @@ def train_model(model, train_dataset, collate_fn=None, loss_fn=None, optimizer=N
                 #     metrics_list, cum_metrics, batch_metrics, validation_dataset=False)
 
                 # compute training metrics for this batch
-                metrics_history.compute_batch_metrics(logits, labels, batch_loss, update_validation_metrics=False)
+                metrics_history.compute_batch_metrics(logits, labels, batch_loss,
+                                                      update_validation_metrics = False)
 
                 samples += len(labels)
                 num_batches += 1
@@ -1012,12 +1038,14 @@ def train_model(model, train_dataset, collate_fn=None, loss_fn=None, optimizer=N
                 #                len_tot_samples, samples, len_tot_samples, tot_samples),
                 #               end='', flush=True)
 
-                if (verbose in [1, 2] and ((epoch == 0) or ((epoch + 1) % report_interval == 0))):
+                if (verbose in [1, 2] and (
+                        (epoch == 0) or ((epoch + 1) % report_interval == 0))):
                     # report progress on epoch 0 and every report_interval thereafter if verbose in [1,2]
                     # fetch metrics only if verbose == 2, else set metrics = '...'
                     # if verbose == 0, there is no output whatsoever!
                     metrics_str = "..." if verbose == 1 else \
-                        metrics_history.get_batch_metrics_str(include_validation_metrics=False) + learning_rates
+                        metrics_history.get_batch_metrics_str(
+                            include_validation_metrics = False) + learning_rates
                     # if verbose == 1 -> display progress counter only, no metrics
                     #    e.g.: Epoch (2/20): (1024/5000) -> ...
                     # if verbose == 2 -> display progress counter + metrics after each batch
@@ -1026,7 +1054,7 @@ def train_model(model, train_dataset, collate_fn=None, loss_fn=None, optimizer=N
                           (len_num_epochs, epoch + 1, len_num_epochs, epochs,
                            len_tot_samples, samples, len_tot_samples, tot_samples,
                            metrics_str),
-                          end='', flush=True)
+                          end = '', flush = True)
             else:
                 # all batches in train_loader dataset are complete...
 
@@ -1036,7 +1064,7 @@ def train_model(model, train_dataset, collate_fn=None, loss_fn=None, optimizer=N
                 #     history[metric_name].append(cum_metrics[metric_name])
 
                 # compute average of training metrics across all batches of train_loader
-                metrics_history.accumulate(accum_validation_metrics=False)
+                metrics_history.accumulate(accum_validation_metrics = False)
 
                 # display average training metrics for this epoch if verbose = 1 or 2
                 # learning_rates = get_lrates__(optimizer)
@@ -1045,14 +1073,16 @@ def train_model(model, train_dataset, collate_fn=None, loss_fn=None, optimizer=N
                         # metrics_str = get_metrics_str__(
                         #     metrics_list, cum_metrics, validation_dataset=False)
 
-                        metrics_str = metrics_history.get_metrics_str(include_validation_metrics=False)
+                        metrics_str = metrics_history.get_metrics_str(
+                            include_validation_metrics = False)
 
                         metrics_str += learning_rates
                         print('\rEpoch (%*d/%*d): (%*d/%*d) -> %s ...' %
                               (len_num_epochs, epoch + 1, len_num_epochs, epochs,
                                len_tot_samples, samples, len_tot_samples, tot_samples,
                                metrics_str),
-                              end='' if validation_dataset is not None else '\n', flush=True)
+                              end = '' if validation_dataset is not None else '\n',
+                              flush = True)
 
                 if validation_dataset is not None:
                     # perform validation over validation dataset
@@ -1061,9 +1091,11 @@ def train_model(model, train_dataset, collate_fn=None, loss_fn=None, optimizer=N
                     model.eval()  # mark model as evaluating - don't apply dropouts or batch norms
                     with torch.no_grad():
                         # run through the validation dataset
-                        val_loader = torch.utils.data.DataLoader(validation_dataset, batch_size=val_batch_size,
-                                                                 collate_fn=collate_fn, shuffle=shuffle,
-                                                                 num_workers=num_workers)
+                        val_loader = torch.utils.data.DataLoader(validation_dataset,
+                                                                 batch_size = val_batch_size,
+                                                                 collate_fn = collate_fn,
+                                                                 shuffle = shuffle,
+                                                                 num_workers = num_workers)
                         num_val_batches = 0
 
                         for val_data, val_labels in val_loader:
@@ -1088,7 +1120,8 @@ def train_model(model, train_dataset, collate_fn=None, loss_fn=None, optimizer=N
 
                             # calculate all metrics for validation dataset batch
                             metrics_history.compute_batch_metrics(
-                                val_logits, val_labels, batch_loss, update_validation_metrics=True)
+                                val_logits, val_labels, batch_loss,
+                                update_validation_metrics = True)
 
                             num_val_batches += 1
                         else:
@@ -1100,23 +1133,26 @@ def train_model(model, train_dataset, collate_fn=None, loss_fn=None, optimizer=N
                             #     history['val_%s' % metric_name].append(cum_metrics['val_%s' % metric_name])
 
                             # average metrics across all val-dataset batches
-                            metrics_history.accumulate(accum_validation_metrics=True)
+                            metrics_history.accumulate(accum_validation_metrics = True)
 
-                            if (verbose in [1, 2]) and ((epoch == 0) or ((epoch + 1) % report_interval == 0)):
+                            if (verbose in [1, 2]) and (
+                                    (epoch == 0) or ((epoch + 1) % report_interval == 0)):
                                 # display train + val set metrics only if verbose =1 or 2 and at
                                 # reporting interval epoch
                                 # metrics_str = get_metrics_str__(
                                 #     metrics_list, cum_metrics, validation_dataset=True)
 
-                                metrics_str = metrics_history.get_metrics_str(include_validation_metrics=True)
+                                metrics_str = metrics_history.get_metrics_str(
+                                    include_validation_metrics = True)
 
                                 # learning_rates = get_lrates__(optimizer)
                                 metrics_str += learning_rates
                                 print('\rEpoch (%*d/%*d): (%*d/%*d) -> %s' %
                                       (len_num_epochs, epoch + 1, len_num_epochs, epochs,
-                                       len_tot_samples, samples, len_tot_samples, tot_samples,
+                                       len_tot_samples, samples, len_tot_samples,
+                                       tot_samples,
                                        metrics_str),
-                                      flush=True)
+                                      flush = True)
 
             # check for early stopping
             if early_stopping is not None:
@@ -1140,7 +1176,8 @@ def train_model(model, train_dataset, collate_fn=None, loss_fn=None, optimizer=N
                 if isinstance(lr_scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
                     # lr_metric = cum_metrics['val_loss'] if validation_dataset is not None \
                     #     else cum_metrics['loss']
-                    lr_metric = metrics_history.history['val_loss'][-1] if validation_dataset is not None \
+                    lr_metric = metrics_history.history['val_loss'][
+                        -1] if validation_dataset is not None \
                         else metrics_history.history['loss'][-1]
                     lr_scheduler.step(lr_metric)
                 else:
@@ -1151,7 +1188,8 @@ def train_model(model, train_dataset, collate_fn=None, loss_fn=None, optimizer=N
         model = model.cpu()
 
 
-def evaluate_model(model, dataset, collate_fn=None, loss_fn=None, batch_size=64, metrics=None, num_workers=0):
+def evaluate_model(model, dataset, collate_fn = None, loss_fn = None, batch_size = 64,
+                   metrics = None, num_workers = 0):
     """ evaluate's model performance against dataset provided
         @params:
             - model: instance of model derived from nn.Model (or instance of pyt.PytModel or pyt.PytSequential)
@@ -1173,7 +1211,7 @@ def evaluate_model(model, dataset, collate_fn=None, loss_fn=None, batch_size=64,
             "evaluate_model() works with instances of nn.Module only!"
         assert isinstance(dataset, torch.utils.data.Dataset), \
             "dataset must be a subclass of torch.utils.data.Dataset"
-        check_attribs__(model, loss_fn, check_only_loss=True)
+        check_attribs__(model, loss_fn, check_only_loss = True)
         if loss_fn is None:
             loss_fn = model.loss_fn
 
@@ -1182,8 +1220,9 @@ def evaluate_model(model, dataset, collate_fn=None, loss_fn=None, batch_size=64,
         model = model.cuda() if gpu_available else model.cpu()
 
         samples, num_batches = 0, 0
-        loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size,
-                                             collate_fn=collate_fn, shuffle=False, num_workers=num_workers)
+        loader = torch.utils.data.DataLoader(dataset, batch_size = batch_size,
+                                             collate_fn = collate_fn, shuffle = False,
+                                             num_workers = num_workers)
         tot_samples = len(dataset)
         len_tot_samples = len(str(tot_samples))
 
@@ -1219,7 +1258,7 @@ def evaluate_model(model, dataset, collate_fn=None, loss_fn=None, batch_size=64,
 
                 # compute all metrics for this batch
                 metrics_history.compute_batch_metrics(logits, labels, batch_loss,
-                                                      update_validation_metrics=False)
+                                                      update_validation_metrics = False)
 
                 samples += len(labels)
                 num_batches += 1
@@ -1229,29 +1268,31 @@ def evaluate_model(model, dataset, collate_fn=None, loss_fn=None, batch_size=64,
                 #     metrics_list, batch_metrics, validation_dataset=False)
 
                 # display progress for this batch
-                metrics_str = metrics_history.get_batch_metrics_str(include_validation_metrics=False)
+                metrics_str = metrics_history.get_batch_metrics_str(
+                    include_validation_metrics = False)
 
                 print('\rEvaluating (%*d/%*d) -> %s' %
                       (len_tot_samples, samples, len_tot_samples, tot_samples,
                        metrics_str),
-                      end='', flush=True)
+                      end = '', flush = True)
             else:
                 # compute average of all metrics provided in metrics list
                 # for metric_name in metrics_list:
                 #     cum_metrics[metric_name] = cum_metrics[metric_name] / num_batches
 
                 # compute average of all metrics provided in metrics list
-                metrics_history.accumulate(accum_validation_metrics=False)
+                metrics_history.accumulate(accum_validation_metrics = False)
 
                 # metrics_str = get_metrics_str__(
                 #     metrics_list, cum_metrics, validation_dataset=False)
 
-                metrics_str = metrics_history.get_metrics_str(include_validation_metrics=False)
+                metrics_str = metrics_history.get_metrics_str(
+                    include_validation_metrics = False)
 
                 print('\rEvaluating (%*d/%*d) -> %s' %
                       (len_tot_samples, tot_samples, len_tot_samples, tot_samples,
                        metrics_str),
-                      flush=True)
+                      flush = True)
 
         if metrics is None:
             # return cum_metrics['loss']
@@ -1267,7 +1308,7 @@ def evaluate_model(model, dataset, collate_fn=None, loss_fn=None, batch_size=64,
         model = model.cpu()
 
 
-def predict_dataset(model, dataset, batch_size=64, num_workers=0):
+def predict_dataset(model, dataset, batch_size = 64, num_workers = 0):
     """ runs prediction on dataset (use for classification ONLY)
         @params:
             - model: instance of model derived from nn.Model (or instance of pyt.PytModel or pyt.PytSequential)
@@ -1286,8 +1327,8 @@ def predict_dataset(model, dataset, batch_size=64, num_workers=0):
         gpu_available = torch.cuda.is_available()
         model = model.cuda() if gpu_available else model.cpu()
 
-        loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size,
-                                             shuffle=False, num_workers=num_workers)
+        loader = torch.utils.data.DataLoader(dataset, batch_size = batch_size,
+                                             shuffle = False, num_workers = num_workers)
 
         preds, actuals = [], []
 
@@ -1331,7 +1372,7 @@ def predict(model, data):
         with torch.no_grad():
             model.eval()
             if isinstance(data, np.ndarray):
-                data = torch.tensor(data, dtype=torch.float32)
+                data = torch.tensor(data, dtype = torch.float32)
             data = data.cuda() if gpu_available else data.cpu()
             # forward pass
             logits = model(data)
@@ -1342,7 +1383,7 @@ def predict(model, data):
 
 
 def save_model(model, model_save_name,
-               model_save_dir=os.path.join('.', 'model_states'), verbose=1):
+               model_save_dir = os.path.join('.', 'model_states'), verbose = 1):
     """ saves Pytorch model to disk 
         @params:
             - model: instance of model derived from nn.Model (or instance of pytk.PytModel or pytk.PytSequential)
@@ -1368,7 +1409,8 @@ def save_model(model, model_save_name,
         try:
             os.mkdir(model_save_dir)
         except OSError as err:
-            print(f"FATAL: Unable to create folder {model_save_dir} to save Pytorch model!")
+            print(
+                f"FATAL: Unable to create folder {model_save_dir} to save Pytorch model!")
             raise err
 
     model_save_path = os.path.join(model_save_dir, model_save_name)
@@ -1378,7 +1420,7 @@ def save_model(model, model_save_name,
         print(f'Pytorch model saved to {model_save_path}')
 
 
-def save_model_state2(model, model_save_path, verbose=1):
+def save_model_state2(model, model_save_path, verbose = 1):
     """ saves Pytorch state (state_dict) to disk  
         @params:
             - model: instance of model derived from nn.Model (or instance of pytk.PytModel or pytk.PytSequential)
@@ -1421,7 +1463,7 @@ def save_model_state2(model, model_save_path, verbose=1):
         print(f"Pytorch model saved to {model_save_path}")
 
 
-def save_model_state(model, model_save_path, verbose=1):
+def save_model_state(model, model_save_path, verbose = 1):
     """ saves Pytorch state (state_dict) to disk  
         @params:
             - model: instance of model derived from nn.Model (or instance of pytk.PytModel or pytk.PytSequential)
@@ -1451,7 +1493,7 @@ def save_model_state(model, model_save_path, verbose=1):
         print(f"Pytorch model saved to {model_save_path}")
 
 
-def load_model(model_save_name, model_save_dir='./model_states', verbose=1):
+def load_model(model_save_name, model_save_dir = './model_states', verbose = 1):
     """ loads model from disk and create a complete instance from saved state
         @params:
             - model_save_name: name of file or complete path of file to save model to 
@@ -1481,7 +1523,7 @@ def load_model(model_save_name, model_save_dir='./model_states', verbose=1):
     return model
 
 
-def load_model_state2(file_path, verbose=1):
+def load_model_state2(file_path, verbose = 1):
     """ loads model from disk and create a complete instance from saved state
         @params:
             - model_save_name: name of file or complete path of file to save model to 
@@ -1500,7 +1542,7 @@ def load_model_state2(file_path, verbose=1):
     return model
 
 
-def load_model_state(model, model_state_dict_path, verbose=1):
+def load_model_state(model, model_state_dict_path, verbose = 1):
     """ loads model's state dict from file on disk
         @params:
             - model: instance of model derived from nn.Model (or instance of pytk.PytModel or pytk.PytSequential)
@@ -1511,7 +1553,8 @@ def load_model_state(model, model_state_dict_path, verbose=1):
     # convert model_state_dict_path to absolute path
     model_save_path = pathlib.Path(model_state_dict_path).absolute()
     if not os.path.exists(model_save_path):
-        raise IOError(f"ERROR: can't load model from {model_state_dict_path} - file does not exist!")
+        raise IOError(
+            f"ERROR: can't load model from {model_state_dict_path} - file does not exist!")
 
     # load state dict from path
     state_dict = torch.load(model_save_path)
@@ -1522,7 +1565,7 @@ def load_model_state(model, model_state_dict_path, verbose=1):
     return model
 
 
-def show_plots(history, metric=None, plot_title=None, fig_size=None):
+def show_plots(history, metric = None, plot_title = None, fig_size = None):
     """ Useful function to view plot of loss values & 'metric' across the various epochs
         Works with the history object returned by the fit() or fit_generator() call """
     assert type(history) is dict
@@ -1591,17 +1634,17 @@ def show_plots(history, metric=None, plot_title=None, fig_size=None):
     df = pd.DataFrame(history)
 
     with sns.axes_style("darkgrid"):
-        sns.set_context("notebook", font_scale=1.2)
+        sns.set_context("notebook", font_scale = 1.2)
         sns.set_style(
             {"font.sans-serif": ["SF Pro Display", "Arial", "Calibri", "DejaVu Sans"]})
 
-        f, ax = plt.subplots(nrows=1, ncols=col_count,
-                             figsize=((16, 5) if fig_size is None else fig_size))
+        f, ax = plt.subplots(nrows = 1, ncols = col_count,
+                             figsize = ((16, 5) if fig_size is None else fig_size))
         axs = ax[0] if col_count == 2 else ax
 
         # plot the losses
         losses_df = df.loc[:, loss_metrics]
-        losses_df.plot(ax=axs)
+        losses_df.plot(ax = axs)
         # ax[0].set_ylim(0.0, 1.0)
         axs.grid(True)
         losses_title = 'Training \'loss\' vs Epochs' if len(
@@ -1611,10 +1654,11 @@ def show_plots(history, metric=None, plot_title=None, fig_size=None):
         # plot the metric, if specified
         if metric is not None:
             metrics_df = df.loc[:, other_metrics]
-            metrics_df.plot(ax=ax[1])
+            metrics_df.plot(ax = ax[1])
             # ax[1].set_ylim(0.0, 1.0)
             ax[1].grid(True)
-            metrics_title = f'Training \'{other_metrics[0]}\' vs Epochs' if len(other_metrics) == 1 \
+            metrics_title = f'Training \'{other_metrics[0]}\' vs Epochs' if len(
+                other_metrics) == 1 \
                 else f'Training & Validation \'{other_metrics[0]}\' vs Epochs'
             ax[1].title.set_text(metrics_title)
 
@@ -1625,7 +1669,8 @@ def show_plots(history, metric=None, plot_title=None, fig_size=None):
         plt.close()
 
 
-def plot_confusion_matrix(cm, class_names=None, title="Confusion Matrix", cmap=plt.cm.Blues):
+def plot_confusion_matrix(cm, class_names = None, title = "Confusion Matrix",
+                          cmap = plt.cm.Blues):
     """ graphical plot of the confusion matrix 
         @params:
             cm - the confusion matrix (value returned by the sklearn.metrics.confusion_matrix(...) call)
@@ -1635,17 +1680,17 @@ def plot_confusion_matrix(cm, class_names=None, title="Confusion Matrix", cmap=p
     """
 
     class_names = ['0', '1'] if class_names is None else class_names
-    df = pd.DataFrame(cm, index=class_names, columns=class_names)
+    df = pd.DataFrame(cm, index = class_names, columns = class_names)
 
     with sns.axes_style("darkgrid"):
-        sns.set_context("notebook", font_scale=1.1)
+        sns.set_context("notebook", font_scale = 1.1)
         sns.set_style(
             {"font.sans-serif": ["SF Pro Display", "Arial", "Calibri", "DejaVu Sans"]})
-        hmap = sns.heatmap(df, annot=True, fmt="d", cmap=cmap)
+        hmap = sns.heatmap(df, annot = True, fmt = "d", cmap = cmap)
         hmap.yaxis.set_ticklabels(
-            hmap.yaxis.get_ticklabels(), rotation=0, ha='right')
+            hmap.yaxis.get_ticklabels(), rotation = 0, ha = 'right')
         hmap.xaxis.set_ticklabels(
-            hmap.xaxis.get_ticklabels(), rotation=30, ha='right')
+            hmap.xaxis.get_ticklabels(), rotation = 30, ha = 'right')
 
         plt.ylabel('True label')
         plt.xlabel('Predicted label')
@@ -1686,7 +1731,7 @@ class PytkModule(nn.Module):
         self.optimizer = None
         self.metrics_list = None
 
-    def compile(self, loss, optimizer, metrics=None):
+    def compile(self, loss, optimizer, metrics = None):
         """
             this function sets loss, optimizer and metrics attributes of the module
             @params:
@@ -1706,9 +1751,12 @@ class PytkModule(nn.Module):
         raise NotImplementedError("You have landed up calling PytModule.forward(). " +
                                   "You must re-implement this method in your derived class!")
 
-    def fit_dataset(self, train_dataset, collate_fn=None, loss_fn=None, optimizer=None, validation_split=0.0,
-                    validation_dataset=None, lr_scheduler=None, epochs=25, batch_size=64, metrics=None,
-                    shuffle=True, num_workers=0, early_stopping=None, verbose=2, report_interval=1):
+    def fit_dataset(self, train_dataset, collate_fn = None, loss_fn = None,
+                    optimizer = None, validation_split = 0.0,
+                    validation_dataset = None, lr_scheduler = None, epochs = 25,
+                    batch_size = 64, metrics = None,
+                    shuffle = True, num_workers = 0, early_stopping = None, verbose = 2,
+                    report_interval = 1):
         """ 
             train model on instance of torch.utils.data.Dataset
             @params:
@@ -1760,15 +1808,22 @@ class PytkModule(nn.Module):
         p_loss_fn = self.loss_fn if loss_fn is None else loss_fn
         p_optimizer = self.optimizer if optimizer is None else optimizer
         p_metrics_list = self.metrics_list if metrics is None else metrics
-        return train_model(self, train_dataset, collate_fn=collate_fn, loss_fn=p_loss_fn, optimizer=p_optimizer,
-                           validation_split=validation_split, validation_dataset=validation_dataset,
-                           lr_scheduler=lr_scheduler, epochs=epochs, batch_size=batch_size,
-                           metrics=p_metrics_list, shuffle=shuffle, num_workers=num_workers,
-                           early_stopping=early_stopping, verbose=verbose, report_interval=report_interval)
+        return train_model(self, train_dataset, collate_fn = collate_fn,
+                           loss_fn = p_loss_fn, optimizer = p_optimizer,
+                           validation_split = validation_split,
+                           validation_dataset = validation_dataset,
+                           lr_scheduler = lr_scheduler, epochs = epochs,
+                           batch_size = batch_size,
+                           metrics = p_metrics_list, shuffle = shuffle,
+                           num_workers = num_workers,
+                           early_stopping = early_stopping, verbose = verbose,
+                           report_interval = report_interval)
 
-    def fit(self, X_train, y_train, collate_fn=None, loss_fn=None, optimizer=None, validation_split=0.0,
-            validation_data=None, lr_scheduler=None, epochs=25, batch_size=64, metrics=None, shuffle=True,
-            num_workers=0, early_stopping=None, verbose=2, report_interval=1):
+    def fit(self, X_train, y_train, collate_fn = None, loss_fn = None, optimizer = None,
+            validation_split = 0.0,
+            validation_data = None, lr_scheduler = None, epochs = 25, batch_size = 64,
+            metrics = None, shuffle = True,
+            num_workers = 0, early_stopping = None, verbose = 2, report_interval = 1):
         """ 
             train model on Numpy arrays (X_train, y_train)
             @params:
@@ -1834,10 +1889,13 @@ class PytkModule(nn.Module):
         if validation_data is not None:
             assert isinstance(validation_data, tuple)
             assert isinstance(
-                validation_data[0], np.ndarray), "Expecting validation_dataset[0] to be a Numpy array"
+                validation_data[0],
+                np.ndarray), "Expecting validation_dataset[0] to be a Numpy array"
             assert isinstance(
-                validation_data[1], np.ndarray), "Expecting validation_dataset[1] to be a Numpy array"
-            if (validation_data[1].dtype == np.int) or (validation_data[1].dtype == np.long):
+                validation_data[1],
+                np.ndarray), "Expecting validation_dataset[1] to be a Numpy array"
+            if (validation_data[1].dtype == np.int) or (
+                    validation_data[1].dtype == np.long):
                 y_val_dtype = np.long
             else:
                 y_val_dtype = np.float32
@@ -1850,21 +1908,29 @@ class PytkModule(nn.Module):
         p_loss_fn = self.loss_fn if loss_fn is None else loss_fn
         p_optimizer = self.optimizer if optimizer is None else optimizer
         p_metrics_list = self.metrics_list if metrics is None else metrics
-        return self.fit_dataset(train_dataset, collate_fn=collate_fn, loss_fn=p_loss_fn, optimizer=p_optimizer,
-                                validation_split=validation_split, validation_dataset=validation_dataset,
-                                lr_scheduler=lr_scheduler,
-                                epochs=epochs, batch_size=batch_size, metrics=p_metrics_list,
-                                shuffle=shuffle, num_workers=num_workers, early_stopping=early_stopping,
-                                verbose=verbose, report_interval=report_interval)
+        return self.fit_dataset(train_dataset, collate_fn = collate_fn,
+                                loss_fn = p_loss_fn, optimizer = p_optimizer,
+                                validation_split = validation_split,
+                                validation_dataset = validation_dataset,
+                                lr_scheduler = lr_scheduler,
+                                epochs = epochs, batch_size = batch_size,
+                                metrics = p_metrics_list,
+                                shuffle = shuffle, num_workers = num_workers,
+                                early_stopping = early_stopping,
+                                verbose = verbose, report_interval = report_interval)
 
-    def evaluate_dataset(self, dataset, collate_fn=None, loss_fn=None, batch_size=64, metrics=None, num_workers=0):
+    def evaluate_dataset(self, dataset, collate_fn = None, loss_fn = None,
+                         batch_size = 64, metrics = None,
+                         num_workers = 0):
         p_loss_fn = self.loss_fn if loss_fn is None else loss_fn
         p_metrics_list = self.metrics_list if metrics is None else metrics
-        return evaluate_model(self, dataset, collate_fn=collate_fn, loss_fn=p_loss_fn, batch_size=batch_size,
-                              metrics=p_metrics_list,
-                              num_workers=num_workers)
+        return evaluate_model(self, dataset, collate_fn = collate_fn, loss_fn = p_loss_fn,
+                              batch_size = batch_size,
+                              metrics = p_metrics_list,
+                              num_workers = num_workers)
 
-    def evaluate(self, X, y, collate_fn=None, loss_fn=None, batch_size=64, metrics=None, num_workers=0):
+    def evaluate(self, X, y, collate_fn = None, loss_fn = None, batch_size = 64,
+                 metrics = None, num_workers = 0):
         assert ((X is not None) and (isinstance(X, np.ndarray))), \
             "Parameter error: X is None or is NOT an instance of np.ndarray"
         assert ((y is not None) and (isinstance(y, np.ndarray))), \
@@ -1879,13 +1945,14 @@ class PytkModule(nn.Module):
         torch_y = torch.from_numpy(y).type(
             torch.LongTensor if y_dtype == np.long else torch.FloatTensor)
         p_dataset = torch.utils.data.TensorDataset(torch_X, torch_y)
-        return self.evaluate_dataset(p_dataset, collate_fn=collate_fn, loss_fn=loss_fn, batch_size=batch_size,
-                                     metrics=metrics, num_workers=num_workers)
+        return self.evaluate_dataset(p_dataset, collate_fn = collate_fn,
+                                     loss_fn = loss_fn, batch_size = batch_size,
+                                     metrics = metrics, num_workers = num_workers)
 
-    def predict_dataset(self, dataset, batch_size=32, num_workers=0):
+    def predict_dataset(self, dataset, batch_size = 32, num_workers = 0):
         assert dataset is not None
         assert isinstance(dataset, torch.utils.data.Dataset)
-        return predict_dataset(self, dataset, batch_size, num_workers=num_workers)
+        return predict_dataset(self, dataset, batch_size, num_workers = num_workers)
 
     def predict(self, data):
         assert data is not None
@@ -1893,7 +1960,7 @@ class PytkModule(nn.Module):
             "data must be an instance of Numpy ndarray or torch.tensor"
         return predict(self, data)
 
-    def save__(self, model_save_name, model_save_dir='./model_states'):
+    def save__(self, model_save_name, model_save_dir = './model_states'):
         save_model(self, model_save_name, model_save_dir)
 
     def save(self, model_save_path):
@@ -1924,7 +1991,7 @@ class PytkModuleWrapper():
         self.optimizer = None
         self.metrics_list = None
 
-    def compile(self, loss, optimizer, metrics=None):
+    def compile(self, loss, optimizer, metrics = None):
         assert loss is not None, "ERROR: loss function must be a valid loss function!"
         assert optimizer is not None, "ERROR: optimizer must be a valid optimizer function"
         self.loss_fn = loss
@@ -1934,26 +2001,26 @@ class PytkModuleWrapper():
     def forward(self, inp):
         return self.model.forward(inp)
 
-    def parameters(self, recurse=True):
+    def parameters(self, recurse = True):
         return self.model.parameters(recurse)
 
     def fit_dataset(
-        self,
-        train_dataset,
-        collate_fn=None,
-        loss_fn=None,
-        optimizer=None,
-        validation_split=0.0,
-        validation_dataset=None,
-        lr_scheduler=None,
-        epochs=25,
-        batch_size=64,
-        metrics=None,
-        shuffle=True,
-        num_workers=0,
-        early_stopping=None,
-        verbose=2,
-        report_interval=1
+            self,
+            train_dataset,
+            collate_fn = None,
+            loss_fn = None,
+            optimizer = None,
+            validation_split = 0.0,
+            validation_dataset = None,
+            lr_scheduler = None,
+            epochs = 25,
+            batch_size = 64,
+            metrics = None,
+            shuffle = True,
+            num_workers = 0,
+            early_stopping = None,
+            verbose = 2,
+            report_interval = 1
     ):
 
         p_loss_fn = self.loss_fn if loss_fn is None else loss_fn
@@ -1963,26 +2030,28 @@ class PytkModuleWrapper():
         return train_model(
             self.model,
             train_dataset,
-            collate_fn=collate_fn,
-            loss_fn=p_loss_fn,
-            optimizer=p_optimizer,
-            validation_split=validation_split,
-            validation_dataset=validation_dataset,
-            lr_scheduler=lr_scheduler,
-            epochs=epochs,
-            batch_size=batch_size,
-            metrics=p_metrics_list,
-            shuffle=shuffle,
-            num_workers=num_workers,
-            early_stopping=early_stopping,
-            verbose=verbose,
-            report_interval=report_interval
+            collate_fn = collate_fn,
+            loss_fn = p_loss_fn,
+            optimizer = p_optimizer,
+            validation_split = validation_split,
+            validation_dataset = validation_dataset,
+            lr_scheduler = lr_scheduler,
+            epochs = epochs,
+            batch_size = batch_size,
+            metrics = p_metrics_list,
+            shuffle = shuffle,
+            num_workers = num_workers,
+            early_stopping = early_stopping,
+            verbose = verbose,
+            report_interval = report_interval
         )
 
-    def fit(self, X_train, y_train, collate_fn=None, loss_fn=None, optimizer=None, validation_split=0.0,
-            validation_data=None,
-            lr_scheduler=None, epochs=25, batch_size=64, metrics=None, shuffle=True, num_workers=0,
-            early_stopping=None, verbose=2, report_interval=1):
+    def fit(self, X_train, y_train, collate_fn = None, loss_fn = None, optimizer = None,
+            validation_split = 0.0,
+            validation_data = None,
+            lr_scheduler = None, epochs = 25, batch_size = 64, metrics = None,
+            shuffle = True, num_workers = 0,
+            early_stopping = None, verbose = 2, report_interval = 1):
 
         assert ((X_train is not None) and (isinstance(X_train, np.ndarray))), \
             "Parameter error: X_train is None or is NOT an instance of np.ndarray"
@@ -2004,10 +2073,13 @@ class PytkModuleWrapper():
         if validation_data is not None:
             assert isinstance(validation_data, tuple)
             assert isinstance(
-                validation_data[0], np.ndarray), "Expecting validation_dataset[0] to be a Numpy array"
+                validation_data[0],
+                np.ndarray), "Expecting validation_dataset[0] to be a Numpy array"
             assert isinstance(
-                validation_data[1], np.ndarray), "Expecting validation_dataset[1] to be a Numpy array"
-            if (validation_data[1].dtype == np.int) or (validation_data[1].dtype == np.long):
+                validation_data[1],
+                np.ndarray), "Expecting validation_dataset[1] to be a Numpy array"
+            if (validation_data[1].dtype == np.int) or (
+                    validation_data[1].dtype == np.long):
                 y_val_dtype = np.long
             else:
                 y_val_dtype = np.float32
@@ -2024,29 +2096,34 @@ class PytkModuleWrapper():
         p_metrics_list = self.metrics_list if metrics is None else metrics
         return self.fit_dataset(
             train_dataset,
-            collate_fn=collate_fn,
-            loss_fn=p_loss_fn,
-            optimizer=p_optimizer,
-            validation_split=validation_split,
-            validation_dataset=validation_dataset,
-            lr_scheduler=lr_scheduler,
-            epochs=epochs,
-            batch_size=batch_size,
-            metrics=p_metrics_list,
-            shuffle=shuffle,
-            num_workers=num_workers,
-            early_stopping=early_stopping,
-            verbose=verbose,
-            report_interval=report_interval
+            collate_fn = collate_fn,
+            loss_fn = p_loss_fn,
+            optimizer = p_optimizer,
+            validation_split = validation_split,
+            validation_dataset = validation_dataset,
+            lr_scheduler = lr_scheduler,
+            epochs = epochs,
+            batch_size = batch_size,
+            metrics = p_metrics_list,
+            shuffle = shuffle,
+            num_workers = num_workers,
+            early_stopping = early_stopping,
+            verbose = verbose,
+            report_interval = report_interval
         )
 
-    def evaluate_dataset(self, dataset, collate_fn=None, loss_fn=None, batch_size=64, metrics=None, num_workers=0):
+    def evaluate_dataset(self, dataset, collate_fn = None, loss_fn = None,
+                         batch_size = 64, metrics = None,
+                         num_workers = 0):
         p_loss_fn = self.loss_fn if loss_fn is None else loss_fn
         p_metrics_list = self.metrics_list if metrics is None else metrics
-        return evaluate_model(self.model, dataset, collate_fn=collate_fn, loss_fn=p_loss_fn, batch_size=batch_size,
-                              metrics=p_metrics_list, num_workers=num_workers)
+        return evaluate_model(self.model, dataset, collate_fn = collate_fn,
+                              loss_fn = p_loss_fn,
+                              batch_size = batch_size,
+                              metrics = p_metrics_list, num_workers = num_workers)
 
-    def evaluate(self, X, y, collate_fn=None, loss_fn=None, batch_size=64, metrics=None, num_workers=0):
+    def evaluate(self, X, y, collate_fn = None, loss_fn = None, batch_size = 64,
+                 metrics = None, num_workers = 0):
         assert ((X is not None) and (isinstance(X, np.ndarray))), \
             "Parameter error: X is None or is NOT an instance of np.ndarray"
         assert ((y is not None) and (isinstance(y, np.ndarray))), \
@@ -2060,13 +2137,14 @@ class PytkModuleWrapper():
         torch_y = torch.from_numpy(y).type(
             torch.LongTensor if y_dtype == np.long else torch.FloatTensor)
         p_dataset = torch.utils.data.TensorDataset(torch_X, torch_y)
-        return self.evaluate_dataset(p_dataset, collate_fn=collate_fn, loss_fn=loss_fn, batch_size=batch_size,
-                                     metrics=metrics, num_workers=num_workers)
+        return self.evaluate_dataset(p_dataset, collate_fn = collate_fn,
+                                     loss_fn = loss_fn, batch_size = batch_size,
+                                     metrics = metrics, num_workers = num_workers)
 
-    def predict_dataset(self, dataset, batch_size=32, num_workers=0):
+    def predict_dataset(self, dataset, batch_size = 32, num_workers = 0):
         assert dataset is not None
         assert isinstance(dataset, torch.utils.data.Dataset)
-        return predict_dataset(self.model, dataset, batch_size, num_workers=num_workers)
+        return predict_dataset(self.model, dataset, batch_size, num_workers = num_workers)
 
     def predict(self, data):
         assert data is not None
@@ -2074,7 +2152,7 @@ class PytkModuleWrapper():
             "data must be an instance of Numpy ndarray or torch.tensor"
         return predict(self.model, data)
 
-    def save__(self, model_save_name, model_save_dir='./model_states'):
+    def save__(self, model_save_name, model_save_dir = './model_states'):
         save_model(self.model, model_save_name, model_save_dir)
 
     def save(self, model_save_path):
