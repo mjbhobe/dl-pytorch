@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-pyt_cifar10_dnn.py: multiclass classification of the CIFAR10 image library.
+pyt_cifar10_pretrained_cnn.py: multiclass classifaction using pretrained Resnet model
 
 @author: Manish Bhobe
 My experiments with Python, Machine Learning & Deep Learning.
@@ -11,9 +11,7 @@ import warnings
 
 warnings.filterwarnings('ignore')
 
-import sys
 import os
-import random
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -28,7 +26,7 @@ import torch
 
 print('Using Pytorch version: ', torch.__version__)
 import torch.nn as nn
-from torchvision import datasets, transforms
+from torchvision import datasets, transforms, models
 import torchmetrics
 import torchsummary
 # My helper functions for training/evaluating etc.
@@ -52,14 +50,15 @@ def load_data():
     means, stds = [0.5, 0.5, 0.5], [0.5, 0.5, 0.5]
     train_xforms = transforms.Compose(
         [
-            transforms.RandomHorizontalFlip(),
-            transforms.RandomRotation(20),
+            transforms.Resize(32),
+            transforms.AutoAugment(),
             transforms.ToTensor(),
             transforms.Normalize(means, stds)
         ]
     )
     val_test_xforms = transforms.Compose(
         [
+            transforms.Resize(32),
             transforms.ToTensor(),
             transforms.Normalize(means, stds)
         ]
@@ -179,57 +178,21 @@ def display_sample(
 IMAGE_HEIGHT, IMAGE_WIDTH, NUM_CHANNELS, NUM_CLASSES = 32, 32, 3, 10
 
 
-# if you prefer to use Convolutional Neural Network, use the following model definition
-class Cifar10ConvNet(nn.Module):
-    def __init__(self):
-        super(Cifar10ConvNet, self).__init__()
-        self.net = nn.Sequential(
-            t3.Conv2d(3, 32, 3, padding = 1),
-            nn.ReLU(),
-            nn.MaxPool2d(2),
-
-            t3.Conv2d(32, 64, 3, padding = 1),
-            nn.ReLU(),
-            nn.MaxPool2d(2),
-
-            t3.Conv2d(64, 128, 3, padding = 1),
-            nn.ReLU(),
-            nn.MaxPool2d(2),
-
-            nn.Flatten(),
-            nn.Dropout(0.30),
-
-            t3.Linear(4 * 4 * 128, 512),
-            nn.ReLU(),
-            nn.Dropout(0.30),
-
-            t3.Linear(512, NUM_CLASSES)
-        )
-
-    def forward(self, x):
-        return self.net(x)
-
-
 def build_model():
-    model = Cifar10ConvNet()
-    # define the loss function & optimizer that model should
-    loss_fn = nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(
-        params = model.parameters(),
-        lr = LEARNING_RATE, weight_decay = L2_REG
-    )
-    model.compile(loss = loss_fn, optimizer = optimizer, metrics = ['acc'])
+    model = models.resnet18(pretrained = True)
+    # and replace the fully-connected (last) layer with our own
+    model.fc = nn.Linear(512, NUM_CLASSES, bias = True)
     return model
 
 
-DO_TRAINING = True
+DO_TRAINING = False
 DO_EVALUATION = True
 DO_PREDICTION = True
 SHOW_SAMPLE = True
 
-MODEL_SAVE_NAME = 'pyt_cifar10_cnn.pyt'
+MODEL_SAVE_NAME = 'pyt_cifar10_resnet18.pyt'
 MODEL_SAVE_PATH = os.path.join(os.path.dirname(__file__), 'model_states', MODEL_SAVE_NAME)
-NUM_EPOCHS, BATCH_SIZE, LEARNING_RATE, L2_REG = 25, 64, 0.001, 0.0005
+NUM_EPOCHS, BATCH_SIZE, LEARNING_RATE, L2_REG = 5, 64, 0.001, 0.0005
 
 
 def main():
@@ -259,7 +222,7 @@ def main():
         )
 
     if DO_TRAINING:
-        model = Cifar10ConvNet()
+        model = build_model()
         print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_WIDTH, IMAGE_HEIGHT)))
         optimizer = torch.optim.Adam(
             params = model.parameters(),
@@ -267,11 +230,6 @@ def main():
         )
 
         # train model
-        # hist = t3.cross_train_model(
-        #     model, train_dataset, loss_fn, optimizer, device = DEVICE,
-        #     validation_dataset = val_dataset, metrics_map = metrics_map,
-        #     epochs = NUM_EPOCHS, batch_size = BATCH_SIZE
-        # )
         hist = trainer.fit(model, optimizer, train_dataset, validation_dataset = val_dataset)
         hist.plot_metrics(title = "Training Metrics", fig_size = (10, 8))
 
@@ -281,7 +239,7 @@ def main():
 
     if DO_EVALUATION:
         # load model state from .pt file
-        model = Cifar10ConvNet()
+        model = build_model()
         model = t3.load_model(model, MODEL_SAVE_PATH)
         print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_WIDTH, IMAGE_HEIGHT)))
 
@@ -297,7 +255,7 @@ def main():
 
     if DO_PREDICTION:
         # load model state from .pt file
-        model = Cifar10ConvNet()
+        model = build_model()
         model = t3.load_model(model, MODEL_SAVE_PATH)
         print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_WIDTH, IMAGE_HEIGHT)))
 

@@ -282,7 +282,7 @@ class MetricsHistory:
             else:
                 # epoch metrics (pick last value in list)
                 metric_val = self.metrics_history[metric_name]["epoch_vals"][-1]
-            metrics_str += f"{metric_name} - {metric_val:.4f} - "
+            metrics_str += f"{metric_name}: {metric_val:.4f} - "
 
         if include_val_metrics:
             # repeat for validation metrics
@@ -298,7 +298,7 @@ class MetricsHistory:
                     metric_val = \
                         self.metrics_history[f"val_{metric_name}"][
                             "epoch_vals"][-1]
-                metrics_str += f"val_{metric_name} - {metric_val:.4f} - "
+                metrics_str += f"val_{metric_name}: {metric_val:.4f} - "
         # trim ending " - "
         if metrics_str.endswith(" - "):
             metrics_str = metrics_str[:-3]
@@ -686,7 +686,7 @@ def evaluate_model(
         model = model.to('cpu')
 
 
-def predict_dataset(model, dataset, device, batch_size = 64):
+def predict_dataset(model, dataset, device, batch_size = 64) -> tuple:
     try:
         model = model.to(device)
         loader = torch.utils.data.DataLoader(
@@ -709,7 +709,7 @@ def predict_dataset(model, dataset, device, batch_size = 64):
         model = model.to('cpu')
 
 
-def predict(model, data, device, batch_size = 64):
+def predict(model, data, device, batch_size = 64) -> np.ndarray:
     """
         runs predictions on Numpy Array (use for classification ONLY)
         @params:
@@ -846,3 +846,71 @@ if __name__ == "__main__":
     print(
         f"Use freely at your own risk. {__author__} is not responsible for any damages!"
     )
+
+
+class Trainer:
+    def __init__(
+        self, loss_fn, device, metrics_map: map = None, epochs: int = 5,
+        batch_size: int = 64, lr_scheduler = None, reporting_interval = 1, shuffle = True,
+        num_workers = 0
+    ):
+        if loss_fn is None:
+            raise ValueError("FATAL ERROR: Trainer() -> 'loss_fn' cannot be None")
+        if device is None:
+            raise ValueError("FATAL ERROR: Trainer() -> 'device' cannot be None")
+        if epochs < 1:
+            raise ValueError("FATAL ERROR: Trainer() -> 'epochs' >= 1")
+        # batch_size can be -ve
+        batch_size = -1 if batch_size < 0 else batch_size
+        if lr_scheduler is not None:
+            # NOTE:  ReduceLROnPlateau is NOT derived from _LRScheduler, but from object, which
+            # is odd as all other schedulers derive from _LRScheduler
+            assert (isinstance(lr_scheduler, torch.optim.lr_scheduler._LRScheduler) or \
+                    isinstance(lr_scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau)), \
+                "lr_scheduler: incorrect type. Expecting class derived from " \
+                "torch.optim._LRScheduler or ReduceLROnPlateau"
+        reporting_interval = 1 if reporting_interval < 1 else reporting_interval
+        assert num_workers >= 0, \
+            "FATAL ERROR: Trainer() -> 'num_workers' must be >= 0"
+
+        self.loss_fn = loss_fn
+        self.device = device
+        self.metrics_map = metrics_map
+        self.epochs = epochs
+        self.batch_size = batch_size
+        self.lr_scheduler = lr_scheduler
+        self.reporting_interval = reporting_interval
+        self.shuffle = shuffle
+        self.num_workers = num_workers
+
+    def fit(
+        self, model, optimizer, train_dataset, validation_dataset = None,
+        validation_split = 0.0
+    ) -> MetricsHistory:
+        assert model is not None, \
+            "FATAL ERROR: Trainer.fit() -> 'model' cannot be None"
+        assert optimizer is not None, \
+            "FATAL ERROR: Trainer.fit() -> 'optimizer' cannot be None"
+        assert train_dataset is not None, \
+            "FATAL ERROR: Trainer.fit() -> 'train_dataset' cannot be None"
+
+        history = cross_train_model(
+            model, train_dataset, self.loss_fn, optimizer, device = self.device,
+            validation_split = validation_split, validation_dataset = validation_dataset,
+            epochs = self.epochs, batch_size = self.batch_size,
+            reporting_interval = self.reporting_interval, lr_scheduler = self.lr_scheduler,
+            shuffle = self.shuffle, num_workers = self.num_workers
+        )
+        return history
+
+    def evaluate(self, model, dataset) -> dict:
+        return evaluate_model(
+            model, dataset, self.loss_fn, device = self.device, metrics_map = self.metrics_map,
+            batch_size = self.batch_size
+        )
+
+    def predict_dataset(self, model, dataset) -> tuple:
+        return predict_dataset(model, dataset, self.device, self.batch_size)
+
+    def predict(self, model, data) -> np.ndarray:
+        return predict(model, data, self.device, self.batch_size)
