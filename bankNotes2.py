@@ -1,5 +1,5 @@
 """
-bankNotes.py - predict authenticity of bank notes
+bankNotes2.py - predict authenticity of bank notes
 
 @author: Manish Bhobe
 My experiments with Python, Machine Learning & Deep Learning.
@@ -26,11 +26,18 @@ import torch
 import torch.nn as nn
 
 print('Using Pytorch version: ', torch.__version__)
+import torchmetrics
+from torchmetrics.classification import (
+    BinaryAccuracy, BinaryF1Score,
+    BinaryAUROC
+)
+
+print(f"Using torchmetrics: {torchmetrics.__version__}")
 
 # My helper functions for training/evaluating etc.
-import pytorch_toolkit as pytk
+import torch_training_toolkit as t3
 
-SEED = pytk.seed_all()
+SEED = t3.seed_all()
 
 DATA_FILE_PATH = os.path.join(
     os.getcwd(), "csv_files",
@@ -39,6 +46,9 @@ DATA_FILE_PATH = os.path.join(
 assert os.path.exists(DATA_FILE_PATH), \
     f"FATAL: {DATA_FILE_PATH} - data file does not exist!"
 print(f"Using data file {DATA_FILE_PATH}")
+DEVICE = torch.device("cuda:0") \
+    if torch.cuda.is_available() else torch.device("cpu")
+print(f"Training model on {DEVICE}")
 
 
 # CSV dataset structure
@@ -68,18 +78,18 @@ class BankNotesDataset(torch.utils.data.Dataset):
         return (features, label)
 
 
-class Net(pytk.PytkModule):
+class Net(nn.Module):
     """ our classification model """
 
     def __init__(self, num_features):
         super(Net, self).__init__()
         # num_features-8-8-1
         self.net = nn.Sequential(
-            pytk.Linear(num_features, 8),
+            t3.Linear(num_features, 8),
             nn.ReLU(),
-            pytk.Linear(8, 8),
+            t3.Linear(8, 8),
             nn.ReLU(),
-            pytk.Linear(8, 1),
+            t3.Linear(8, 1),
             nn.Sigmoid()
         )
 
@@ -93,21 +103,13 @@ MODEL_SAVE_PATH = os.path.join(
     os.getcwd(), "model_states", "bank_notes_model.pyt"
 )
 # hyperparameters for training
-EPOCHS = 25
+NUM_EPOCHS = 25
 BATCH_SIZE = 64
 LR = 0.01
 
 DO_TRAINING = True
 DO_EVAL = True
 DO_PREDS = True
-
-
-def build_model():
-    model = Net(4)
-    loss_fn = torch.nn.BCELoss()
-    optimizer = torch.optim.SGD(model.parameters(), lr = LR)
-    model.compile(loss = loss_fn, optimizer = optimizer, metrics = ['acc'])
-    return model, optimizer
 
 
 def main():
@@ -120,32 +122,50 @@ def main():
         f"train_dataset: {len(train_dataset)} recs, test_dataset: {len(test_dataset)} recs"
     )
 
+    # build & train model
+    loss_fn = torch.nn.BCELoss()
+
+    metrics_map = {
+        "acc": BinaryAccuracy(),
+        "f1": BinaryF1Score(),
+        "roc_auc": BinaryAUROC(thresholds = None)
+    }
+    trainer = t3.Trainer(
+        loss_fn = loss_fn, device = DEVICE, metrics_map = metrics_map,
+        epochs = NUM_EPOCHS, batch_size = BATCH_SIZE
+    )
+
     if DO_TRAINING:
         # cross-training with 20% validation data
-        model, optimizer = build_model()
-        hist = model.fit_dataset(
-            train_dataset, validation_split = 0.2, epochs = EPOCHS,
-            batch_size = BATCH_SIZE
-        )
-        pytk.show_plots(history = hist, metric = 'acc', plot_title = "Model peformance")
-        model.save(MODEL_SAVE_PATH)
+        model = Net(4)
+        optimizer = torch.optim.SGD(model.parameters(), lr = LR)
+        # hist = t3.cross_train_model(
+        #     model, train_dataset, loss_fn, optimizer, device = DEVICE,
+        #     validation_split = 0.2, epochs = EPOCHS,
+        #     batch_size = BATCH_SIZE, metrics_map = metrics_map
+        # )
+        hist = trainer.fit(model, optimizer, train_dataset, validation_split = 0.2)
+        hist.plot_metrics(title = "Model Performance", fig_size = (16, 8))
+        t3.save_model(model, MODEL_SAVE_PATH)
         del model
 
     if DO_EVAL:
-        model, _ = build_model()
-        model.load(MODEL_SAVE_PATH)
+        model = Net(4)
+        model = t3.load_model(model, MODEL_SAVE_PATH)
         print("Evaluating model performance...")
         print("Train dataset")
-        metrics = t3.evaluate_model(
-            model, train_dataset, loss_fn, device = DEVICE,
-            metrics_map = metrics_map
-        )
+        # metrics = t3.evaluate_model(
+        #     model, train_dataset, loss_fn, device = DEVICE,
+        #     metrics_map = metrics_map
+        # )
+        metrics = trainer.evaluate(model, train_dataset)
         print(f"Training metrics: {metrics}")
         print("Test dataset")
-        metrics = t3.evaluate_model(
-            model, test_dataset, loss_fn, device = DEVICE,
-            metrics_map = metrics_map
-        )
+        # metrics = t3.evaluate_model(
+        #     model, test_dataset, loss_fn, device = DEVICE,
+        #     metrics_map = metrics_map
+        # )
+        metrics = trainer.evaluate(model, test_dataset)
         print(f"Testing metrics: {metrics}")
         del model
 
@@ -153,7 +173,8 @@ def main():
         model = Net(4)
         print("Running predictionson test dataset...")
         model = t3.load_model(model, MODEL_SAVE_PATH)
-        preds, actuals = t3.predict_model(model, test_dataset, device = DEVICE)
+        # preds, actuals = t3.predict_dataset(model, test_dataset, device = DEVICE)
+        preds, actuals = trainer.predict_dataset(model, test_dataset)
         preds = np.round(preds).ravel()
         actuals = actuals.ravel()
         count = len(actuals) // 3

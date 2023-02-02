@@ -40,7 +40,7 @@ from torchmetrics.classification import (
 print(f"Using torchmetrics: {torchmetrics.__version__}")
 
 # My helper functions for training/evaluating etc.
-import pytorch_training_toolkit as t3
+import torch_training_toolkit as t3
 
 SEED = t3.seed_all()
 
@@ -51,9 +51,7 @@ LR = 0.01
 DATA_FILE = os.path.join('.', 'csv_files', 'weatherAUS.csv')
 print(f"Data file: {DATA_FILE}")
 MODEL_SAVE_PATH = os.path.join('.', 'model_states', 'weather_model.pt')
-DEVICE = torch.device("cuda:0") if torch.cuda.is_available() else torch.device(
-    "cpu"
-)
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 # ---------------------------------------------------------------------------
@@ -224,17 +222,17 @@ def main():
     }
 
     loss_fn = nn.BCELoss()
+    trainer = t3.Trainer(
+        loss_fn = loss_fn, device = DEVICE, metrics_map = metrics_map,
+        epochs = NUM_EPOCHS, batch_size = BATCH_SIZE
+    )
 
     if DO_TRAINING:
         # build model
         model = Net(4)
         print(model)
         optimizer = torch.optim.Adam(model.parameters(), lr = LR)
-        hist = t3.cross_train_model(
-            model, train_dataset, loss_fn, optimizer, device = DEVICE,
-            validation_split = 0.2, epochs = NUM_EPOCHS,
-            batch_size = BATCH_SIZE, metrics_map = metrics_map
-        )
+        hist = trainer.fit(model, optimizer, train_dataset, validation_split = 0.2)
         hist.plot_metrics(title = "Model Performance", fig_size = (16, 8))
         t3.save_model(model, MODEL_SAVE_PATH)
         del model
@@ -246,17 +244,12 @@ def main():
         # evaluate performance
         print('Evaluating performance...')
         print('Training dataset')
-        metrics = t3.evaluate_model(
-            model, train_dataset, loss_fn, device = DEVICE,
-            metrics_map = metrics_map,
-            batch_size = BATCH_SIZE
-        )
+        # evaluate training dataset (just re-confirming similar results as during training)
+        metrics = trainer.evaluate(model, train_dataset)
         print(f"Training metrics: {metrics}")
         print("Testing dataset")
-        metrics = t3.evaluate_model(
-            model, test_dataset, loss_fn, device = DEVICE,
-            metrics_map = metrics_map
-        )
+        # evaluate test dataset (for a good model, these should not be much different from training)
+        metrics = trainer.evaluate(model, test_dataset)
         print(f"Testing metrics: {metrics}")
         del model
 
@@ -265,7 +258,7 @@ def main():
         model = t3.load_model(model, MODEL_SAVE_PATH)
         print(model)
 
-        preds, actuals = t3.predict_dataset(model, test_dataset, device = DEVICE)
+        preds, actuals = trainer.predict_dataset(model, test_dataset)
         preds = np.round(preds).ravel()
         actuals = actuals.ravel()
         incorrect_counts = (preds != actuals).sum()

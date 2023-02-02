@@ -8,8 +8,6 @@ Use at your own risk!! I am not responsible if your CPU or GPU gets fried :D
 """
 import warnings
 
-import torchmetrics.classification
-
 warnings.filterwarnings('ignore')
 
 import os
@@ -29,12 +27,15 @@ print('Using Pytorch version: ', torch.__version__)
 import torch.nn as nn
 from torchvision import datasets, transforms
 import torchsummary
+import torchmetrics
+
+print(f"Using torchmetrics: {torchmetrics.__version__}")
+import torchmetrics.classification
 # My helper functions for training/evaluating etc.
-import pytorch_training_toolkit as t3
+import torch_training_toolkit as t3
 
 SEED = t3.seed_all()
-DEVICE = torch.device("cuda:0") \
-    if torch.cuda.is_available() else torch.device("cpu")
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Training model on {DEVICE}")
 
 
@@ -213,6 +214,10 @@ def main():
     metrics_map = {
         "acc": torchmetrics.classification.MulticlassAccuracy(num_classes = NUM_CLASSES)
     }
+    trainer = t3.Trainer(
+        loss_fn = loss_fn, device = DEVICE, metrics_map = metrics_map,
+        epochs = NUM_EPOCHS, batch_size = BATCH_SIZE
+    )
 
     if SHOW_SAMPLE:
         # display sample from test dataset
@@ -240,27 +245,25 @@ def main():
         scheduler = torch.optim.lr_scheduler.MultiStepLR(
             optimizer, milestones = [10, 20, 30, 40], gamma = 0.15
         )
-        hist = t3.cross_train_model(
-            model, train_dataset, loss_fn, optimizer, device = DEVICE,
-            validation_dataset = val_dataset, metrics_map = metrics_map,
-            lr_scheduler = scheduler,
-            epochs = NUM_EPOCHS, batch_size = BATCH_SIZE
+        # hist = t3.cross_train_model(
+        #     model, train_dataset, loss_fn, optimizer, device = DEVICE,
+        #     validation_dataset = val_dataset, metrics_map = metrics_map,
+        #     lr_scheduler = scheduler,
+        #     epochs = NUM_EPOCHS, batch_size = BATCH_SIZE
+        # )
+        hist = trainer.fit(
+            model, optimizer, train_dataset, validation_dataset = val_dataset,
+            lr_scheduler = scheduler
         )
         hist.plot_metrics(title = "Model Training Metrics", fig_size = (8, 6))
 
         # evaluate model performance on train/eval & test datasets
         print('Evaluating model performance...')
-        metrics = t3.evaluate_model(
-            model, train_dataset, loss_fn, device = DEVICE, metrics_map = metrics_map
-        )
+        metrics = trainer.evaluate(model, train_dataset)
         print(f"Training metrics -> {metrics}")
-        metrics = t3.evaluate_model(
-            model, val_dataset, loss_fn, device = DEVICE, metrics_map = metrics_map
-        )
+        metrics = trainer.evaluate(model, val_dataset)
         print(f"Cross-val metrics -> {metrics}")
-        metrics = t3.evaluate_model(
-            model, test_dataset, loss_fn, device = DEVICE, metrics_map = metrics_map
-        )
+        metrics = trainer.evaluate(model, test_dataset)
         print(f"Testing metrics   -> {metrics}")
 
         # save model state
@@ -274,25 +277,16 @@ def main():
         t3.load_model(model, MODEL_SAVE_PATH)
         print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
 
-        # model = pytk.load_model(MODEL_SAVE_PATH)
-        torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH))
-
         # evaluate model performance on train/eval & test datasets
         print('Evaluating model performance...')
-        metrics = t3.evaluate_model(
-            model, train_dataset, loss_fn, device = DEVICE, metrics_map = metrics_map
-        )
+        metrics = trainer.evaluate(model, train_dataset)
         print(f"Training metrics -> {metrics}")
-        metrics = t3.evaluate_model(
-            model, val_dataset, loss_fn, device = DEVICE, metrics_map = metrics_map
-        )
+        metrics = trainer.evaluate(model, val_dataset)
         print(f"Cross-val metrics -> {metrics}")
-        metrics = t3.evaluate_model(
-            model, test_dataset, loss_fn, device = DEVICE, metrics_map = metrics_map
-        )
+        metrics = trainer.evaluate(model, test_dataset)
         print(f"Testing metrics   -> {metrics}")
 
-        y_pred, y_true = t3.predict_dataset(model, test_dataset, device = DEVICE)
+        y_pred, y_true = trainer.predict_dataset(model, test_dataset)
         y_pred = np.argmax(y_pred, axis = 1)
         print('Sample labels (50): ', y_true[:50])
         print('Sample predictions: ', y_true[:50])
@@ -305,7 +299,7 @@ def main():
         )
         data_iter = iter(trainloader)
         images, labels = next(data_iter)  # fetch a batch of 64 random images
-        preds = t3.predict(model, images, device = DEVICE)
+        preds = trainer.predict(model, images)
         preds = np.argmax(preds, axis = 1)
         display_sample(
             images, labels.numpy(), sample_predictions = preds,

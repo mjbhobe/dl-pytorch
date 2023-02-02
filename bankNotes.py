@@ -1,5 +1,5 @@
 """
-bankNotes.py - predict authenticity of bank notes
+bankNotes2.py - predict authenticity of bank notes
 
 @author: Manish Bhobe
 My experiments with Python, Machine Learning & Deep Learning.
@@ -26,18 +26,11 @@ import torch
 import torch.nn as nn
 
 print('Using Pytorch version: ', torch.__version__)
-import torchmetrics
-from torchmetrics.classification import (
-    BinaryAccuracy, BinaryF1Score,
-    BinaryAUROC
-)
-
-print(f"Using torchmetrics: {torchmetrics.__version__}")
 
 # My helper functions for training/evaluating etc.
-import pytorch_training_toolkit as t3
+import pytorch_toolkit as pytk
 
-SEED = t3.seed_all()
+SEED = pytk.seed_all()
 
 DATA_FILE_PATH = os.path.join(
     os.getcwd(), "csv_files",
@@ -46,9 +39,6 @@ DATA_FILE_PATH = os.path.join(
 assert os.path.exists(DATA_FILE_PATH), \
     f"FATAL: {DATA_FILE_PATH} - data file does not exist!"
 print(f"Using data file {DATA_FILE_PATH}")
-DEVICE = torch.device("cuda:0") \
-    if torch.cuda.is_available() else torch.device("cpu")
-print(f"Training model on {DEVICE}")
 
 
 # CSV dataset structure
@@ -78,18 +68,18 @@ class BankNotesDataset(torch.utils.data.Dataset):
         return (features, label)
 
 
-class Net(nn.Module):
+class Net(pytk.PytkModule):
     """ our classification model """
 
     def __init__(self, num_features):
         super(Net, self).__init__()
         # num_features-8-8-1
         self.net = nn.Sequential(
-            t3.Linear(num_features, 8),
+            pytk.Linear(num_features, 8),
             nn.ReLU(),
-            t3.Linear(8, 8),
+            pytk.Linear(8, 8),
             nn.ReLU(),
-            t3.Linear(8, 1),
+            pytk.Linear(8, 1),
             nn.Sigmoid()
         )
 
@@ -112,6 +102,14 @@ DO_EVAL = True
 DO_PREDS = True
 
 
+def build_model():
+    model = Net(4)
+    loss_fn = torch.nn.BCELoss()
+    optimizer = torch.optim.SGD(model.parameters(), lr = LR)
+    model.compile(loss = loss_fn, optimizer = optimizer, metrics = ['acc'])
+    return model, optimizer
+
+
 def main():
     # load the dataset
     dataset = BankNotesDataset(DATA_FILE_PATH)
@@ -122,31 +120,20 @@ def main():
         f"train_dataset: {len(train_dataset)} recs, test_dataset: {len(test_dataset)} recs"
     )
 
-    # build & train model
-    loss_fn = torch.nn.BCELoss()
-
-    metrics_map = {
-        "acc": BinaryAccuracy(),
-        "f1": BinaryF1Score(),
-        "roc_auc": BinaryAUROC(thresholds = None)
-    }
-
     if DO_TRAINING:
         # cross-training with 20% validation data
-        model = Net(4)
-        optimizer = torch.optim.SGD(model.parameters(), lr = LR)
-        hist = t3.cross_train_model(
-            model, train_dataset, loss_fn, optimizer, device = DEVICE,
-            validation_split = 0.2, epochs = EPOCHS,
-            batch_size = BATCH_SIZE, metrics_map = metrics_map
+        model, optimizer = build_model()
+        hist = model.fit_dataset(
+            train_dataset, validation_split = 0.2, epochs = EPOCHS,
+            batch_size = BATCH_SIZE
         )
-        hist.plot_metrics(title = "Model Performance", fig_size = (16, 8))
-        t3.save_model(model, MODEL_SAVE_PATH)
+        pytk.show_plots(history = hist, metric = 'acc', plot_title = "Model peformance")
+        model.save(MODEL_SAVE_PATH)
         del model
 
     if DO_EVAL:
-        model = Net(4)
-        model = t3.load_model(model, MODEL_SAVE_PATH)
+        model, _ = build_model()
+        model.load(MODEL_SAVE_PATH)
         print("Evaluating model performance...")
         print("Train dataset")
         metrics = t3.evaluate_model(
@@ -166,7 +153,7 @@ def main():
         model = Net(4)
         print("Running predictionson test dataset...")
         model = t3.load_model(model, MODEL_SAVE_PATH)
-        preds, actuals = t3.predict_dataset(model, test_dataset, device = DEVICE)
+        preds, actuals = t3.predict_model(model, test_dataset, device = DEVICE)
         preds = np.round(preds).ravel()
         actuals = actuals.ravel()
         count = len(actuals) // 3

@@ -32,7 +32,7 @@ from torchmetrics.classification import (
     BinaryAUROC
 )
 # import pytorch_toolkit - training Nirvana :)
-import pytorch_training_toolkit as t3
+import torch_training_toolkit as t3
 
 # to ensure that you get consistent results across runs & machines
 # @see: https://discuss.pytorch.org/t/reproducibility-over-different-machines/63047
@@ -177,6 +177,10 @@ def main():
         "f1": BinaryF1Score(),
         "roc_auc": BinaryAUROC(thresholds = None)
     }
+    trainer = t3.Trainer(
+        loss_fn = loss_fn, device = DEVICE, metrics_map = metrics_map,
+        epochs = NUM_EPOCHS, batch_size = BATCH_SIZE
+    )
 
     if DO_TRAINING:
         model = WBCNet(NUM_FEATURES, NUM_CLASSES)
@@ -188,12 +192,13 @@ def main():
 
         # train model
         print('Training model...')
-        hist = t3.cross_train_model(
-            model, train_dataset, loss_fn, optimizer, device = DEVICE,
-            validation_dataset = val_dataset, epochs = NUM_EPOCHS,
-            batch_size = BATCH_SIZE, metrics_map = metrics_map,
-            reporting_interval = 25
-        )
+        # hist = t3.cross_train_model(
+        #     model, train_dataset, loss_fn, optimizer, device = DEVICE,
+        #     validation_dataset = val_dataset, epochs = NUM_EPOCHS,
+        #     batch_size = BATCH_SIZE, metrics_map = metrics_map,
+        #     reporting_interval = 25
+        # )
+        hist = trainer.fit(model, optimizer, train_dataset, validation_dataset = val_dataset)
         hist.plot_metrics(fig_size = (16, 8))
         # save model state
         t3.save_model(model, MODEL_SAVE_PATH)
@@ -207,27 +212,30 @@ def main():
 
         print('Evaluating model performance...')
         print('Training dataset')
-        metrics = t3.evaluate_model(
-            model, train_dataset, loss_fn, device = DEVICE,
-            metrics_map = metrics_map,
-            batch_size = BATCH_SIZE
-        )
+        # metrics = t3.evaluate_model(
+        #     model, train_dataset, loss_fn, device = DEVICE,
+        #     metrics_map = metrics_map,
+        #     batch_size = BATCH_SIZE
+        # )
+        metrics = trainer.evaluate(model, train_dataset)
         print(f"Training metrics: {metrics}")
 
         print('Cross-validation dataset')
-        metrics = t3.evaluate_model(
-            model, val_dataset, loss_fn, device = DEVICE,
-            metrics_map = metrics_map,
-            batch_size = BATCH_SIZE
-        )
+        # metrics = t3.evaluate_model(
+        #     model, val_dataset, loss_fn, device = DEVICE,
+        #     metrics_map = metrics_map,
+        #     batch_size = BATCH_SIZE
+        # )
+        metrics = trainer.evaluate(model, val_dataset)
         print(f"Cross-validation metrics: {metrics}")
 
         print('Testing dataset')
-        metrics = t3.evaluate_model(
-            model, test_dataset, loss_fn, device = DEVICE,
-            metrics_map = metrics_map,
-            batch_size = BATCH_SIZE
-        )
+        # metrics = t3.evaluate_model(
+        #     model, test_dataset, loss_fn, device = DEVICE,
+        #     metrics_map = metrics_map,
+        #     batch_size = BATCH_SIZE
+        # )
+        metrics = trainer.evaluate(model, test_dataset)
         print(f"Testing metrics: {metrics}")
         del model
 
@@ -237,7 +245,8 @@ def main():
         model = t3.load_model(model, MODEL_SAVE_PATH)
         print(model)
 
-        preds, actuals = t3.predict_dataset(model, test_dataset, device = DEVICE)
+        # preds, actuals = t3.predict_dataset(model, test_dataset, device = DEVICE)
+        preds, actuals = trainer.predict_dataset(model, test_dataset)
         preds = np.round(preds).ravel()
         actuals = actuals.ravel()
         incorrect_counts = (preds != actuals).sum()
