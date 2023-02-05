@@ -112,7 +112,7 @@ def get_data(
     plt.show()
 
     X_train, X_test, y_train, y_test = \
-        train_test_split(X, y, test_size = test_split, random_state = seed)
+        train_test_split(X, y, test_size = test_split, random_state = SEED)
     if debug:
         print(
             f"Split data -> X_train.shape = {X_train.shape}, y_train.shape = {y_train.shape}, "
@@ -147,7 +147,8 @@ class WeatherDataset(torch.utils.data.Dataset):
         assert os.path.exists(data_file_path), \
             f"FATAL: {data_file_path} - file does not exist!"
         df = pd.read_csv(data_file_path)
-        if shuffle_it: df = shuffle(df)
+        if shuffle_it:
+            df = shuffle(df)
         cols = ['Rainfall', 'Humidity3pm', 'Pressure9am', 'RainToday',
                 'RainTomorrow']
         df = df[cols]
@@ -176,7 +177,7 @@ class WeatherDataset(torch.utils.data.Dataset):
     def __getitem__(self, idx):
         features = self.X[idx, :]
         label = self.y[idx, :]
-        return (features, label)
+        return features, label
 
 
 class Net(nn.Module):
@@ -200,6 +201,8 @@ class Net(nn.Module):
 DO_TRAINING = True
 DO_EVAL = True
 DO_PREDICTION = True
+
+import pickle, sys
 
 
 def main():
@@ -233,6 +236,10 @@ def main():
         print(model)
         optimizer = torch.optim.Adam(model.parameters(), lr = LR)
         hist = trainer.fit(model, optimizer, train_dataset, validation_split = 0.2)
+        hist_pkl = os.path.join(os.path.dirname(__file__), 'model_states', "history2.pkl")
+        with open(hist_pkl, "wb") as f:
+            pickle.dump(hist, f)
+        sys.exit(-1)
         hist.plot_metrics(title = "Model Performance", fig_size = (16, 8))
         t3.save_model(model, MODEL_SAVE_PATH)
         del model

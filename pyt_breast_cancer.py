@@ -134,8 +134,8 @@ class WBCNet(nn.Module):
         return x
 
 
-DO_TRAINING = True
-DO_EVAL = True
+DO_TRAINING = False
+DO_EVAL = False
 DO_PREDICTION = True
 MODEL_SAVE_PATH = os.path.join(
     os.path.dirname(__file__), 'model_states', 'pyt_wbc_ann2.pyt'
@@ -154,22 +154,22 @@ def main():
     # load our data & build tensor datasets for cross-training & testing
     (X_train, y_train), (X_test, y_test) = load_data()
     print(X_train.shape, y_train.shape, X_test.shape, y_test.shape)
-    train_dataset = torch.utils.data.TensorDataset(
-        torch.FloatTensor(X_train),
-        torch.FloatTensor(y_train)
-    )
-    test_dataset = torch.utils.data.TensorDataset(
-        torch.FloatTensor(X_test),
-        torch.FloatTensor(y_test)
-    )
-
-    val_dataset, test_dataset = t3.split_dataset(
-        test_dataset, split_perc = 0.20
-    )
-    print(
-        f"train_dataset: {len(train_dataset)} - val_dataset: {len(val_dataset)} - " +
-        f"test_dataset: {len(test_dataset)}"
-    )
+    # train_dataset = torch.utils.data.TensorDataset(
+    #     torch.FloatTensor(X_train),
+    #     torch.FloatTensor(y_train)
+    # )
+    # test_dataset = torch.utils.data.TensorDataset(
+    #     torch.FloatTensor(X_test),
+    #     torch.FloatTensor(y_test)
+    # )
+    #
+    # val_dataset, test_dataset = t3.split_dataset(
+    #     test_dataset, split_perc = 0.20
+    # )
+    # print(
+    #     f"train_dataset: {len(train_dataset)} - val_dataset: {len(val_dataset)} - " +
+    #     f"test_dataset: {len(test_dataset)}"
+    # )
 
     loss_fn = nn.BCELoss()
     metrics_map = {
@@ -198,7 +198,10 @@ def main():
         #     batch_size = BATCH_SIZE, metrics_map = metrics_map,
         #     reporting_interval = 25
         # )
-        hist = trainer.fit(model, optimizer, train_dataset, validation_dataset = val_dataset)
+        hist = trainer.fit(
+            model, optimizer,
+            train_dataset = (X_train, y_train), validation_split = 0.20
+        )  # validation_dataset = val_dataset)
         hist.plot_metrics(fig_size = (16, 8))
         # save model state
         t3.save_model(model, MODEL_SAVE_PATH)
@@ -217,26 +220,16 @@ def main():
         #     metrics_map = metrics_map,
         #     batch_size = BATCH_SIZE
         # )
-        metrics = trainer.evaluate(model, train_dataset)
-        print(f"Training metrics: {metrics}")
-
-        print('Cross-validation dataset')
-        # metrics = t3.evaluate_model(
-        #     model, val_dataset, loss_fn, device = DEVICE,
-        #     metrics_map = metrics_map,
-        #     batch_size = BATCH_SIZE
-        # )
-        metrics = trainer.evaluate(model, val_dataset)
-        print(f"Cross-validation metrics: {metrics}")
-
+        metrics = trainer.evaluate(model, dataset = (X_train, y_train))
+        print(f"Training metrics -> {metrics}")
         print('Testing dataset')
         # metrics = t3.evaluate_model(
         #     model, test_dataset, loss_fn, device = DEVICE,
         #     metrics_map = metrics_map,
         #     batch_size = BATCH_SIZE
         # )
-        metrics = trainer.evaluate(model, test_dataset)
-        print(f"Testing metrics: {metrics}")
+        metrics = trainer.evaluate(model, dataset = (X_test, y_test))
+        print(f"Testing metrics -> {metrics}")
         del model
 
     if DO_PREDICTION:
@@ -246,7 +239,7 @@ def main():
         print(model)
 
         # preds, actuals = t3.predict_dataset(model, test_dataset, device = DEVICE)
-        preds, actuals = trainer.predict_dataset(model, test_dataset)
+        preds, actuals = trainer.predict_dataset(model, dataset = (X_test, y_test))
         preds = np.round(preds).ravel()
         actuals = actuals.ravel()
         incorrect_counts = (preds != actuals).sum()

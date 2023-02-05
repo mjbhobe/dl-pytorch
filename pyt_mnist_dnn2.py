@@ -197,7 +197,7 @@ class MNISTConvNet2(nn.Module):
 DO_TRAINING = True
 DO_PREDICTION = True
 SHOW_SAMPLE = False
-USE_CNN = True  # if False, will use an MLP
+USE_CNN = False  # if False, will use an MLP
 
 MODEL_SAVE_NAME = 'pyt_mnist_cnn.pyt' if USE_CNN else 'pyt_mnist_dnn.pyt'
 MODEL_SAVE_PATH = os.path.join(os.path.dirname(__file__), 'model_states', MODEL_SAVE_NAME)
@@ -233,6 +233,7 @@ def main():
     if DO_TRAINING:
         print(f'Using {"CNN" if USE_CNN else "ANN"} model...')
         model = MNISTConvNet2() if USE_CNN else MNISTNet2()
+        model = model.to(DEVICE)
         optimizer = torch.optim.Adam(
             params = model.parameters(),
             lr = LEARNING_RATE, weight_decay = L2_REG
@@ -245,26 +246,22 @@ def main():
         scheduler = torch.optim.lr_scheduler.MultiStepLR(
             optimizer, milestones = [10, 20, 30, 40], gamma = 0.15
         )
-        # hist = t3.cross_train_model(
-        #     model, train_dataset, loss_fn, optimizer, device = DEVICE,
-        #     validation_dataset = val_dataset, metrics_map = metrics_map,
-        #     lr_scheduler = scheduler,
-        #     epochs = NUM_EPOCHS, batch_size = BATCH_SIZE
-        # )
+
         hist = trainer.fit(
             model, optimizer, train_dataset, validation_dataset = val_dataset,
             lr_scheduler = scheduler
         )
+        # save hist to pickle file
         hist.plot_metrics(title = "Model Training Metrics", fig_size = (8, 6))
 
         # evaluate model performance on train/eval & test datasets
         print('Evaluating model performance...')
         metrics = trainer.evaluate(model, train_dataset)
-        print(f"Training metrics -> {metrics}")
+        print(f"Training metrics -> loss: {metrics['loss']:.4f} - acc: {metrics['acc']:.4f}")
         metrics = trainer.evaluate(model, val_dataset)
-        print(f"Cross-val metrics -> {metrics}")
+        print(f"Cross-val metrics -> loss: {metrics['loss']:.4f} - acc: {metrics['acc']:.4f}")
         metrics = trainer.evaluate(model, test_dataset)
-        print(f"Testing metrics   -> {metrics}")
+        print(f"Testing metrics   -> loss: {metrics['loss']:.4f} - acc: {metrics['acc']:.4f}")
 
         # save model state
         t3.save_model(model, MODEL_SAVE_PATH)
@@ -273,6 +270,7 @@ def main():
     if DO_PREDICTION:
         print('Running predictions...')
         model = MNISTConvNet2() if USE_CNN else MNISTNet2()
+        model = model.to(DEVICE)
         # load model state from .pt file
         t3.load_model(model, MODEL_SAVE_PATH)
         print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
@@ -280,11 +278,11 @@ def main():
         # evaluate model performance on train/eval & test datasets
         print('Evaluating model performance...')
         metrics = trainer.evaluate(model, train_dataset)
-        print(f"Training metrics -> {metrics}")
+        print(f"Training metrics -> loss: {metrics['loss']:.4f} - acc: {metrics['acc']:.4f}")
         metrics = trainer.evaluate(model, val_dataset)
-        print(f"Cross-val metrics -> {metrics}")
+        print(f"Cross-val metrics -> loss: {metrics['loss']:.4f} - acc: {metrics['acc']:.4f}")
         metrics = trainer.evaluate(model, test_dataset)
-        print(f"Testing metrics   -> {metrics}")
+        print(f"Testing metrics   -> loss: {metrics['loss']:.4f} - acc: {metrics['acc']:.4f}")
 
         y_pred, y_true = trainer.predict_dataset(model, test_dataset)
         y_pred = np.argmax(y_pred, axis = 1)

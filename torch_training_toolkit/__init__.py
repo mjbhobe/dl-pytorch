@@ -38,8 +38,8 @@ import torch
 
 # bring in our functions & classes
 from utils import get_logger, seed_all, plot_confusion_matrix
-from dataset_utils import split_dataset
 from layers import Linear, Conv2d
+from dataset_utils import split_dataset
 from training import Trainer, load_model, save_model
 
 _logger = get_logger(__name__)

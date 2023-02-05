@@ -17,13 +17,13 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import logging
 
 # Pytorch imports
 import torch
 import torch.nn as nn
 
 # print('Using Pytorch version: ', torch.__version__)
-import torchmetrics
 
 # print(f"Using torchmetrics: {torchmetrics.__version__}")
 
@@ -34,8 +34,10 @@ __author__ = "Manish Bhobe"
 
 # DEVICE = torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
 
-
-def seed_all(seed = T3_FAV_SEED):
+# ----------------------------------------------------------------------------------
+# utility functions
+# ----------------------------------------------------------------------------------
+def seed_all(seed = None):
     """seed all random number generators to ensure that you get consistent results
        across multiple runs ON SAME MACHINE - you may get different results
        on a different machine (architecture) & that is to be expected
@@ -66,6 +68,52 @@ def seed_all(seed = T3_FAV_SEED):
         torch.backends.cudnn.enabled = False
 
     return seed
+
+
+def get_logger(name: str, level: int = logging.WARNING) -> logging.Logger:
+    logger = logging.getLogger(name)
+    formatter = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
+    logger.addHandler(formatter)
+    logger.setLevel(level)
+    return logger
+
+
+def plot_confusion_matrix(
+    cm, class_names = None, title = "Confusion Matrix",
+    cmap = plt.cm.Blues
+):
+    """ graphical plot of the confusion matrix
+        @params:
+            cm - the confusion matrix (value returned by the sklearn.metrics.confusion_matrix(...) call)
+            class_names (list) - names (text) of classes you want to use (list of strings)
+            title (string, default='Confusion Matrix') - title of the plot
+            cmap (matplotlib supported palette, default=plt.cm.Blues) - color palette you want to use
+    """
+
+    class_names = ['0', '1'] if class_names is None else class_names
+    df = pd.DataFrame(cm, index = class_names, columns = class_names)
+
+    with sns.axes_style("darkgrid"):
+        sns.set_context("notebook", font_scale = 1.1)
+        sns.set_style(
+            {
+                "font.sans-serif": ["SF Pro Display", "Arial", "Calibri",
+                                    "DejaVu Sans"]
+            }
+        )
+        hmap = sns.heatmap(df, annot = True, fmt = "d", cmap = cmap)
+        hmap.yaxis.set_ticklabels(
+            hmap.yaxis.get_ticklabels(), rotation = 0, ha = 'right'
+        )
+        hmap.xaxis.set_ticklabels(
+            hmap.xaxis.get_ticklabels(), rotation = 30, ha = 'right'
+        )
+
+        plt.ylabel('True label')
+        plt.xlabel('Predicted label')
+        plt.title(title)
+    plt.show()
+    plt.close()
 
 
 # ----------------------------------------------------------------------------------
@@ -117,6 +165,38 @@ def Conv2d(
     return layer
 
 
+# ----------------------------------------------------------------------------------
+# dataset related functions
+# ----------------------------------------------------------------------------------
+def split_dataset(dataset: torch.utils.data.Dataset, split_perc: float = 0.20):
+    """ randomly splits a dataset into 2 based on split percentage (split_perc)
+        @params:
+            - dataset (torch.utils.data.Dataset): the dataset to split
+            - split_perc (float) : defines ratio (>= 0.0 and <= 1.0) for number
+                of records in 2nd split. Default = 0.2
+            Example: if dataset has 100 records and split_perc = 0.2, then
+            2nd dataset will have 0.2 * 100 = 20 randomly selected records
+            and first dataset will have (100 - 20 = 80) records.
+        @returns: tuple of datasets (split_1, split_2)
+    """
+    assert (split_perc >= 0.0) and (split_perc <= 1.0), \
+        f"FATAL ERROR: invalid split_perc value {split_perc}." \
+        f"Expecting float >= 0.0 and <= 1.0"
+
+    if split_perc > 0.0:
+        num_recs = len(dataset)
+        train_count = int((1.0 - split_perc) * num_recs)
+        test_count = num_recs - train_count
+        train_dataset, test_dataset = \
+            torch.utils.data.random_split(dataset, [train_count, test_count])
+        return train_dataset, test_dataset
+    else:
+        return dataset, None
+
+
+# ----------------------------------------------------------------------------------
+# MetricsHistory
+# ----------------------------------------------------------------------------------
 class MetricsHistory:
     """ class to calculate & store metrics across training batches """
 
@@ -234,9 +314,6 @@ class MetricsHistory:
         """ calculates average value of the accumulated metrics from last batch & appends
             to epoch metrics list
         """
-        # metric_names = ["loss"]
-        # if self.metrics_map is not None:
-        #     metric_names.extend([key for key in self.metrics_map.keys()])
         metric_names = self.tracked_metrics()
 
         for metric in metric_names:
@@ -255,9 +332,6 @@ class MetricsHistory:
 
     def clear_batch_metrics(self):
         """ reset the lists that track batch metrics """
-        # metric_names = ["loss"]
-        # if self.metrics_map is not None:
-        #     metric_names.extend([key for key in self.metrics_map.keys()])
         metric_names = self.tracked_metrics()
 
         for metric in metric_names:
@@ -269,9 +343,6 @@ class MetricsHistory:
         self, batch_metrics = True, include_val_metrics = False
     ):
         # will not include loss
-        # metric_names = ["loss"]
-        # if self.metrics_map is not None:
-        #     metric_names.extend([key for key in self.metrics_map.keys()])
         metric_names = self.tracked_metrics()
         metrics_str = ""
         for metric_name in metric_names:
@@ -305,12 +376,10 @@ class MetricsHistory:
         return metrics_str
 
     def plot_metrics(self, title = None, fig_size = None):
-        """ plots epoch metrics values across epochs to show how
-            training progresses
+        """ plots metrics values across epochs to show training (& cross-validation)
+            is progressing across metrics. Gives a visual perspective of metrics
+            across epochs
         """
-        # metric_names = ["loss"]
-        # if self.metrics_map is not None:
-        #     metric_names.extend([key for key in self.metrics_map.keys()])
         metric_names = self.tracked_metrics()
         metric_vals = {
             metric_name: self.metrics_history[metric_name]["epoch_vals"]
@@ -324,7 +393,7 @@ class MetricsHistory:
 
         # we will plot a max of 3 metrics per row
         MAX_COL_COUNT = 3
-        col_count = MAX_COL_COUNT if len(metric_names) % MAX_COL_COUNT != 0 \
+        col_count = MAX_COL_COUNT if len(metric_names) > MAX_COL_COUNT \
             else len(metric_names)
         row_count = len(metric_names) // MAX_COL_COUNT
         row_count += 1 if len(metric_names) % MAX_COL_COUNT != 0 else 0
@@ -333,56 +402,58 @@ class MetricsHistory:
 
         with sns.axes_style("darkgrid"):
             sns.set_context("notebook", font_scale = 1.2)
+            sns.set_style(
+                {
+                    "font.sans-serif": ["SF Pro Display", "Arial", "Calibri", "DejaVu Sans",
+                                        "Sans"]
+                }
+            )
             fig_size = (16, 5) if fig_size is None else fig_size
-            plt.figure(figsize = fig_size)
-            for i, metric_name in enumerate(metric_names):
-                plt.subplot(row_count, col_count, i + 1)
-                plt.plot(
-                    x_vals, metric_vals[metric_name], lw = 2, markersize = 7
-                )
-                if self.include_val_metrics:
-                    plt.plot(
-                        x_vals, metric_vals[f"val_{metric_name}"], lw = 2,
-                        markersize = 7
-                    )
-                legend = ["train", "valid"] if self.include_val_metrics else [
-                    "train"]
-                plt.legend(legend, loc = "best")
-                plt.title(f"{metric_name} vs epochs")
+
+            f, ax = plt.subplots(row_count, col_count, figsize = fig_size)
+            for r in range(row_count):
+                for c in range(col_count):
+                    index = r * (col_count - 1) + c
+                    if index < len(metric_names):
+                        metric_name = metric_names[index]
+                        if row_count == 1:
+                            ax[c].plot(
+                                x_vals, metric_vals[metric_name], lw = 2, markersize = 7
+                            )
+                        else:
+                            ax[r, c].plot(
+                                x_vals, metric_vals[metric_name], lw = 2, markersize = 7
+                            )
+                        if self.include_val_metrics:
+                            if row_count == 1:
+                                ax[c].plot(
+                                    x_vals, metric_vals[f"val_{metric_name}"], lw = 2,
+                                    markersize = 7
+                                )
+                            else:
+                                ax[r, c].plot(
+                                    x_vals, metric_vals[f"val_{metric_name}"], lw = 2,
+                                    markersize = 7
+                                )
+                        legend = ["train", "valid"] if self.include_val_metrics else ["train"]
+                        title = f"Training & Cross-validation \'{metric_name}\' vs Epochs" \
+                            if len(legend) == 2 else f"Training \'{metric_name}\' vs Epochs"
+                        if row_count == 1:
+                            ax[c].legend(legend, loc = "best")
+                            ax[c].set_title(title)
+                        else:
+                            ax[r, c].legend(legend, loc = "best")
+                            ax[r, c].set_title(title)
 
         if title is not None:
             plt.suptitle(title)
 
         plt.show()
-        plt.close()
 
 
-def split_dataset(dataset: torch.utils.data.Dataset, split_perc: float = 0.20):
-    """ randomly splits a dataset into 2 based on split percentage (split_perc)
-        @params:
-            - dataset (torch.utils.data.Dataset): the dataset to split
-            - split_perc (float) : defines ratio (>= 0.0 and <= 1.0) for number
-                of records in 2nd split. Default = 0.2
-            Example: if dataset has 100 records and split_perc = 0.2, then
-            2nd dataset will have 0.2 * 100 = 20 randomly selected records
-            and first dataset will have (100 - 20 = 80) records.
-        @returns: tuple of datasets (split_1, split_2)
-    """
-    assert (split_perc >= 0.0) and (split_perc <= 1.0), \
-        f"FATAL ERROR: invalid split_perc value {split_perc}." \
-        f"Expecting float >= 0.0 and <= 1.0"
-
-    if split_perc > 0.0:
-        num_recs = len(dataset)
-        train_count = int((1.0 - split_perc) * num_recs)
-        test_count = num_recs - train_count
-        train_dataset, test_dataset = \
-            torch.utils.data.random_split(dataset, [train_count, test_count])
-        return train_dataset, test_dataset
-    else:
-        return dataset, None
-
-
+# ----------------------------------------------------------------------------------
+# training related functions & classes
+# ----------------------------------------------------------------------------------
 def cross_train_model(
     model, dataset, loss_fxn, optimizer, device,
     validation_split = 0.0, validation_dataset = None, metrics_map = None,
@@ -419,7 +490,7 @@ def cross_train_model(
     if lr_scheduler is not None:
         # NOTE:  ReduceLROnPlateau is NOT derived from _LRScheduler, but from object, which
         # is odd as all other schedulers derive from _LRScheduler
-        assert (isinstance(lr_scheduler, torch.optim.lr_scheduler._LRScheduler) \
+        assert (isinstance(lr_scheduler, torch.optim.lr_scheduler._LRScheduler)
                 or isinstance(
                 lr_scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau
             )), \
@@ -440,11 +511,14 @@ def cross_train_model(
 
     if val_dataset is not None:
         print(
-            f"Cross training on {len(train_dataset)} training and " +
+            f"Cross training on \'{device}\' with {len(train_dataset)} training and " +
             f"{len(val_dataset)} cross-validation records...", flush = True
         )
     else:
-        print(f"Training on {len(train_dataset)} records...", flush = True)
+        print(
+            f"Training on \'{device}\' with {len(train_dataset)} records...",
+            flush = True
+        )
 
     if reporting_interval != 1:
         print(
@@ -493,8 +567,9 @@ def cross_train_model(
                 optimizer.step()
 
                 # compute batch metric(s)
+                preds = preds.to(device)
                 history.calculate_batch_metrics(
-                    preds, y, loss_tensor.item(),
+                    preds.to("cpu"), y.to("cpu"), loss_tensor.item(),
                     val_metrics = False
                 )
 
@@ -570,7 +645,7 @@ def cross_train_model(
                             val_preds = model(val_X)
                             val_batch_loss = loss_fxn(val_preds, val_y).item()
                             history.calculate_batch_metrics(
-                                preds, y, val_batch_loss,
+                                preds.to("cpu"), y.to("cpu"), val_batch_loss,
                                 val_metrics = True
                             )
                             num_val_batches += 1
@@ -617,8 +692,6 @@ def cross_train_model(
 def evaluate_model(
     model, dataset, loss_fn, device, metrics_map = None, batch_size = 64
 ):
-    from torchmetrics.classification import BinaryAccuracy
-
     try:
         model = model.to(device)
         loader = torch.utils.data.DataLoader(
@@ -646,7 +719,7 @@ def evaluate_model(
                 batch_loss = loss_fn(preds, y).item()
                 # batch_acc = accuracy(preds, y)
                 history.calculate_batch_metrics(
-                    preds, y, batch_loss,
+                    preds.to("cpu"), y.to("cpu"), batch_loss,
                     val_metrics = False
                 )
                 # loss += batch_loss
@@ -797,62 +870,25 @@ def load_model(model, model_state_dict_path, verbose = 1):
     return model
 
 
-def plot_confusion_matrix(
-    cm, class_names = None, title = "Confusion Matrix",
-    cmap = plt.cm.Blues
-):
-    """ graphical plot of the confusion matrix
-        @params:
-            cm - the confusion matrix (value returned by the sklearn.metrics.confusion_matrix(...) call)
-            class_names (list) - names (text) of classes you want to use (list of strings)
-            title (string, default='Confusion Matrix') - title of the plot
-            cmap (matplotlib supported palette, default=plt.cm.Blues) - color palette you want to use
-    """
+# custom data types
+from typing import Union, Dict, Tuple
+import torchmetrics
 
-    class_names = ['0', '1'] if class_names is None else class_names
-    df = pd.DataFrame(cm, index = class_names, columns = class_names)
-
-    with sns.axes_style("darkgrid"):
-        sns.set_context("notebook", font_scale = 1.1)
-        sns.set_style(
-            {
-                "font.sans-serif": ["SF Pro Display", "Arial", "Calibri",
-                                    "DejaVu Sans"]
-            }
-        )
-        hmap = sns.heatmap(df, annot = True, fmt = "d", cmap = cmap)
-        hmap.yaxis.set_ticklabels(
-            hmap.yaxis.get_ticklabels(), rotation = 0, ha = 'right'
-        )
-        hmap.xaxis.set_ticklabels(
-            hmap.xaxis.get_ticklabels(), rotation = 30, ha = 'right'
-        )
-
-        plt.ylabel('True label')
-        plt.xlabel('Predicted label')
-        plt.title(title)
-    plt.show()
-    plt.close()
-
-
-if __name__ == "__main__":
-    print(
-        f"This is {os.path.basename(__file__)} version {__version__} by {__author__}"
-    )
-    print(
-        "A library of useful functions ease the process of training/evaluating Pytorch models"
-    )
-    print("Licensed with a friendly MIT license")
-    print(
-        f"Use freely at your own risk. {__author__} is not responsible for any damages!"
-    )
+# LossFxnType = Callable[[torch.tensor, torch.tensor], torch.tensor]
+LRSchedulerType = torch.optim.lr_scheduler._LRScheduler
+ReduceLROnPlateauType = torch.optim.lr_scheduler.ReduceLROnPlateau
+NumpyArrayTuple = Tuple[np.ndarray, np.ndarray]
+MetricsMapType = Dict[str, torchmetrics.Metric]
 
 
 class Trainer:
     def __init__(
-        self, loss_fn, device, metrics_map: map = None, epochs: int = 5,
-        batch_size: int = 64, lr_scheduler = None, reporting_interval = 1, shuffle = True,
-        num_workers = 0
+        self, loss_fn,
+        device: torch.device,
+        metrics_map: MetricsMapType = None,
+        epochs: int = 5, batch_size: int = 64, reporting_interval: int = 1,
+        shuffle: bool = True,
+        num_workers: int = 0
     ):
         if loss_fn is None:
             raise ValueError("FATAL ERROR: Trainer() -> 'loss_fn' cannot be None")
@@ -862,13 +898,6 @@ class Trainer:
             raise ValueError("FATAL ERROR: Trainer() -> 'epochs' >= 1")
         # batch_size can be -ve
         batch_size = -1 if batch_size < 0 else batch_size
-        if lr_scheduler is not None:
-            # NOTE:  ReduceLROnPlateau is NOT derived from _LRScheduler, but from object, which
-            # is odd as all other schedulers derive from _LRScheduler
-            assert (isinstance(lr_scheduler, torch.optim.lr_scheduler._LRScheduler) or \
-                    isinstance(lr_scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau)), \
-                "lr_scheduler: incorrect type. Expecting class derived from " \
-                "torch.optim._LRScheduler or ReduceLROnPlateau"
         reporting_interval = 1 if reporting_interval < 1 else reporting_interval
         assert num_workers >= 0, \
             "FATAL ERROR: Trainer() -> 'num_workers' must be >= 0"
@@ -878,14 +907,17 @@ class Trainer:
         self.metrics_map = metrics_map
         self.epochs = epochs
         self.batch_size = batch_size
-        self.lr_scheduler = lr_scheduler
         self.reporting_interval = reporting_interval
         self.shuffle = shuffle
         self.num_workers = num_workers
 
     def fit(
-        self, model, optimizer, train_dataset, validation_dataset = None,
-        validation_split = 0.0
+        self, model: nn.Module,
+        optimizer: torch.optim.Optimizer,
+        train_dataset: torch.utils.data.Dataset,
+        validation_dataset: torch.utils.data.Dataset = None,
+        validation_split: float = 0.0,
+        lr_scheduler: Union[LRSchedulerType, ReduceLROnPlateauType] = None
     ) -> MetricsHistory:
         assert model is not None, \
             "FATAL ERROR: Trainer.fit() -> 'model' cannot be None"
@@ -893,24 +925,31 @@ class Trainer:
             "FATAL ERROR: Trainer.fit() -> 'optimizer' cannot be None"
         assert train_dataset is not None, \
             "FATAL ERROR: Trainer.fit() -> 'train_dataset' cannot be None"
+        if lr_scheduler is not None:
+            # NOTE:  ReduceLROnPlateau is NOT derived from _LRScheduler, but from object, which
+            # is odd as all other schedulers derive from _LRScheduler
+            assert (isinstance(lr_scheduler, torch.optim.lr_scheduler._LRScheduler) or
+                    isinstance(lr_scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau)), \
+                "lr_scheduler: incorrect type. Expecting class derived from " \
+                "torch.optim._LRScheduler or ReduceLROnPlateau"
 
         history = cross_train_model(
             model, train_dataset, self.loss_fn, optimizer, device = self.device,
             validation_split = validation_split, validation_dataset = validation_dataset,
-            epochs = self.epochs, batch_size = self.batch_size,
-            reporting_interval = self.reporting_interval, lr_scheduler = self.lr_scheduler,
+            metrics_map = self.metrics_map, epochs = self.epochs, batch_size = self.batch_size,
+            reporting_interval = self.reporting_interval, lr_scheduler = lr_scheduler,
             shuffle = self.shuffle, num_workers = self.num_workers
         )
         return history
 
-    def evaluate(self, model, dataset) -> dict:
+    def evaluate(self, model: nn.Module, dataset: torch.utils.data.Dataset) -> dict:
         return evaluate_model(
             model, dataset, self.loss_fn, device = self.device, metrics_map = self.metrics_map,
             batch_size = self.batch_size
         )
 
-    def predict_dataset(self, model, dataset) -> tuple:
+    def predict_dataset(self, model: nn.Module, dataset: torch.utils.data.Dataset) -> tuple:
         return predict_dataset(model, dataset, self.device, self.batch_size)
 
-    def predict(self, model, data) -> np.ndarray:
+    def predict(self, model: nn.Module, data: np.ndarray) -> np.ndarray:
         return predict(model, data, self.device, self.batch_size)
