@@ -66,7 +66,8 @@ def get_logger(name: str, level: int = logging.WARNING) -> logging.Logger:
 
 def plot_confusion_matrix(
     cm, class_names = None, title = "Confusion Matrix",
-    cmap = plt.cm.Blues
+    cmap = plt.cm.Purples,
+    fig_size = (8, 6)
 ):
     """ graphical plot of the confusion matrix
         @params:
@@ -79,12 +80,13 @@ def plot_confusion_matrix(
     class_names = ['0', '1'] if class_names is None else class_names
     df = pd.DataFrame(cm, index = class_names, columns = class_names)
 
+    plt.figure(figsize = fig_size)
     with sns.axes_style("darkgrid"):
-        sns.set_context("notebook", font_scale = 1.1)
+        # sns.set_context("notebook")  # , font_scale = 1.1)
         sns.set_style(
             {
-                "font.sans-serif": ["SF Pro Display", "Arial", "Calibri",
-                                    "DejaVu Sans"]
+                "font.sans-serif": ["Segoe UI", "Calibri", "SF Pro Display", "Arial",
+                                    "DejaVu Sans", "Sans"]
             }
         )
         hmap = sns.heatmap(df, annot = True, fmt = "d", cmap = cmap)

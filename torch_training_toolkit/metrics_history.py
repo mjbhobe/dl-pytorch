@@ -222,11 +222,11 @@ class MetricsHistory:
         x_vals = np.arange(1, len(metric_vals["loss"]) + 1)
 
         with sns.axes_style("darkgrid"):
-            sns.set_context("notebook", font_scale = 1.2)
+            sns.set_context("notebook")  # , font_scale = 1.2)
             sns.set_style(
                 {
-                    "font.sans-serif": ["SF Pro Display", "Arial", "Calibri", "DejaVu Sans",
-                                        "Sans"]
+                    "font.sans-serif": ["Segoe UI", "Calibri", "SF Pro Display", "Arial",
+                                        "DejaVu Sans", "Sans"]
                 }
             )
             fig_size = (16, 5) if fig_size is None else fig_size

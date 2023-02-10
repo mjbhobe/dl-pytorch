@@ -32,9 +32,6 @@ NumpyArrayTuple = Tuple[np.ndarray, np.ndarray]
 MetricsMapType = Dict[str, torchmetrics.Metric]
 
 
-# LossFxnType = Callable[[torch.Tensor, torch.Tensor], torch.Tensor]
-
-
 def cross_train_model(
     model: nn.Module,
     dataset: Union[NumpyArrayTuple, torch.utils.data.Dataset],
@@ -133,14 +130,10 @@ def cross_train_model(
     try:
         model = model.to(device)
         tot_samples = len(train_dataset)
-        len_num_epochs, len_tot_samples = len(str(epochs)), len(
-            str(tot_samples)
-        )
+        len_num_epochs, len_tot_samples = len(str(epochs)), len(str(tot_samples))
         # create metrics history
         history = MetricsHistory(metrics_map, (val_dataset is not None))
-        train_batch_size = batch_size if batch_size != -1 else len(
-            train_dataset
-        )
+        train_batch_size = batch_size if batch_size != -1 else len(train_dataset)
 
         for epoch in range(epochs):
             model.train()
@@ -228,18 +221,16 @@ def cross_train_model(
                             end = '', flush = True
                         )
 
-                    val_batch_size = batch_size if batch_size != -1 else len(
-                        val_dataset
-                    )
+                    val_batch_size = batch_size if batch_size != -1 else len(val_dataset)
                     model.eval()
                     with torch.no_grad():
-                        val_dataloader = None if val_dataset is None else \
-                            torch.utils.data.DataLoader(
-                                val_dataset,
-                                batch_size = val_batch_size,
-                                shuffle = shuffle,
-                                num_workers = num_workers
-                            )
+                        # val_dataloader = None if val_dataset is None else \
+                        val_dataloader = torch.utils.data.DataLoader(
+                            val_dataset,
+                            batch_size = val_batch_size,
+                            shuffle = shuffle,
+                            num_workers = num_workers
+                        )
                         num_val_batches = 0
 
                         for val_X, val_y in val_dataloader:
@@ -248,7 +239,7 @@ def cross_train_model(
                             val_preds = model(val_X)
                             val_batch_loss = loss_fxn(val_preds, val_y).item()
                             history.calculate_batch_metrics(
-                                preds.to("cpu"), y.to("cpu"), val_batch_loss,
+                                val_preds.to("cpu"), val_y.to("cpu"), val_batch_loss,
                                 val_metrics = True
                             )
                             num_val_batches += 1
@@ -256,8 +247,7 @@ def cross_train_model(
                             # loop over val_dataset completed - compute val average metrics
                             history.calculate_epoch_metrics(val_metrics = True)
                             # display final metrics
-                            if (epoch == 0) or (
-                                (epoch + 1) % reporting_interval == 0) \
+                            if (epoch == 0) or ((epoch + 1) % reporting_interval == 0) \
                                 or ((epoch + 1) == epochs):
                                 metricsStr = history.get_metrics_str(
                                     batch_metrics = False,

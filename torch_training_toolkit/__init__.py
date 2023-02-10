@@ -27,6 +27,7 @@ __version__ = '.'.join(map(str, version_info))
 __installer_version__ = __version__
 __title__ = "Torch Training Toolkit (t3)"
 __author__ = "Manish Bhobé"
+# Nämostuté -> means "May our Minds Meet"
 __organization__ = "Nämostuté Ltd."
 __org_domain__ = "namostute.pytorch.in"
 __license__ = __doc__

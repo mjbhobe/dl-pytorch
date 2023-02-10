@@ -36,7 +36,7 @@ import torch_training_toolkit as t3
 
 # to ensure that you get consistent results across runs & machines
 # @see: https://discuss.pytorch.org/t/reproducibility-over-different-machines/63047
-SEED = t3.seed_all()
+SEED = t3.seed_all(41)
 data_file_path = os.path.join(
     os.path.dirname(__file__), 'data', 'wisconsin_breast_cancer.csv'
 )
@@ -134,8 +134,8 @@ class WBCNet(nn.Module):
         return x
 
 
-DO_TRAINING = False
-DO_EVAL = False
+DO_TRAINING = True
+DO_EVAL = True
 DO_PREDICTION = True
 MODEL_SAVE_PATH = os.path.join(
     os.path.dirname(__file__), 'model_states', 'pyt_wbc_ann2.pyt'
@@ -154,22 +154,6 @@ def main():
     # load our data & build tensor datasets for cross-training & testing
     (X_train, y_train), (X_test, y_test) = load_data()
     print(X_train.shape, y_train.shape, X_test.shape, y_test.shape)
-    # train_dataset = torch.utils.data.TensorDataset(
-    #     torch.FloatTensor(X_train),
-    #     torch.FloatTensor(y_train)
-    # )
-    # test_dataset = torch.utils.data.TensorDataset(
-    #     torch.FloatTensor(X_test),
-    #     torch.FloatTensor(y_test)
-    # )
-    #
-    # val_dataset, test_dataset = t3.split_dataset(
-    #     test_dataset, split_perc = 0.20
-    # )
-    # print(
-    #     f"train_dataset: {len(train_dataset)} - val_dataset: {len(val_dataset)} - " +
-    #     f"test_dataset: {len(test_dataset)}"
-    # )
 
     loss_fn = nn.BCELoss()
     metrics_map = {
@@ -192,12 +176,6 @@ def main():
 
         # train model
         print('Training model...')
-        # hist = t3.cross_train_model(
-        #     model, train_dataset, loss_fn, optimizer, device = DEVICE,
-        #     validation_dataset = val_dataset, epochs = NUM_EPOCHS,
-        #     batch_size = BATCH_SIZE, metrics_map = metrics_map,
-        #     reporting_interval = 25
-        # )
         hist = trainer.fit(
             model, optimizer,
             train_dataset = (X_train, y_train), validation_split = 0.20
@@ -215,19 +193,9 @@ def main():
 
         print('Evaluating model performance...')
         print('Training dataset')
-        # metrics = t3.evaluate_model(
-        #     model, train_dataset, loss_fn, device = DEVICE,
-        #     metrics_map = metrics_map,
-        #     batch_size = BATCH_SIZE
-        # )
         metrics = trainer.evaluate(model, dataset = (X_train, y_train))
         print(f"Training metrics -> {metrics}")
         print('Testing dataset')
-        # metrics = t3.evaluate_model(
-        #     model, test_dataset, loss_fn, device = DEVICE,
-        #     metrics_map = metrics_map,
-        #     batch_size = BATCH_SIZE
-        # )
         metrics = trainer.evaluate(model, dataset = (X_test, y_test))
         print(f"Testing metrics -> {metrics}")
         del model
