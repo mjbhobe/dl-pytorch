@@ -16,9 +16,9 @@ if sys.version_info < (2,):
 import os
 import pathlib
 
-from metrics_history import *
-from dataset_utils import *
-from layers import *
+from .metrics_history import *
+from .dataset_utils import *
+from .layers import *
 
 # custom data types
 from typing import Union, Dict, Tuple
@@ -552,6 +552,7 @@ class Trainer:
         validation_split: float = 0.0,
         lr_scheduler: Union[LRSchedulerType, ReduceLROnPlateauType] = None
     ) -> MetricsHistory:
+    
         """ fits (i.e cross-trains) the model using provided training data (and optionally
             cross-validation data).
             @params:
