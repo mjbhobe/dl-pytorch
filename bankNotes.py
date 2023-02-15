@@ -136,13 +136,13 @@ def main():
         model.load(MODEL_SAVE_PATH)
         print("Evaluating model performance...")
         print("Train dataset")
-        metrics = t3.evaluate_model(
+        metrics = t3.evaluate_module(
             model, train_dataset, loss_fn, device = DEVICE,
             metrics_map = metrics_map
         )
         print(f"Training metrics: {metrics}")
         print("Test dataset")
-        metrics = t3.evaluate_model(
+        metrics = t3.evaluate_module(
             model, test_dataset, loss_fn, device = DEVICE,
             metrics_map = metrics_map
         )

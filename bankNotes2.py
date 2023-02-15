@@ -17,9 +17,9 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 # tweaks for libraries
-np.set_printoptions(precision = 6, linewidth = 1024, suppress = True)
+np.set_printoptions(precision=6, linewidth=1024, suppress=True)
 plt.style.use('seaborn')
-sns.set(style = 'whitegrid', font_scale = 1.1, palette = 'muted')
+sns.set(style='whitegrid', font_scale=1.1, palette='muted')
 
 # Pytorch imports
 import torch
@@ -46,8 +46,7 @@ DATA_FILE_PATH = os.path.join(
 assert os.path.exists(DATA_FILE_PATH), \
     f"FATAL: {DATA_FILE_PATH} - data file does not exist!"
 print(f"Using data file {DATA_FILE_PATH}")
-DEVICE = torch.device("cuda:0") \
-    if torch.cuda.is_available() else torch.device("cpu")
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Training model on {DEVICE}")
 
 
@@ -60,14 +59,12 @@ class BankNotesDataset(torch.utils.data.Dataset):
 
     def __init__(self, data_file_path):
         all_data = np.loadtxt(
-            data_file_path, delimiter = ',', dtype = np.float32
+            data_file_path, delimiter=',', dtype=np.float32
         )
         # self.X = torch.FloatTensor(all_data[:, 0:4])
         # self.y = torch.FloatTensor(all_data[:, 4]).reshape(-1, 1)
-        self.X = torch.tensor(all_data[:, 0:4], dtype = torch.float32)
-        self.y = torch.tensor(all_data[:, 4], dtype = torch.float32).reshape(
-            -1, 1
-        )
+        self.X = torch.tensor(all_data[:, 0:4], dtype=torch.float32)
+        self.y = torch.tensor(all_data[:, 4], dtype=torch.float32).reshape(-1, 1)
 
     def __len__(self):
         return len(self.X)
@@ -90,6 +87,7 @@ class Net(nn.Module):
             t3.Linear(8, 8),
             nn.ReLU(),
             t3.Linear(8, 1),
+            # Binary classifier should end in Sigmoid()
             nn.Sigmoid()
         )
 
@@ -115,37 +113,32 @@ DO_PREDS = True
 def main():
     # load the dataset
     dataset = BankNotesDataset(DATA_FILE_PATH)
-    print(f"Loaded {len(dataset)} records", flush = True)
+    print(f"Loaded {len(dataset)} records", flush=True)
     # set aside 10% as test dataset
-    train_dataset, test_dataset = t3.split_dataset(dataset, split_perc = 0.1)
+    train_dataset, test_dataset = t3.split_dataset(dataset, split_perc=0.1)
     print(
         f"train_dataset: {len(train_dataset)} recs, test_dataset: {len(test_dataset)} recs"
     )
 
-    # build & train model
+    # loss function to use during cross-training & model evaluation
     loss_fn = torch.nn.BCELoss()
 
     metrics_map = {
         "acc": BinaryAccuracy(),
         "f1": BinaryF1Score(),
-        "roc_auc": BinaryAUROC(thresholds = None)
+        "roc_auc": BinaryAUROC(thresholds=None)
     }
     trainer = t3.Trainer(
-        loss_fn = loss_fn, device = DEVICE, metrics_map = metrics_map,
-        epochs = NUM_EPOCHS, batch_size = BATCH_SIZE
+        loss_fn=loss_fn, device=DEVICE, metrics_map=metrics_map,
+        epochs=NUM_EPOCHS, batch_size=BATCH_SIZE
     )
 
     if DO_TRAINING:
         # cross-training with 20% validation data
         model = Net(4)
-        optimizer = torch.optim.SGD(model.parameters(), lr = LR)
-        # hist = t3.cross_train_model(
-        #     model, train_dataset, loss_fn, optimizer, device = DEVICE,
-        #     validation_split = 0.2, epochs = EPOCHS,
-        #     batch_size = BATCH_SIZE, metrics_map = metrics_map
-        # )
-        hist = trainer.fit(model, optimizer, train_dataset, validation_split = 0.2)
-        hist.plot_metrics(title = "Model Performance", fig_size = (16, 8))
+        optimizer = torch.optim.SGD(model.parameters(), lr=LR)
+        hist = trainer.fit(model, optimizer, train_dataset, validation_split=0.2)
+        hist.plot_metrics(title="Model Performance", fig_size=(16, 8))
         t3.save_model(model, MODEL_SAVE_PATH)
         del model
 
@@ -153,28 +146,20 @@ def main():
         model = Net(4)
         model = t3.load_model(model, MODEL_SAVE_PATH)
         print("Evaluating model performance...")
-        print("Train dataset")
-        # metrics = t3.evaluate_model(
-        #     model, train_dataset, loss_fn, device = DEVICE,
-        #     metrics_map = metrics_map
-        # )
         metrics = trainer.evaluate(model, train_dataset)
-        print(f"Training metrics: {metrics}")
-        print("Test dataset")
-        # metrics = t3.evaluate_model(
-        #     model, test_dataset, loss_fn, device = DEVICE,
-        #     metrics_map = metrics_map
-        # )
+        print(f" - Training -> loss: {metrics['loss']:.4f} - acc: {metrics['acc']:.4f} - " +
+              f"f1: {metrics['f1']:.4f} - roc_auc: {metrics['roc_auc']:.4f}")
         metrics = trainer.evaluate(model, test_dataset)
-        print(f"Testing metrics: {metrics}")
+        print(f" - Testing -> loss: {metrics['loss']:.4f} - acc: {metrics['acc']:.4f} - " +
+              f"f1: {metrics['f1']:.4f} - roc_auc: {metrics['roc_auc']:.4f}")
         del model
 
     if DO_PREDS:
         model = Net(4)
         print("Running predictionson test dataset...")
         model = t3.load_model(model, MODEL_SAVE_PATH)
-        # preds, actuals = t3.predict_dataset(model, test_dataset, device = DEVICE)
-        preds, actuals = trainer.predict_dataset(model, test_dataset)
+        # preds, actuals = t3.predict_module(model, test_dataset, device = DEVICE)
+        preds, actuals = trainer.predict(model, test_dataset)
         preds = np.round(preds).ravel()
         actuals = actuals.ravel()
         count = len(actuals) // 3

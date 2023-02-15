@@ -30,9 +30,10 @@ LRSchedulerType = torch.optim.lr_scheduler._LRScheduler
 ReduceLROnPlateauType = torch.optim.lr_scheduler.ReduceLROnPlateau
 NumpyArrayTuple = Tuple[np.ndarray, np.ndarray]
 MetricsMapType = Dict[str, torchmetrics.Metric]
+MetricsValType = Dict[str, float]
 
 
-def cross_train_model(
+def cross_train_module(
     model: nn.Module,
     dataset: Union[NumpyArrayTuple, torch.utils.data.Dataset],
     loss_fxn,
@@ -51,39 +52,16 @@ def cross_train_model(
     """
         Cross-trains model (derived from nn.Module) across epochs using specified loss function,
         optimizer, validation dataset (if any), learning rate scheduler, epochs and batch size etc.
-        @params:
-            - model: the model being trained (instance of nn.Module)
-            - dataset: the training dataset (subclass of torch.data.utils.Dataset)
-            - loss_fxn: loss function used to calculate loss for each batch of data
-                from the 'dataset' (instance of one of the loss functions available in Pytorch)
-            - optimizer: optimizer used to optimize the weights of the model.
-                One of the optimizers available in torch.nn.optim package
-            - validation_
 
+        This function is used internally by the Trainer class - see Trainer.fit(...)
     """
     # validate parameters passed into function
-    # assert isinstance(model, nn.Module), \
-    #     "cross_train_model: 'model' parameter must be an instance of nn.Module!"
-    # assert isinstance(dataset, torch.utils.data.Dataset), \
-    #     "cross_train_model: 'dataset' must be a subclass of torch.utils.data.Dataset"
     assert (0.0 <= validation_split < 1.0), \
-        "cross_train_model: 'validation_split' must be a float between (0.0, 1.0]"
-    # if validation_dataset is not None:
-    #     assert isinstance(validation_dataset, torch.utils.data.Dataset), \
-    #         "cross_train_model: 'validation_dataset' must be a subclass of torch.utils.data.Dataset"
+        "cross_train_module: 'validation_split' must be a float between (0.0, 1.0]"
     if loss_fxn is None:
-        raise ValueError("cross_train_model: 'loss_fxn' cannot be None")
+        raise ValueError("cross_train_module: 'loss_fxn' cannot be None")
     if optimizer is None:
-        raise ValueError("cross_train_model: 'optimizer' cannot be None")
-    # if lr_scheduler is not None:
-    #     # NOTE:  ReduceLROnPlateau is NOT derived from _LRScheduler, but from object, which
-    #     # is odd as all other schedulers derive from _LRScheduler
-    #     assert (isinstance(lr_scheduler, torch.optim.lr_scheduler._LRScheduler) \
-    #             or isinstance(
-    #             lr_scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau
-    #         )), \
-    #         "lr_scheduler: incorrect type. Expecting class derived from torch.optim._LRScheduler or " \
-    #         "ReduceLROnPlateau"
+        raise ValueError("cross_train_module: 'optimizer' cannot be None")
 
     reporting_interval = 1 if reporting_interval < 1 else reporting_interval
     reporting_interval = 1 if reporting_interval >= epochs else reporting_interval
@@ -93,19 +71,25 @@ def cross_train_model(
     if isinstance(train_dataset, tuple):
         # train dataset was a tuple of np.ndarrays - convert to Dataset
         torch_X_train = torch.from_numpy(train_dataset[0]).type(torch.FloatTensor)
-        torch_y_train = torch.from_numpy(train_dataset[1]).type(torch.FloatTensor)
+        torch_y_train = torch.from_numpy(train_dataset[1]).type(
+            torch.LongTensor
+            if train_dataset[1].dtype in [np.int, np.long] else torch.FloatTensor
+        )
         train_dataset = torch.utils.data.TensorDataset(torch_X_train, torch_y_train)
 
     if (val_dataset is not None) and isinstance(val_dataset, tuple):
         # cross-val dataset was a tuple of np.ndarrays - convert to Dataset
         torch_X_val = torch.from_numpy(val_dataset[0]).type(torch.FloatTensor)
-        torch_y_val = torch.from_numpy(val_dataset[1]).type(torch.FloatTensor)
+        torch_y_val = torch.from_numpy(val_dataset[1]).type(
+            torch.LongTensor
+            if val_dataset[1].dtype in [np.int, np.long] else torch.FloatTensor
+        )
         val_dataset = torch.utils.data.TensorDataset(torch_X_val, torch_y_val)
 
     # split the dataset if validation_split > 0.0
     if (validation_split > 0.0) and (validation_dataset is None):
-        # NOTE: validation_dataset supersedes validation_split, use
-        # validation_split only if validation_dataset is None
+        # NOTE: validation_dataset supersedes validation_split!!
+        # Use validation_split only if validation_dataset is None
         train_dataset, val_dataset = \
             split_dataset(train_dataset, validation_split)
 
@@ -268,8 +252,6 @@ def cross_train_model(
                 if isinstance(
                     lr_scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau
                 ):
-                    # lr_metric = cum_metrics['val_loss'] if validation_dataset is not None \
-                    #     else cum_metrics['loss']
                     lr_metric = history.metrics_history["loss"]["epoch_vals"][
                         -1] \
                         if val_dataset is not None \
@@ -282,21 +264,24 @@ def cross_train_model(
         model = model.to('cpu')
 
 
-def evaluate_model(
+def evaluate_module(
     model: nn.Module,
     dataset: Union[NumpyArrayTuple, torch.utils.data.Dataset],
     loss_fn,
     device: torch.device,
     metrics_map: MetricsMapType = None,
     batch_size: int = 64
-):
+) -> MetricsValType:
     try:
         model = model.to(device)
 
         # if dataset is a tuple of np.ndarrays, convert to torch Dataset
         if isinstance(dataset, tuple):
             X = torch.from_numpy(dataset[0]).type(torch.FloatTensor)
-            y = torch.from_numpy(dataset[1]).type(torch.FloatTensor)
+            y = torch.from_numpy(dataset[1]).type(
+                torch.LongTensor
+                if dataset[1].dtype in [np.int, np.long] else torch.FloatTensor
+            )
             dataset = torch.utils.data.TensorDataset(X, y)
 
         loader = torch.utils.data.DataLoader(
@@ -353,7 +338,7 @@ def evaluate_model(
         model = model.to('cpu')
 
 
-def predict_dataset(
+def predict_module(
     model: nn.Module,
     dataset: Union[NumpyArrayTuple, torch.utils.data.Dataset],
     device: torch.device,
@@ -365,7 +350,10 @@ def predict_dataset(
         # if dataset is a tuple of np.ndarrays, convert to torch Dataset
         if isinstance(dataset, tuple):
             X = torch.from_numpy(dataset[0]).type(torch.FloatTensor)
-            y = torch.from_numpy(dataset[1]).type(torch.FloatTensor)
+            y = torch.from_numpy(dataset[1]).type(
+                torch.LongTensor
+                if dataset[1].dtype in [np.int, np.long] else torch.FloatTensor
+            )
             dataset = torch.utils.data.TensorDataset(X, y)
 
         loader = torch.utils.data.DataLoader(
@@ -388,7 +376,7 @@ def predict_dataset(
         model = model.to('cpu')
 
 
-def predict(
+def predict_array(
     model: nn.Module,
     data: np.ndarray,
     device: torch.device,
@@ -452,17 +440,23 @@ def save_model(model: nn.Module, model_save_path: str, verbose: bool = True):
             raise err
 
     # now save the model to file_path
-    torch.save(model.state_dict(), model_save_path)
+    # NOTE: a good practice is to move the model to cpu before saving the state dict
+    # as this will save tensors as CPU tensors, rather than CUDA tensors, which will
+    # help load model on any machine that may or may not have GPUs
+    torch.save(model.to("cpu").state_dict(), model_save_path)
     if verbose:
         print(f"Pytorch model saved to {model_save_path}")
 
 
-def load_model(model: nn.Module, model_state_dict_path: str, verbose: bool = True):
+def load_model(model: nn.Module, model_state_dict_path: str, verbose: bool = True) -> nn.Module:
     """ loads model's state dict from file on disk
         @params:
-            - model: instance of model derived from nn.Module (or instance of pytk.PytModel or pytk.PytSequential)
-            - model_state_dict_path: complete/relative path from where model's state dict should be loaded. \
-                This should be a valid path (i.e. should exist), else an IOError is raised.
+            - model: instance of model derived from nn.Module
+            - model_state_dict_path: complete/relative path from where model's state dict
+              should be loaded. This should be a valid path (i.e. should exist),
+              else an IOError is raised.
+        @returns:
+            - an nn.Module with state dict (weights & structure) loaded from disk
     """
 
     # convert model_state_dict_path to absolute path
@@ -491,6 +485,44 @@ class Trainer:
         shuffle: bool = True,
         num_workers: int = 0
     ):
+        """ constructs a Trainer object to be used for cross-training, evaluation of and
+            getting predictions from an nn.Module instance.
+            @params:
+             - loss_fn: loss function to be used during training & evaluation (pass an instance
+                 of one of PyTorch's loss functions (e.g. nn.BCELoss(), nn.CrossEntropyLoss())
+             - device (type torch.device): the device on which training/evaluation etc.
+                 should happen (e.g., torch.device("cuda") for GPU or torch.device("cpu"))
+             - metrics_map (optional, default None): declares the metrics ** IN ADDITION TO ** loss
+                 that should be tracked across epochs as the model trains/evaluates. It is optional,
+                 which means that only loss will be tracked, else loss + all metrics defined in the map
+                 will be tracked across epochs.
+                 A metrics_map is of type `Dict[str, torchmetric.Metric]` & you can define several
+                 metrics to be monitored during the training process. Each metric has a user-defined
+                 abbreviation (the `str` part of the Dict) and an associated torchmetric.Metric _formula_
+                 to calculate the metric
+                 Example of metrics_maps:
+                    # measures accuracy (abbreviated 'acc' [user can choose any abbreviation here!])
+                    metric_map = {
+                        "acc": torchmetrics.classification.BinaryAccuracy()
+                    }
+                    # this one trackes 3 metrics - accuracy (acc),
+                    metrics_map = {
+                        "acc": torchmetrics.classification.BinaryAccuracy(),
+                        "f1": torchmetrics.classification.BinaryF1Score(),
+                        "roc_auc": torchmetrics.classification.BinaryAUROC(thresholds = None)
+                    }
+             - epochs (int, default 5) - number of epochs for which the module should train
+             - batch_size (int, default 64) - size of batch used during training
+             - reporting_interval (int, default 1) - interval (i.e. number of epochs) after
+                 which progress must be reported when training. By default, the class
+                 reports progress after each epoch. Set this value to change the interval
+                 for example, if reporting_interval = 5, progress will be reported on the
+                 first, then every fifth and the last epoch.
+             - shuffle (bool, default=True) - should the data be shuffled during training?
+                 If True, it is shuffled else not. It is a good practice to always shuffle
+                 data between epochs. This setting should be left to the default value,
+                 unless you have a valid reason NOT to shuffle data (training and cross-validation)
+        """
         if loss_fn is None:
             raise ValueError("FATAL ERROR: Trainer() -> 'loss_fn' cannot be None")
         if device is None:
@@ -520,6 +552,23 @@ class Trainer:
         validation_split: float = 0.0,
         lr_scheduler: Union[LRSchedulerType, ReduceLROnPlateauType] = None
     ) -> MetricsHistory:
+        """ fits (i.e cross-trains) the model using provided training data (and optionally
+            cross-validation data).
+            @params:
+              - model (type nn.Module) - an instance of the model (derived from nn.Module) to
+                  be trained.
+              - optimizer (type torch.optim.Optimizer) - the optimizer used to adjust the weights
+                  during training. Use an instance of any optimizer from torch.optim package
+              - train_dataset (a Numpy `ndarray tuple` OR `torch.utils.data.Dataset`) - the data/or dataset
+                  to be used for training. It can be a tuple of Numpy arrays or an instance of
+                  torch.utils.data.Dataset class.
+                  When you have loaded data from scikit dataset (for example thre Iris dataset) it is
+                  common to use Numpy arrays for training. For image & text datasets, you would nornmally
+                  use an instance of torch.utils.data.Dataset
+               - validation_dataset (optional, default = None) [type a Numpy `ndarray tuple` OR `torch.utils.data.Dataset`
+                  class]. Optionally defined the validation data/dataset to be used. Similar to train_dataset
+               - validation_split (float, default=0.2) - 
+        """
         assert model is not None, \
             "FATAL ERROR: Trainer.fit() -> 'model' cannot be None"
         assert optimizer is not None, \
@@ -534,7 +583,7 @@ class Trainer:
                 "lr_scheduler: incorrect type. Expecting class derived from " \
                 "torch.optim._LRScheduler or ReduceLROnPlateau"
 
-        history = cross_train_model(
+        history = cross_train_module(
             model, train_dataset, self.loss_fn, optimizer, device = self.device,
             validation_split = validation_split, validation_dataset = validation_dataset,
             metrics_map = self.metrics_map, epochs = self.epochs, batch_size = self.batch_size,
@@ -548,13 +597,20 @@ class Trainer:
         model: nn.Module,
         dataset: Union[NumpyArrayTuple, torch.utils.data.Dataset]
     ) -> dict:
-        return evaluate_model(
+        return evaluate_module(
             model, dataset, self.loss_fn, device = self.device, metrics_map = self.metrics_map,
             batch_size = self.batch_size
         )
 
-    def predict_dataset(self, model: nn.Module, dataset: torch.utils.data.Dataset) -> tuple:
-        return predict_dataset(model, dataset, self.device, self.batch_size)
+    # def predict_dataset(self, model: nn.Module, dataset: torch.utils.data.Dataset) -> tuple:
+    #     return predict_module(model, dataset, self.device, self.batch_size)
 
-    def predict(self, model: nn.Module, data: np.ndarray) -> np.ndarray:
-        return predict(model, data, self.device, self.batch_size)
+    def predict(
+        self,
+        model: nn.Module,
+        dataset: Union[np.ndarray, NumpyArrayTuple, torch.utils.data.Dataset]
+    ) -> Union[np.ndarray, NumpyArrayTuple]:
+        if isinstance(dataset, np.ndarray):
+            return predict_array(model, dataset, self.device, self.batch_size)
+        else:
+            return predict_module(model, dataset, self.device, self.batch_size)

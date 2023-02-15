@@ -8,6 +8,7 @@ Use at your own risk!! I am not responsible if your CPU or GPU gets fried :D
 """
 
 import warnings
+
 warnings.filterwarnings('ignore')
 
 import sys
@@ -26,10 +27,10 @@ from torch.utils.data import Dataset, TensorDataset
 import pytorch_toolkit as pytk
 
 # tweaks for libraries
-np.set_printoptions(precision=6, linewidth=1024, suppress=True)
+np.set_printoptions(precision = 6, linewidth = 1024, suppress = True)
 plt.style.use('seaborn')
 sns.set_style('darkgrid')
-sns.set_context('notebook', font_scale=1.10)
+sns.set_context('notebook', font_scale = 1.10)
 
 # Pytorch imports
 print('Using Pytorch version: ', torch.__version__)
@@ -56,7 +57,7 @@ url = r'https://raw.githubusercontent.com/a-coders-guide-to-ai/a-coders-guide-to
 local_data_path = './data/diabetes.csv'
 
 
-def load_data(upsample=False, test_split=0.20):
+def load_data(upsample = False, test_split = 0.20):
     from sklearn.model_selection import train_test_split
     from sklearn.preprocessing import StandardScaler
 
@@ -65,7 +66,7 @@ def load_data(upsample=False, test_split=0.20):
         df = pd.read_csv(url)
         df.to_csv(local_data_path)
     else:
-        df = pd.read_csv(local_data_path, index_col=0)
+        df = pd.read_csv(local_data_path, index_col = 0)
 
     print(df.shape)
     print(df.head())
@@ -73,22 +74,27 @@ def load_data(upsample=False, test_split=0.20):
     X = df.iloc[:, :-1].values
     y = df.iloc[:, -1].values
     print(
-        f"Raw data shapes -> X.shape: {X.shape} - y.shape: {y.shape} - label dist: {np.bincount(y)}")
+        f"Raw data shapes -> X.shape: {X.shape} - y.shape: {y.shape} - label dist: {np.bincount(y)}"
+    )
 
     # split into train/test sets
     X_train, X_test, y_train, y_test = \
-        train_test_split(X, y, test_size=test_split,
-                         random_state=SEED, stratify=y)
+        train_test_split(
+            X, y, test_size = test_split,
+            random_state = SEED, stratify = y
+        )
     if upsample:
-        difference = sum((y_train == 0)*1) - sum((y_train == 1)*1)
+        difference = sum((y_train == 0) * 1) - sum((y_train == 1) * 1)
         indices = np.where(y_train == 1)[0]
         rand_subsample = np.random.randint(0, len(indices), (difference,))
         X_train = np.concatenate((X_train, X_train[indices[rand_subsample]]))
         y_train = np.concatenate((y_train, y_train[indices[rand_subsample]]))
 
     X_train, X_val, y_train, y_val = \
-        train_test_split(X_train, y_train, test_size=test_split,
-                         random_state=SEED, stratify=y_train)
+        train_test_split(
+            X_train, y_train, test_size = test_split,
+            random_state = SEED, stratify = y_train
+        )
 
     # scale data
     ss = StandardScaler()
@@ -99,9 +105,11 @@ def load_data(upsample=False, test_split=0.20):
     # y_val = np.expand_dims(y_val, axis=1)
     # y_test = np.expand_dims(y_test, axis=1)
 
-    print(f"X_train.shape: {X_train.shape} - y_train.shape: {y_train.shape}\n" +
-          f"X_val.shape: {X_val.shape} - y_val.shape: {y_val.shape}\n" +
-          f"X_test.shape: {X_test.shape} - y_test.shape: {y_test.shape}")
+    print(
+        f"X_train.shape: {X_train.shape} - y_train.shape: {y_train.shape}\n" +
+        f"X_val.shape: {X_val.shape} - y_val.shape: {y_val.shape}\n" +
+        f"X_test.shape: {X_test.shape} - y_test.shape: {y_test.shape}"
+        )
 
     return (X_train, y_train), (X_val, y_val), (X_test, y_test)
 
@@ -120,6 +128,7 @@ class PimaDataset(Dataset):
         y_ret = self.y[item]
         return X_ret, y_ret
 
+
 # our ANN
 
 
@@ -129,13 +138,13 @@ class PimaModel(pytk.PytkModule):
         self.net = nn.Sequential(
             nn.Linear(8, 32),
             nn.ReLU(),
-            nn.Dropout(p=0.25),
+            nn.Dropout(p = 0.25),
             nn.Linear(32, 64),
             nn.ReLU(),
             # nn.Dropout(p=0.25),
             # nn.Linear(32, 64),
             # nn.ReLU(),
-            nn.Dropout(p=0.30),
+            nn.Dropout(p = 0.30),
             nn.Linear(64, 2)
         )
         # self.fc1 = nn.Linear(8, 16)
@@ -170,7 +179,7 @@ DECAY = 0.01
 
 
 def main():
-    (X_train, y_train), (X_val, y_val), (X_test, y_test) = load_data(upsample=True)
+    (X_train, y_train), (X_val, y_val), (X_test, y_test) = load_data(upsample = True)
     # NOTE: BCELoss expects y-value labels as floats
     # y_train, y_val, y_test = y_train.astype(np.float), y_val.astype(np.float), y_test.astype(np.float)
     # train_dataset = PimaDataset(X_train, y_train)
@@ -185,8 +194,8 @@ def main():
         loss_fn = nn.CrossEntropyLoss()
         # optimizer = torch.optim.SGD(
         #     model.parameters(), lr=LEARNING_RATE, weight_decay=DECAY)
-        optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE, weight_decay=DECAY)
-        model.compile(loss=loss_fn, optimizer=optimizer, metrics=['acc'])
+        optimizer = torch.optim.Adam(model.parameters(), lr = LEARNING_RATE, weight_decay = DECAY)
+        model.compile(loss = loss_fn, optimizer = optimizer, metrics = ['acc'])
         print(model)
 
         # train model
@@ -194,9 +203,11 @@ def main():
         # split training data into train/cross-val datasets in 80:20 ratio
         # hist = model.fit_dataset(train_dataset, validation_dataset=val_dataset,
         #                          epochs=NUM_EPOCHS, batch_size=BATCH_SIZE, report_interval=100)
-        hist = model.fit(X_train, y_train, validation_data=(X_val, y_val),
-                         epochs=NUM_EPOCHS, batch_size=BATCH_SIZE, report_interval=100)
-        pytk.show_plots(hist, metric='acc', plot_title="Performance Metrics")
+        hist = model.fit(
+            X_train, y_train, validation_data = (X_val, y_val),
+            epochs = NUM_EPOCHS, batch_size = BATCH_SIZE, report_interval = 100
+        )
+        pytk.show_plots(hist, metric = 'acc', plot_title = "Performance Metrics")
 
         # evaluate model performance on train/eval & test datasets
         print('\nEvaluating model performance...')
@@ -217,14 +228,16 @@ def main():
     if DO_PREDICTION:
         print('\nRunning predictions...')
         model = pytk.load_model(MODEL_SAVE_PATH)
-        # _, y_pred = model.predict_dataset(X_test)
-        y_pred = np.argmax(model.predict(X_test), axis=1)
+        # _, y_pred = model.predict_module(X_test)
+        y_pred = np.argmax(model.predict(X_test), axis = 1)
 
         # display output
         print('Sample labels: ', y_test.flatten())
         print('Sample predictions: ', y_pred)
-        print('We got %d/%d correct!' %
-              ((y_test.flatten() == y_pred).sum(), len(y_test.flatten())))
+        print(
+            'We got %d/%d correct!' %
+            ((y_test.flatten() == y_pred).sum(), len(y_test.flatten()))
+            )
 
 
 if __name__ == "__main__":

@@ -506,18 +506,18 @@ def cross_train_model(
     """
     # validate parameters passed into function
     # assert isinstance(model, nn.Module), \
-    #     "cross_train_model: 'model' parameter must be an instance of nn.Module!"
+    #     "cross_train_module: 'model' parameter must be an instance of nn.Module!"
     # assert isinstance(dataset, torch.utils.data.Dataset), \
-    #     "cross_train_model: 'dataset' must be a subclass of torch.utils.data.Dataset"
+    #     "cross_train_module: 'dataset' must be a subclass of torch.utils.data.Dataset"
     assert (0.0 <= validation_split < 1.0), \
-        "cross_train_model: 'validation_split' must be a float between (0.0, 1.0]"
+        "cross_train_module: 'validation_split' must be a float between (0.0, 1.0]"
     # if validation_dataset is not None:
     #     assert isinstance(validation_dataset, torch.utils.data.Dataset), \
-    #         "cross_train_model: 'validation_dataset' must be a subclass of torch.utils.data.Dataset"
+    #         "cross_train_module: 'validation_dataset' must be a subclass of torch.utils.data.Dataset"
     if loss_fxn is None:
-        raise ValueError("cross_train_model: 'loss_fxn' cannot be None")
+        raise ValueError("cross_train_module: 'loss_fxn' cannot be None")
     if optimizer is None:
-        raise ValueError("cross_train_model: 'optimizer' cannot be None")
+        raise ValueError("cross_train_module: 'optimizer' cannot be None")
     # if lr_scheduler is not None:
     #     # NOTE:  ReduceLROnPlateau is NOT derived from _LRScheduler, but from object, which
     #     # is odd as all other schedulers derive from _LRScheduler

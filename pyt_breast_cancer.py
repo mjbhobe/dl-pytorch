@@ -206,7 +206,7 @@ def main():
         model = t3.load_model(model, MODEL_SAVE_PATH)
         print(model)
 
-        # preds, actuals = t3.predict_dataset(model, test_dataset, device = DEVICE)
+        # preds, actuals = t3.predict_module(model, test_dataset, device = DEVICE)
         preds, actuals = trainer.predict_dataset(model, dataset = (X_test, y_test))
         preds = np.round(preds).ravel()
         actuals = actuals.ravel()

@@ -10,7 +10,6 @@ import warnings
 
 warnings.filterwarnings('ignore')
 
-import os, random
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -66,7 +65,7 @@ def load_data(val_split = 0.20, test_split = 0.20):
 
 # our model - note that it is created the same way as your usual Pytorch model
 # Only difference is that it has been derived from pytk.PytkModule class 
-class IrisNet(pytk.PytkModule):
+class IrisNet(nn.Module):
     def __init__(self, inp_size, hidden1, hidden2, num_classes):
         super(IrisNet, self).__init__()
         self.fc1 = nn.Linear(inp_size, hidden1)
@@ -84,7 +83,6 @@ class IrisNet(pytk.PytkModule):
 
 
 DO_TRAINING = True
-DO_TESTING = True
 DO_PREDICTION = True
 MODEL_SAVE_NAME = './model_states/pyt_iris_ann.pyt'
 NUM_EPOCHS = 250
@@ -114,35 +112,22 @@ def main():
         print('Building model...')
         model = IrisNet(4, 16, 16, 4)
         optimizer = torch.optim.Adam(model.parameters(), lr = 0.001, weight_decay = 0.005)
-        hist = trainer.fit(model, optimizer, train_dataset=(X_train, y_train),
-
-
-        # define the loss function & optimizer that model should
-        loss_fn = nn.CrossEntropyLoss()
-        model.compile(loss = loss_fn, optimizer = optimizer, metrics = ['acc'])
-        print(model)
-
-        # train model - here is the magic, notice the Keras-like fit(...) call
-        print('Training model...')
-        hist = model.fit(
-            X_train, y_train, validation_data = (X_val, y_val), epochs = 250,
-            batch_size = BATCH_SIZE, verbose = 0
+        hist = trainer.fit(
+            model, optimizer, train_dataset = (X_train, y_train),
+            validation_dataset = (X_val, y_val)
         )
-        # display plots of loss & accuracy against epochs
-        pytk.show_plots(hist, metric = 'acc', plot_title = 'Training metrics')
-
+        hist.plot_metrics(title = "Model Performance")
         # evaluate model performance on train/eval & test datasets
-        # Again, notice the Keras-like API to evaluate model performance
         print('\nEvaluating model performance...')
-        loss, acc = model.evaluate(X_train, y_train)
-        print(f'  Training dataset  -> loss: {loss:.4f} - acc: {acc:.4f}')
-        loss, acc = model.evaluate(X_val, y_val)
-        print(f'  Cross-val dataset -> loss: {loss:.4f} - acc: {acc:.4f}')
-        loss, acc = model.evaluate(X_test, y_test)
-        print(f'  Test dataset      -> loss: {loss:.4f} - acc: {acc:.4f}')
+        metrics = trainer.evaluate(model, dataset = (X_train, y_train))
+        print(f"  - Training dataset  -> loss: {metrics['loss']:.4f} - acc: {metrics['acc']:.4f}")
+        metrics = trainer.evaluate(model, dataset = (X_val, y_val))
+        print(f"  - Cross-val dataset -> loss: {metrics['loss']:.4f} - acc: {metrics['acc']:.4f}")
+        metrics = trainer.evaluate(model, dataset = (X_test, y_test))
+        print(f"  - Test dataset      -> loss: {metrics['loss']:.4f} - acc: {metrics['acc']:.4f}")
 
         # save model state
-        model.save(MODEL_SAVE_NAME)
+        t3.save_model(model, MODEL_SAVE_NAME)
         del model
 
     if DO_PREDICTION:
@@ -150,13 +135,14 @@ def main():
         # load model state from .pt file
         # model = pytk.load_model(MODEL_SAVE_NAME)
         model = IrisNet(4, 16, 16, 4)
-        model.load(MODEL_SAVE_NAME)
+        model = t3.load_model(model, MODEL_SAVE_NAME)
 
-        y_pred = np.argmax(model.predict(X_test), axis = 1)
+        y_pred = np.argmax(trainer.predict(model, X_test), axis = 1)
         # we have just 5 elements in dataset, showing ALL
         print(f'Sample labels: {y_test}')
         print(f'Sample predictions: {y_pred}')
         print(f'We got {(y_test == y_pred).sum()}/{len(y_test)} correct!!')
+        del model
 
 
 if __name__ == "__main__":

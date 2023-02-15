@@ -265,7 +265,7 @@ def main():
         )
 
         # train model
-        # hist = t3.cross_train_model(
+        # hist = t3.cross_train_module(
         #     model, train_dataset, loss_fn, optimizer, device = DEVICE,
         #     validation_dataset = val_dataset, metrics_map = metrics_map,
         #     epochs = NUM_EPOCHS, batch_size = BATCH_SIZE

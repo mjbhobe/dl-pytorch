@@ -249,9 +249,10 @@ def main():
         print('Displaying sample from train dataset...')
         testloader = torch.utils.data.DataLoader(test_dataset, batch_size=64, shuffle=True)
         data_iter = iter(testloader)
-        images, labels = data_iter.next()  # fetch first batch of 64 images & labels
+        images, labels = next(data_iter)  # fetch first batch of 64 images & labels
         display_sample(images.cpu().numpy(), labels.cpu().numpy(),
                        grid_shape=(8, 8), plot_title='Sample Images')
+        sys.exit(-1)
 
     if DO_TRAINING:
         model = build_model()
