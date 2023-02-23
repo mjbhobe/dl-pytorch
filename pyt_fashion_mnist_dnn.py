@@ -28,25 +28,30 @@ import torch
 
 print('Using Pytorch version: ', torch.__version__)
 import torch.nn as nn
+import torchmetrics
+import torchsummary
 import torch.nn.functional as F
 from torchvision import datasets, transforms
 from torch import optim
 # My helper functions for training/evaluating etc.
-import pytorch_toolkit as pytk
+# import pytorch_toolkit as pytk
+import torch_training_toolkit as t3
 
 # to ensure that you get consistent results across runs & machines
 # @see: https://discuss.pytorch.org/t/reproducibility-over-different-machines/63047
 seed = 123
-random.seed(seed)
-os.environ['PYTHONHASHSEED'] = str(seed)
-np.random.seed(seed)
-torch.manual_seed(seed)
-if torch.cuda.is_available():
-    torch.cuda.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
-    # torch.backends.cudnn.enabled = False
+t3.seed_all(seed)
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# random.seed(seed)
+# os.environ['PYTHONHASHSEED'] = str(seed)
+# np.random.seed(seed)
+# torch.manual_seed(seed)
+# if torch.cuda.is_available():
+#     torch.cuda.manual_seed(seed)
+#     torch.cuda.manual_seed_all(seed)
+#     torch.backends.cudnn.deterministic = True
+#     torch.backends.cudnn.benchmark = False
+#     # torch.backends.cudnn.enabled = False
 
 
 def load_data():
@@ -70,8 +75,8 @@ def load_data():
     print("No of test records: %d" % len(test_dataset))
 
     # lets split the test dataset into val_dataset & test_dataset -> 8000:2000 records
-    val_dataset, test_dataset = torch.utils.data.random_split(test_dataset, [
-                                                              8000, 2000])
+    # val_dataset, test_dataset = torch.utils.data.random_split(test_dataset, [8000, 2000])
+    val_dataset, test_dataset = t3.split_dataset(test_dataset, split_perc=0.2)
     print("No of cross-val records: %d" % len(val_dataset))
     print("No of test records: %d" % len(test_dataset))
 
@@ -158,35 +163,45 @@ IMAGE_HEIGHT, IMAGE_WIDTH, NUM_CHANNELS, NUM_CLASSES = 28, 28, 1, 10
 
 
 # define our network using Linear layers only
-class FMNISTNet(pytk.PytkModule):
+class FMNISTNet(nn.Module):
     def __init__(self):
         super(FMNISTNet, self).__init__()
-        self.fc1 = pytk.Linear(IMAGE_HEIGHT * IMAGE_WIDTH * NUM_CHANNELS, 256)
-        self.fc2 = pytk.Linear(256, 128)
-        self.out = pytk.Linear(128, NUM_CLASSES)
+        # self.flatten = nn.Flatten()
+        self.net = nn.Sequential(
+            nn.Flatten(),
+            t3.Linear(IMAGE_HEIGHT * IMAGE_WIDTH * NUM_CHANNELS, 256),
+            nn.ReLU(),
+            t3.Linear(256, 128),
+            nn.ReLU(),
+            t3.Linear(128, NUM_CLASSES)
+        )
+        # self.fc1 = pytk.Linear(IMAGE_HEIGHT * IMAGE_WIDTH * NUM_CHANNELS, 256)
+        # self.fc2 = pytk.Linear(256, 128)
+        # self.out = pytk.Linear(128, NUM_CLASSES)
 
     def forward(self, x):
         # flatten input (for DNN)
-        x = pytk.Flatten(x)
-        x = F.relu(self.fc1(x))
-        x = F.dropout(x, p=0.20, training=self.training)
-        x = F.relu(self.fc2(x))
-        x = F.dropout(x, p=0.20, training=self.training)
-        # NOTE: nn.CrossEntropyLoss() includes a logsoftmax call, which applies a softmax
-        # function to outputs. So, don't apply one yourself!
-        # x = F.softmax(self.out(x), dim=1)  # -- don't do this!
-        x = self.out(x)
-        return x
+        # x = nn.Flatten(x)
+        # x = F.relu(self.fc1(x))
+        # x = F.dropout(x, p=0.20, training=self.training)
+        # x = F.relu(self.fc2(x))
+        # x = F.dropout(x, p=0.20, training=self.training)
+        # # NOTE: nn.CrossEntropyLoss() includes a logsoftmax call, which applies a softmax
+        # # function to outputs. So, don't apply one yourself!
+        # # x = F.softmax(self.out(x), dim=1)  # -- don't do this!
+        # x = self.out(x)
+        # x = self.flatten(x)
+        return self.net(x)
 
 
 # if you prefer to use Convolutional Neural Network, use the following model definition
-class FMNISTConvNet(pytk.PytkModule):
+class FMNISTConvNet(nn.Module):
     def __init__(self):
         super(FMNISTConvNet, self).__init__()
-        self.conv1 = pytk.Conv2d(1, 128, kernel_size=3)
-        self.conv2 = pytk.Conv2d(128, 64, kernel_size=3)
-        self.fc1 = pytk.Linear(7 * 7 * 64, 512)
-        self.out = pytk.Linear(512, NUM_CLASSES)
+        self.conv1 = t3.Conv2d(1, 128, kernel_size=3)
+        self.conv2 = t3.Conv2d(128, 64, kernel_size=3)
+        self.fc1 = t3.Linear(7 * 7 * 64, 512)
+        self.out = t3.Linear(512, NUM_CLASSES)
 
     def forward(self, x):
         x = F.max_pool2d(F.relu(self.conv1(x)), 2)
@@ -194,7 +209,7 @@ class FMNISTConvNet(pytk.PytkModule):
         x = F.max_pool2d(F.relu(self.conv2(x)), 2)
         x = F.dropout(x, p=0.10, training=self.training)
         # flatten input (for DNN)
-        x = pytk.Flatten(x)
+        x = t3.Flatten(x)
         x = F.relu(self.fc1(x))
         x = F.dropout(x, p=0.20, training=self.training)
         # NOTE: nn.CrossEntropyLoss() includes a logsoftmax call, which applies a softmax
@@ -215,61 +230,68 @@ def build_model(use_cnn=False):
 
 
 DO_TRAINING = True
-DO_PREDICTION = True
+DO_PREDICTION = False
 SHOW_SAMPLE = True
-USE_CNN = True  # if False, will use an ANN
+USE_CNN = False  # if False, will use an ANN
 
 MODEL_SAVE_NAME = 'pyt_mnist_cnn.pyt' if USE_CNN else 'pyt_mnist_dnn.pyt'
 MODEL_SAVE_PATH = os.path.join('.', 'model_states', MODEL_SAVE_NAME)
-NUM_EPOCHS, BATCH_SIZE, LEARNING_RATE, L2_REG = (
-    25 if USE_CNN else 50), 64, 0.001, 0.0005
+NUM_EPOCHS, BATCH_SIZE, LEARNING_RATE, L2_REG = 25, 64, 0.001, 0.0005
 
 
 def main():
     print('Loading datasets...')
     train_dataset, val_dataset, test_dataset = load_data()
 
+    loss_fn = nn.CrossEntropyLoss()
+    metrics_map = {
+        "acc": torchmetrics.classification.MulticlassAccuracy(num_classes=NUM_CLASSES)
+    }
+    trainer = t3.Trainer(
+        loss_fn=loss_fn, device=DEVICE, metrics_map=metrics_map,
+        epochs=NUM_EPOCHS, batch_size=BATCH_SIZE
+    )
+
     if SHOW_SAMPLE:
         # display sample from test dataset
         print('Displaying sample from train dataset...')
         trainloader = torch.utils.data.DataLoader(test_dataset, batch_size=64, shuffle=True)
         data_iter = iter(trainloader)
-        images, labels = data_iter.next()  # fetch first batch of 64 images & labels
+        images, labels = next(data_iter)  # fetch first batch of 64 images & labels
         display_sample(images.cpu().numpy(), labels.cpu().numpy(),
                        grid_shape=(8, 8), plot_title='Sample Images')
 
     if DO_TRAINING:
         print(f'Using {"CNN" if USE_CNN else "ANN"} model...')
-        model = build_model(USE_CNN)
+        model = FMNISTConvNet() if USE_CNN else FMNISTNet()
         # display Keras like summary
-        model.summary((NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH))
+        print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
+        optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
         # train model
-        hist = model.fit_dataset(train_dataset, validation_dataset=val_dataset,
-                                 epochs=NUM_EPOCHS, batch_size=BATCH_SIZE)
-        pytk.show_plots(hist, metric='acc', plot_title='Training metrics')
+        hist = trainer.fit(model, optimizer, train_dataset, validation_dataset=val_dataset)
+        hist.plot_metrics("Model Performance")
 
         # evaluate model performance on train/eval & test datasets
         print('Evaluating model performance...')
-        loss, acc = model.evaluate_dataset(train_dataset)
-        print('  Training dataset  -> loss: %.4f - acc: %.4f' % (loss, acc))
-        loss, acc = model.evaluate_dataset(val_dataset)
-        print('  Cross-val dataset -> loss: %.4f - acc: %.4f' % (loss, acc))
-        loss, acc = model.evaluate_dataset(test_dataset)
-        print('  Test dataset      -> loss: %.4f - acc: %.4f' % (loss, acc))
+        metrics = t3.evaluate(model, train_dataset)
+        print(f"  Training dataset  -> loss: {metrics['loss']:.4f} - acc: {metrics['acc']:.4f}")
+        metrics = t3.evaluate(model, val_dataset)
+        print(f"  Cross-val dataset  -> loss: {metrics['loss']:.4f} - acc: {metrics['acc']:.4f}")
+        metrics = t3.evaluate(model, test_dataset)
+        print(f"  Test dataset  -> loss: {metrics['loss']:.4f} - acc: {metrics['acc']:.4f}")
 
         # save model state
-        model.save(MODEL_SAVE_PATH)
+        t3.save_model(model, MODEL_SAVE_PATH)
         del model
 
     if DO_PREDICTION:
         # load model state from .pt file
-        model = build_model(USE_CNN)
-        model.load(MODEL_SAVE_PATH)
-        # model = pytk.load_model(MODEL_SAVE_PATH)
-        model.summary((NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH))
+        model = FMNISTConvNet() if USE_CNN else FMNISTNet()
+        model = t3.load_model(model, MODEL_SAVE_PATH)
+        print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
 
-        y_pred, y_true = model.predict_dataset(test_dataset)
+        y_pred, y_true = trainer.predict(model, test_dataset)
         y_pred = np.argmax(y_pred, axis=1)
         print('Sample labels (50): ', y_true[:50])
         print('Sample predictions: ', y_true[:50])
@@ -278,11 +300,9 @@ def main():
 
         # display sample from test dataset
         print('Displaying sample predictions...')
-        trainloader = torch.utils.data.DataLoader(
-            test_dataset, batch_size=64, shuffle=True)
-        data_iter = iter(trainloader)
-        images, labels = data_iter.next()  # fetch a batch of 64 random images
-        preds = np.argmax(model.predict(images), axis=1)
+        trainloader = torch.utils.data.DataLoader(test_dataset, batch_size=64, shuffle=True)
+        images, labels = next(iter(trainloader))
+        preds = np.argmax(trainer.predict(model, images), axis=1)
         display_sample(images.cpu().numpy(), labels.cpu().numpy(), sample_predictions=preds,
                        grid_shape=(8, 8), plot_title='Sample Predictions')
 

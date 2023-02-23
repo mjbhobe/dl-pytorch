@@ -236,9 +236,9 @@ class MetricsHistory:
             if len(metric_names) == 1:
                 # only loss
                 plt.figure(figsize=fig_size)
-                plt.plot(x_vals, metric_vals["loss"], lw=2, markersize=7)
+                plt.plot(x_vals, metric_vals["loss"], lw=2, markersize=7, color="steelblue")
                 if self.include_val_metrics:
-                    plt.plot(x_vals, metric_vals["val_loss"], lw=2, markersize=7)
+                    plt.plot(x_vals, metric_vals["val_loss"], lw=2, markersize=7, color="firebrick")
                 legend = ["train", "valid"] if self.include_val_metrics else ["train"]
                 plt_title = f"Training & Cross-validation  Loss vs Epochs" \
                     if len(legend) == 2 else f"Training Loss vs Epochs"
