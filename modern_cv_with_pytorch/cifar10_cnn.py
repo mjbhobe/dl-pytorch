@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """cifar10_cnn.py - Fashion MNIST dataset classification using CNNs """
-import os, sys
+import os
+import sys
 import pathlib
 import argparse
 
@@ -16,9 +17,9 @@ import torchsummary
 import torch_training_toolkit as t3
 from utils import get_data_cifar10 as get_data, display_sample
 
-np.set_printoptions(precision = 6, linewidth = 1024, suppress = True)
+np.set_printoptions(precision=6, linewidth=1024, suppress=True)
 plt.style.use('seaborn')
-sns.set(style = 'darkgrid', context = 'notebook', font_scale = 1.20)
+sns.set(style='darkgrid', context='notebook', font_scale=1.20)
 
 SEED = t3.seed_all(t3.T3_FAV_SEED)
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -36,15 +37,17 @@ class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
         self.net = nn.Sequential(
-            t3.Conv2d(3, 32, 3, padding = 1),
+            # NOTE: t3.Conv2d(...) is almost the same as nn.Conv2d
+            # the t3 version initialises weights & biases and uses padding=1 by default
+            t3.Conv2d(3, 32, 3, padding=1),
             nn.ReLU(),
             nn.MaxPool2d(2),
 
-            t3.Conv2d(32, 64, 3, padding = 1),
+            t3.Conv2d(32, 64, 3, padding=1),
             nn.ReLU(),
             nn.MaxPool2d(2),
 
-            t3.Conv2d(64, 128, 3, padding = 1),
+            t3.Conv2d(64, 128, 3, padding=1),
             nn.ReLU(),
             nn.MaxPool2d(2),
 
@@ -65,36 +68,36 @@ class Net(nn.Module):
 def main():
     parser = argparse.ArgumentParser(pathlib.Path(__file__).name)
     parser.add_argument(
-        "--do_training", action = "store_true",
-        help = "Specify this flag to train the model"
+        "--do_training", action="store_true",
+        help="Specify this flag to train the model"
     )
     parser.add_argument(
-        "--do_predictions", action = "store_true",
-        help = "Specify this flag to run predictions"
+        "--do_predictions", action="store_true",
+        help="Specify this flag to run predictions"
     )
     parser.add_argument(
-        "--show_sample", action = "store_true",
-        help = "Specify this flag to show sample from dataset"
+        "--show_sample", action="store_true",
+        help="Specify this flag to show sample from dataset"
     )
     parser.add_argument(
-        "--num_epochs", type = int, default = 25,
-        help = "Specifies how many epochs to run training for (default=25)"
+        "--num_epochs", type=int, default=25,
+        help="Specifies how many epochs to run training for (default=25)"
     )
     parser.add_argument(
-        "--batch_size", type = int, default = 32,
-        help = "Specifies batch size for training (default=32)"
+        "--batch_size", type=int, default=32,
+        help="Specifies batch size for training (default=32)"
     )
     parser.add_argument(
-        "--lr", type = float, default = 0.01,
-        help = "Specifies learning rate to use for optimizer (default=0.001)"
+        "--lr", type=float, default=0.01,
+        help="Specifies learning rate to use for optimizer (default=0.001)"
     )
     parser.add_argument(
-        "--l1_reg", type = float, required = False,
-        help = "Optional param - specified L1 regularization to be applied"
+        "--l1_reg", type=float, required=False,
+        help="Optional param - specified L1 regularization to be applied"
     )
     parser.add_argument(
-        "--l2_reg", type = float, required = False,
-        help = "Optional param - specified L2 regularization to be applied"
+        "--l2_reg", type=float, required=False,
+        help="Optional param - specified L2 regularization to be applied"
     )
 
     args = parser.parse_args()
@@ -111,19 +114,19 @@ def main():
     BATCH_SIZE = args.batch_size
     LEARNING_RATE = args.lr
 
-    train_dataset, val_dataset, test_dataset, class_names = get_data(DATA_DIR, debug = True)
+    train_dataset, val_dataset, test_dataset, class_names = get_data(DATA_DIR, debug=True)
     if args.show_sample:
         display_sample(
-            test_dataset, class_names, title = "Sample Images from CIFAR10 Test dataset"
+            test_dataset, class_names, title="Sample Images from CIFAR10 Test dataset"
         )
 
     loss_fn = nn.CrossEntropyLoss()
     metrics_map = {
-        "acc": torchmetrics.classification.MulticlassAccuracy(num_classes = NUM_CLASSES)
+        "acc": torchmetrics.classification.MulticlassAccuracy(num_classes=NUM_CLASSES)
     }
     trainer = t3.Trainer(
-        loss_fn, device = DEVICE, metrics_map = metrics_map,
-        epochs = NUM_EPOCHS, batch_size = BATCH_SIZE
+        loss_fn, device=DEVICE, metrics_map=metrics_map,
+        epochs=NUM_EPOCHS, batch_size=BATCH_SIZE
     )
 
     if args.do_training:
@@ -132,18 +135,18 @@ def main():
         model = model.to(DEVICE)
         input_dim = (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)
         print(torchsummary.summary(model, input_dim))
-        optimizer = torch.optim.Adam(model.parameters(), lr = LEARNING_RATE)
+        optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
         lr_scheduler = torch.optim.lr_scheduler.StepLR(
-            optimizer, step_size = 5, gamma = 0.1, verbose = True
+            optimizer, step_size=5, gamma=0.1, verbose=True
         )
 
         hist = trainer.fit(
-            model, optimizer, train_dataset, validation_dataset = val_dataset,
+            model, optimizer, train_dataset, validation_dataset=val_dataset,
             # lr_scheduler = lr_scheduler,
-            l1_reg = args.l1_reg, l2_reg = args.l2_reg
+            l1_reg=args.l1_reg, l2_reg=args.l2_reg
         )
-        hist.plot_metrics(title = "Model Performance")
+        hist.plot_metrics(title="Model Performance")
 
         # evaluate performance
         metrics = trainer.evaluate(model, train_dataset)
@@ -170,7 +173,7 @@ def main():
         input_dim = (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)
         print(torchsummary.summary(model, input_dim))
         y_pred, y_true = trainer.predict(model, test_dataset)
-        y_pred = np.argmax(y_pred, axis = 1)
+        y_pred = np.argmax(y_pred, axis=1)
         correct_preds = (y_pred == y_true).sum()
         pred_acc = (correct_preds / len(y_true)) * 100.0
         print(

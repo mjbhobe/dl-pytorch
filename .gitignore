@@ -13,6 +13,9 @@ kaggle.json
 # ignore IPython Notebook checkpoints
 .ipynb_checkpoints
 
+# ignore configuration files
+database.ini
+
 # ignore model_states folder (saves model states)
 model_states
 
@@ -25,7 +28,7 @@ __pycache__
 # ignore pt (checkpoint) files
 *.pt
 
-# ignore checkpoint files 
+# ignore checkpoint files
 *.ckpt
 
 # for lightning logs

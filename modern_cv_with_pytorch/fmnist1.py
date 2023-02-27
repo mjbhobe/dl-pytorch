@@ -51,15 +51,15 @@ class Net(nn.Module):
 def main():
     parser = argparse.ArgumentParser(pathlib.Path(__file__).name)
     parser.add_argument(
-        "--do_training", action = "store_true",
+        "--do_training", action = "store_true", default=False,
         help = "Specify this flag to train the model"
     )
     parser.add_argument(
-        "--do_predictions", action = "store_true",
+        "--do_predictions", action = "store_true", default=True,
         help = "Specify this flag to run predictions"
     )
     parser.add_argument(
-        "--show_sample", action = "store_true",
+        "--show_sample", action = "store_true", default=False,
         help = "Specify this flag to show sample from dataset"
     )
     parser.add_argument(
@@ -85,10 +85,10 @@ def main():
 
     args = parser.parse_args()
 
-    if len(sys.argv) == 1:
-        # missing command line args
-        parser.print_help()
-        parser.exit()
+    # if len(sys.argv) == 1:
+    #     # missing command line args
+    #     parser.print_help()
+    #     parser.exit()
 
     # DO_TRAINING = args.do_training
     # DO_PREDICTIONS = args.do_predictions
