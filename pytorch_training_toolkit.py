@@ -504,7 +504,7 @@ def cross_train_module(
     metrics_map: MetricsMapType = None,
     epochs: int = 5,
     batch_size: int = 64,
-    l2_reg: float = None, l1_reg: float = None,
+    l1_reg: float = None,
     reporting_interval: int = 1,
     lr_scheduler: Union[LRSchedulerType, ReduceLROnPlateauType] = None,
     shuffle: bool = True,
@@ -571,11 +571,13 @@ def cross_train_module(
             f"NOTE: progress will be reported every {reporting_interval} epoch!"
         )
 
-    add_l1_l2_reg = (l2_reg is not None) or (l1_reg is not None)
-    l1_l2_norm = 2 if l2_reg is not None else 1
-    reg_lambda = l2_reg if l2_reg is not None else l1_reg
-    if add_l1_l2_reg:
-        print(f"Adding L{l1_l2_norm} regularization with lambda = {reg_lambda}")
+    # add_l1_l2_reg = (l2_reg is not None) or (l1_reg is not None)
+    # l1_l2_norm = 2 if l2_reg is not None else 1
+    # reg_lambda = l2_reg if l2_reg is not None else l1_reg
+    # if add_l1_l2_reg:
+    l1_penalty = None if l1_reg is None else torch.nn.L1Loss()
+    if l1_reg is not None:
+        print(f"Adding L1 regularization with lambda = {l1_reg}")
 
     history = None
 
@@ -609,12 +611,12 @@ def cross_train_module(
                 preds = model(X)
                 # calculate loss
                 loss_tensor = loss_fxn(preds, y)
-                # add L1 or L2 regularization if specified
-                reg_loss = 0
-                if add_l1_l2_reg:
+                # add L1 if mentioned
+                if l1_reg is not None:
+                    reg_loss = 0
                     for param in model.parameters():
-                        reg_loss += torch.norm(param, l1_l2_norm)
-                    loss_tensor += reg_loss * reg_lambda
+                        reg_loss += l1_penalty(param)
+                    loss_tensor += reg_loss * l1_reg
                 # compute gradients
                 loss_tensor.backward()
                 # update weights
@@ -1025,7 +1027,7 @@ class Trainer:
         train_dataset: Union[NumpyArrayTuple, torch.utils.data.Dataset],
         validation_dataset: Union[NumpyArrayTuple, torch.utils.data.Dataset] = None,
         validation_split: float = 0.0,
-        l2_reg=None, l1_reg=None,
+        l1_reg=None,
         lr_scheduler: Union[LRSchedulerType, ReduceLROnPlateauType] = None,
         verbose: bool = True
     ) -> MetricsHistory:
@@ -1068,7 +1070,7 @@ class Trainer:
             model, train_dataset, self.loss_fn, optimizer, device=self.device,
             validation_split=validation_split, validation_dataset=validation_dataset,
             metrics_map=self.metrics_map, epochs=self.epochs, batch_size=self.batch_size,
-            l2_reg=l2_reg, l1_reg=l1_reg,
+            l1_reg=l1_reg,
             reporting_interval=self.reporting_interval, lr_scheduler=lr_scheduler,
             shuffle=self.shuffle, num_workers=self.num_workers, verbose=verbose
         )

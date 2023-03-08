@@ -43,7 +43,7 @@ def cross_train_module(
     metrics_map: MetricsMapType = None,
     epochs: int = 5,
     batch_size: int = 64,
-    l2_reg: float = None, l1_reg: float = None,
+    l1_reg: float = None,
     reporting_interval: int = 1,
     lr_scheduler: Union[LRSchedulerType, ReduceLROnPlateauType] = None,
     shuffle: bool = True,
@@ -97,12 +97,12 @@ def cross_train_module(
     if val_dataset is not None:
         print(
             f"Cross training on \'{device}\' with {len(train_dataset)} training and " +
-            f"{len(val_dataset)} cross-validation records...", flush=True
+            f"{len(val_dataset)} cross-validation records...", flush = True
         )
     else:
         print(
             f"Training on \'{device}\' with {len(train_dataset)} records...",
-            flush=True
+            flush = True
         )
 
     if reporting_interval != 1:
@@ -110,11 +110,9 @@ def cross_train_module(
             f"NOTE: progress will be reported every {reporting_interval} epoch!"
         )
 
-    add_l1_l2_reg = (l2_reg is not None) or (l1_reg is not None)
-    l1_l2_norm = 2 if l2_reg is not None else 1
-    reg_lambda = l2_reg if l2_reg is not None else l1_reg
-    if add_l1_l2_reg:
-        print(f"Adding L{l1_l2_norm} regularization with lambda = {reg_lambda}")
+    l1_penalty = None if l1_reg is None else torch.nn.L1Loss()
+    if l1_reg is not None:
+        print(f"Adding L1 regularization with lambda = {l1_reg}")
 
     history = None
 
@@ -133,9 +131,9 @@ def cross_train_module(
             # loop over records in training dataset (use DataLoader)
             train_dataloader = torch.utils.data.DataLoader(
                 train_dataset,
-                batch_size=train_batch_size,
-                shuffle=shuffle,
-                num_workers=num_workers
+                batch_size = train_batch_size,
+                shuffle = shuffle,
+                num_workers = num_workers
             )
             num_batches, samples = 0, 0
 
@@ -148,12 +146,12 @@ def cross_train_module(
                 preds = model(X)
                 # calculate loss
                 loss_tensor = loss_fxn(preds, y)
-                # add L1 or L2 regularization if specified
-                reg_loss = 0
-                if add_l1_l2_reg:
+                # add L1 if mentioned
+                if l1_reg is not None:
+                    reg_loss = 0
                     for param in model.parameters():
-                        reg_loss += torch.norm(param, l1_l2_norm)
-                    loss_tensor += reg_loss * reg_lambda
+                        reg_loss += l1_penalty(param)
+                    loss_tensor += reg_loss * l1_reg
                 # compute gradients
                 loss_tensor.backward()
                 # update weights
@@ -163,7 +161,7 @@ def cross_train_module(
                 preds = preds.to(device)
                 history.calculate_batch_metrics(
                     preds.to("cpu"), y.to("cpu"), loss_tensor.item(),
-                    val_metrics=False
+                    val_metrics = False
                 )
 
                 num_batches += 1
@@ -173,41 +171,41 @@ def cross_train_module(
                     # display progress with batch metrics - will display line like this:
                     # Epoch (  3/100): (  45/1024) -> loss: 3.456 - acc: 0.275
                     metricsStr = history.get_metrics_str(
-                        batch_metrics=True,
-                        include_val_metrics=False
+                        batch_metrics = True,
+                        include_val_metrics = False
                     )
                     print(
                         "\rEpoch (%*d/%*d): (%*d/%*d) -> %s" %
                         (len_num_epochs, epoch + 1, len_num_epochs, epochs,
                          len_tot_samples, samples, len_tot_samples, tot_samples,
-                         metricsStr), end='', flush=True
+                         metricsStr), end = '', flush = True
                     )
             else:
                 # all train batches are over - display average train metrics
-                history.calculate_epoch_metrics(val_metrics=False)
+                history.calculate_epoch_metrics(val_metrics = False)
                 if val_dataset is None:
                     if (epoch == 0) or ((epoch + 1) % reporting_interval == 0) \
-                            or ((epoch + 1) == epochs):
+                        or ((epoch + 1) == epochs):
                         metricsStr = history.get_metrics_str(
-                            batch_metrics=False,
-                            include_val_metrics=False
+                            batch_metrics = False,
+                            include_val_metrics = False
                         )
                         print(
                             "\rEpoch (%*d/%*d): (%*d/%*d) -> %s" %
                             (len_num_epochs, epoch + 1, len_num_epochs, epochs,
                              len_tot_samples, samples, len_tot_samples,
                              tot_samples,
-                             metricsStr), flush=True
+                             metricsStr), flush = True
                         )
                         # training ends here as there is no cross-validation dataset
                 else:
                     # we have a validation dataset
                     # same print as above except for trailing ... and end=''
                     if (epoch == 0) or ((epoch + 1) % reporting_interval == 0) \
-                            or ((epoch + 1) == epochs):
+                        or ((epoch + 1) == epochs):
                         metricsStr = history.get_metrics_str(
-                            batch_metrics=False,
-                            include_val_metrics=False
+                            batch_metrics = False,
+                            include_val_metrics = False
                         )
                         print(
                             "\rEpoch (%*d/%*d): (%*d/%*d) -> %s..." %
@@ -215,7 +213,7 @@ def cross_train_module(
                              len_tot_samples, samples, len_tot_samples,
                              tot_samples,
                              metricsStr),
-                            end='', flush=True
+                            end = '', flush = True
                         )
 
                     val_batch_size = batch_size if batch_size != -1 else len(val_dataset)
@@ -224,9 +222,9 @@ def cross_train_module(
                         # val_dataloader = None if val_dataset is None else \
                         val_dataloader = torch.utils.data.DataLoader(
                             val_dataset,
-                            batch_size=val_batch_size,
-                            shuffle=shuffle,
-                            num_workers=num_workers
+                            batch_size = val_batch_size,
+                            shuffle = shuffle,
+                            num_workers = num_workers
                         )
                         num_val_batches = 0
 
@@ -237,18 +235,18 @@ def cross_train_module(
                             val_batch_loss = loss_fxn(val_preds, val_y).item()
                             history.calculate_batch_metrics(
                                 val_preds.to("cpu"), val_y.to("cpu"), val_batch_loss,
-                                val_metrics=True
+                                val_metrics = True
                             )
                             num_val_batches += 1
                         else:
                             # loop over val_dataset completed - compute val average metrics
-                            history.calculate_epoch_metrics(val_metrics=True)
+                            history.calculate_epoch_metrics(val_metrics = True)
                             # display final metrics
                             if (epoch == 0) or ((epoch + 1) % reporting_interval == 0) \
-                                    or ((epoch + 1) == epochs):
+                                or ((epoch + 1) == epochs):
                                 metricsStr = history.get_metrics_str(
-                                    batch_metrics=False,
-                                    include_val_metrics=True
+                                    batch_metrics = False,
+                                    include_val_metrics = True
                                 )
                                 print(
                                     "\rEpoch (%*d/%*d): (%*d/%*d) -> %s" %
@@ -256,7 +254,7 @@ def cross_train_module(
                                      epochs,
                                      len_tot_samples, samples, len_tot_samples,
                                      tot_samples,
-                                     metricsStr), flush=True
+                                     metricsStr), flush = True
                                 )
 
             # step the learning rate scheduler at end of epoch
@@ -298,8 +296,8 @@ def evaluate_module(
             dataset = torch.utils.data.TensorDataset(X, y)
 
         loader = torch.utils.data.DataLoader(
-            dataset, batch_size=batch_size,
-            shuffle=False
+            dataset, batch_size = batch_size,
+            shuffle = False
         )
 
         tot_samples, samples, num_batches = len(dataset), 0, 0
@@ -320,32 +318,32 @@ def evaluate_module(
                 batch_loss = loss_fn(preds, y).item()
                 history.calculate_batch_metrics(
                     preds.to("cpu"), y.to("cpu"), batch_loss,
-                    val_metrics=False
+                    val_metrics = False
                 )
                 samples += len(y)
                 num_batches += 1
                 if verbose:
                     metricsStr = history.get_metrics_str(
-                        batch_metrics=True,
-                        include_val_metrics=False
+                        batch_metrics = True,
+                        include_val_metrics = False
                     )
                     print(
                         "\rEvaluating (%*d/%*d) -> %s" %
                         (len_tot_samples, samples, len_tot_samples, tot_samples,
-                         metricsStr), end='', flush=True
+                         metricsStr), end = '', flush = True
                     )
             else:
                 # iteration over batch completed
                 # calculate average metrics across all batches
-                history.calculate_epoch_metrics(val_metrics=False)
+                history.calculate_epoch_metrics(val_metrics = False)
                 metricsStr = history.get_metrics_str(
-                    batch_metrics=False,
-                    include_val_metrics=False
+                    batch_metrics = False,
+                    include_val_metrics = False
                 )
                 print(
                     "\rEvaluating (%*d/%*d) -> %s" %
                     (len_tot_samples, samples, len_tot_samples, tot_samples,
-                     metricsStr), flush=True
+                     metricsStr), flush = True
                 )
         return history.get_metric_vals(history.tracked_metrics())
     finally:
@@ -371,8 +369,8 @@ def predict_module(
             dataset = torch.utils.data.TensorDataset(X, y)
 
         loader = torch.utils.data.DataLoader(
-            dataset, batch_size=batch_size,
-            shuffle=False
+            dataset, batch_size = batch_size,
+            shuffle = False
         )
         preds, actuals = [], []
 
@@ -417,7 +415,7 @@ def predict_array(
         with torch.no_grad():
             model.eval()
             if isinstance(data, np.ndarray):
-                data = torch.tensor(data, dtype=torch.float32)
+                data = torch.tensor(data, dtype = torch.float32)
             data = data.to(device)
             # forward pass
             logits = model(data)
@@ -564,7 +562,7 @@ class Trainer:
         train_dataset: Union[NumpyArrayTuple, torch.utils.data.Dataset],
         validation_dataset: Union[NumpyArrayTuple, torch.utils.data.Dataset] = None,
         validation_split: float = 0.0,
-        l2_reg=None, l1_reg=None,
+        l1_reg = None,
         lr_scheduler: Union[LRSchedulerType, ReduceLROnPlateauType] = None,
         verbose: bool = True
     ) -> MetricsHistory:
@@ -604,12 +602,12 @@ class Trainer:
                 "torch.optim._LRScheduler or ReduceLROnPlateau"
 
         history = cross_train_module(
-            model, train_dataset, self.loss_fn, optimizer, device=self.device,
-            validation_split=validation_split, validation_dataset=validation_dataset,
-            metrics_map=self.metrics_map, epochs=self.epochs, batch_size=self.batch_size,
-            l2_reg=l2_reg, l1_reg=l1_reg,
-            reporting_interval=self.reporting_interval, lr_scheduler=lr_scheduler,
-            shuffle=self.shuffle, num_workers=self.num_workers, verbose=verbose
+            model, train_dataset, self.loss_fn, optimizer, device = self.device,
+            validation_split = validation_split, validation_dataset = validation_dataset,
+            metrics_map = self.metrics_map, epochs = self.epochs, batch_size = self.batch_size,
+            l1_reg = l1_reg,
+            reporting_interval = self.reporting_interval, lr_scheduler = lr_scheduler,
+            shuffle = self.shuffle, num_workers = self.num_workers, verbose = verbose
         )
         return history
 
@@ -620,12 +618,9 @@ class Trainer:
         verbose: bool = True
     ) -> dict:
         return evaluate_module(
-            model, dataset, self.loss_fn, device=self.device, metrics_map=self.metrics_map,
-            batch_size=self.batch_size, verbose=verbose
+            model, dataset, self.loss_fn, device = self.device, metrics_map = self.metrics_map,
+            batch_size = self.batch_size, verbose = verbose
         )
-
-    # def predict_dataset(self, model: nn.Module, dataset: torch.utils.data.Dataset) -> tuple:
-    #     return predict_module(model, dataset, self.device, self.batch_size)
 
     def predict(
         self,
