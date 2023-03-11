@@ -109,7 +109,7 @@ def load_data(upsample = False, test_split = 0.20):
         f"X_train.shape: {X_train.shape} - y_train.shape: {y_train.shape}\n" +
         f"X_val.shape: {X_val.shape} - y_val.shape: {y_val.shape}\n" +
         f"X_test.shape: {X_test.shape} - y_test.shape: {y_test.shape}"
-        )
+    )
 
     return (X_train, y_train), (X_val, y_val), (X_test, y_test)
 
@@ -237,7 +237,7 @@ def main():
         print(
             'We got %d/%d correct!' %
             ((y_test.flatten() == y_pred).sum(), len(y_test.flatten()))
-            )
+        )
 
 
 if __name__ == "__main__":

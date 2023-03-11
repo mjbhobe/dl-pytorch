@@ -13,12 +13,10 @@ if sys.version_info < (2,):
         "torch_training_toolkit does not support Python 1. Please use a Python 3+ interpreter!"
     )
 
-import os
-import pathlib
-
 from .metrics_history import *
 from .dataset_utils import *
 from .layers import *
+from .early_stopping import *
 
 # custom data types
 from typing import Union, Dict, Tuple
@@ -46,6 +44,7 @@ def cross_train_module(
     l1_reg: float = None,
     reporting_interval: int = 1,
     lr_scheduler: Union[LRSchedulerType, ReduceLROnPlateauType] = None,
+    early_stopping: EarlyStopping = None,
     shuffle: bool = True,
     num_workers: int = 0,
     verbose: bool = True
@@ -257,6 +256,17 @@ def cross_train_module(
                                      metricsStr), flush = True
                                 )
 
+            if (early_stopping is not None) and (val_dataset is not None):
+                # early stooping test only if validation dataset is used
+                monitored_metric = early_stopping.monitored_metric()
+                last_metric_val = history.metrics_history[monitored_metric]["epoch_vals"][-1]
+                early_stopping(model, last_metric_val, epoch)
+                if early_stopping.early_stop:
+                    # load last state
+                    model.load_state_dict(torch.load(early_stopping.checkpoint_path()))
+                    model.eval()
+                    break
+
             # step the learning rate scheduler at end of epoch
             if (lr_scheduler is not None) and (epoch < epochs - 1):
                 # have to go to these hoops as ReduceLROnPlateau requires a metric for step()
@@ -269,6 +279,7 @@ def cross_train_module(
                     lr_scheduler.step(lr_metric)
                 else:
                     lr_scheduler.step()
+
         return history
     finally:
         model = model.to('cpu')
@@ -493,7 +504,9 @@ class Trainer:
         loss_fn,
         device: torch.device,
         metrics_map: MetricsMapType = None,
-        epochs: int = 5, batch_size: int = 64, reporting_interval: int = 1,
+        epochs: int = 5,
+        batch_size: int = 64,
+        reporting_interval: int = 1,
         shuffle: bool = True,
         num_workers: int = 0
     ):
@@ -564,6 +577,7 @@ class Trainer:
         validation_split: float = 0.0,
         l1_reg = None,
         lr_scheduler: Union[LRSchedulerType, ReduceLROnPlateauType] = None,
+        early_stopping: EarlyStopping = None,
         verbose: bool = True
     ) -> MetricsHistory:
         """ fits (i.e cross-trains) the model using provided training data (and optionally
@@ -607,6 +621,7 @@ class Trainer:
             metrics_map = self.metrics_map, epochs = self.epochs, batch_size = self.batch_size,
             l1_reg = l1_reg,
             reporting_interval = self.reporting_interval, lr_scheduler = lr_scheduler,
+            early_stopping = early_stopping,
             shuffle = self.shuffle, num_workers = self.num_workers, verbose = verbose
         )
         return history

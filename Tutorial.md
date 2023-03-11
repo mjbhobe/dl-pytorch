@@ -179,9 +179,11 @@ box - like `Accuracy`, `F1-Score`, `MSE`, `MAE` etc., which you can use).
 
 ```python
 # instantiate the loss function & optimizer (nothing PyTk specific here)
-loss_fn = nn.BCELoss() 
-optimizer = torch.optim.SGD(model.parameters(), lr=0.001,
-    nesterov=True, weight_decay=0.005, momentum=0.9, dampening=0) 
+loss_fn = nn.BCELoss()
+optimizer = torch.optim.SGD(
+    model.parameters(), lr = 0.001,
+    nesterov = True, weight_decay = 0.005, momentum = 0.9, dampening = 0
+) 
 ```
 
 and this is how you _attach_ these to your model using it's `compile()` method:
@@ -223,7 +225,7 @@ Here is where the Pytorch Tooklit shines - **you don't have to write the code th
 batches of data etc. etc.** - just call the model's `fit(...)` method as shown below:
 
 ```python
-hist = model.fit(X_train=X_train, y_train=y_train, epochs=100, batch_size=16)
+hist = model.fit(X_train = X_train, y_train = y_train, epochs = 100, batch_size = 16)
 ```
 
 The `fit(...)` method takes many more parameters, which I will cover as we progress through this tutorial.
@@ -255,8 +257,10 @@ It is always a good practice to cross-train your model using a `training` datase
 easily accomplish this with the Pytorch Toolkit as shown below. Just modify the `fit(...)` call as follows:
 
 ```python
-hist = model.fit(X_train, y_train, epochs=100, batch_size=16, 
-                 validation_split=0.20)
+hist = model.fit(
+    X_train, y_train, epochs = 100, batch_size = 16,
+    validation_split = 0.20
+)
 ```
 
 The `validation_split` parameter takes a value between `0.0` and `1.0`. The `X_train` & `y_train` training data &
@@ -285,8 +289,10 @@ and `y_val` for the data and labels respectively). To use these, make the follow
 shown below:
 
 ```python
-hist = model.fit(X_train, y_train, epochs=100, batch_size=16, 
-                 validation_data=(X_val, y_val))
+hist = model.fit(
+    X_train, y_train, epochs = 100, batch_size = 16,
+    validation_data = (X_val, y_val)
+)
 ```
 
 We have asked the model to to use `X_val` and `y_val` as the cross-validation data & labels by passing them as a tuple
@@ -304,15 +310,19 @@ Suppose you want to track `accuracy` and `F1-Score` by epoch. Here is what you d
   table above):
 
 ```python
-model.compile(loss=loss_fn, optimizer=optimizer, 
-              metrics=['acc', 'f1'])
+model.compile(
+    loss = loss_fn, optimizer = optimizer,
+    metrics = ['acc', 'f1']
+)
 ```
 
 * Call `fit(...)` as usual - no changes here!
 
 ```python
-hist = model.fit(X_train, y_train, epochs=100, batch_size=16, 
-                 validation_split=0.20)
+hist = model.fit(
+    X_train, y_train, epochs = 100, batch_size = 16,
+    validation_split = 0.20
+)
 ```
 
 You should see output like the following - notice the extra metric being tracked for the `training`
@@ -346,8 +356,10 @@ validation metrics - 100 values each for `val_loss`, `val_acc` and `val_f1`.
 method of any class)
 
 ```python
-pytk.show_plots(hist, metric='acc', 
-                plot_title='Optional title of your plot')
+pytk.show_plots(
+    hist, metric = 'acc',
+    plot_title = 'Optional title of your plot'
+)
 ```
 
 * `hist` is the value returned by the `fit(...)` call as shown above.
@@ -512,7 +524,7 @@ NOTE:
 For generating class predictions, you would use a call as follows:
 
 ```python
-y_pred = np.argmax(model.predict(X_test), axis=1)
+y_pred = np.argmax(model.predict(X_test), axis = 1)
 ```
 
 * For M rows in the test dataset, this will return a 1 dimensional Numpy array with M elements, with each element taking
@@ -662,8 +674,8 @@ want to track. Here is the code for the same:
 
 ```python
 loss_fn = nn.CrossEntropyLoss()
-optimizer = optim.Adam(params=model.parameters(), lr=0.01, weight_decay=0.0005)
-model.compile(loss=loss_fn, optimizer=optimizer, metrics=['acc'])
+optimizer = optim.Adam(params = model.parameters(), lr = 0.01, weight_decay = 0.0005)
+model.compile(loss = loss_fn, optimizer = optimizer, metrics = ['acc'])
 ```
 
 ### Training model using datasets
@@ -674,9 +686,11 @@ model class.
 To train the model, call the `fit_dataset(...)` method as follows:
 
 ```python
-hist = model.fit_dataset(train_dataset, 
-                         validation_dataset=val_dataset, 
-                         epochs=NUM_EPOCHS, batch_size=BATCH_SIZE)
+hist = model.fit_dataset(
+    train_dataset,
+    validation_dataset = val_dataset,
+    epochs = NUM_EPOCHS, batch_size = BATCH_SIZE
+)
 ```
 
 This is almost similar to the `fit()` call - instead of passing `X_train/y_train` Numpy arrays, we pass
@@ -766,17 +780,21 @@ For example, to use this with the Wisconsin Breast Cancer example, I would use t
 
 ```python
 # for the Wisconsin Breast Cancer example
-hist = model.fit(X_train, y_train, epochs=100, batch_size=16,
-                 validation_split=0.20, lr_scheduler=scheduler)
+hist = model.fit(
+    X_train, y_train, epochs = 100, batch_size = 16,
+    validation_split = 0.20, lr_scheduler = scheduler
+)
 ```
 
 and with the MNIST example, where we use datasets, the call would be as follows:
 
 ```python
 # for the Wisconsin Breast Cancer example
-hist = model.fit_dataset(train_dataset, validation_dataset=val_dataset, 
-                         epochs=NUM_EPOCHS, batch_size=BATCH_SIZE, 
-                         lr_scheduler=scheduler)
+hist = model.fit_dataset(
+    train_dataset, validation_dataset = val_dataset,
+    epochs = NUM_EPOCHS, batch_size = BATCH_SIZE,
+    lr_scheduler = scheduler
+)
 ```
 
 For the complete code used in this section, refer to the [MNIST Classification](pyt_mnist_dnn.py) example, where you can
@@ -915,8 +933,8 @@ during the training loop - this is done the same was as shown with `PytkModule` 
 ```python
 LEARNING_RATE, L2_REG = 0.001, 0.0005
 loss_fn = nn.CrossEntropyLoss()
-optimizer = optim.Adam(params=model.parameters(), lr=LEARNING_RATE, weight_decay=L2_REG)
-model.compile(loss=loss_fn, optimizer=optimizer, metrics=['acc'])
+optimizer = optim.Adam(params = model.parameters(), lr = LEARNING_RATE, weight_decay = L2_REG)
+model.compile(loss = loss_fn, optimizer = optimizer, metrics = ['acc'])
 ```
 
 In this example we are using the `Adam` optimizer and the `CrossEntropyLoss` loss function (as this is a multiclass
@@ -929,8 +947,10 @@ into datasets) on the instance of the model. Alternately, had you used Numpy arr
 call `fit()` on the model instance.
 
 ```python
-hist = model.fit_dataset(train_dataset, validation_dataset=val_dataset, 
-                         epochs=NUM_EPOCHS, batch_size=BATCH_SIZE)
+hist = model.fit_dataset(
+    train_dataset, validation_dataset = val_dataset,
+    epochs = NUM_EPOCHS, batch_size = BATCH_SIZE
+)
 ```
 
 Alternatively, had you sourced data & labels as Numpy arrays instead of torchvision datasets, you would use the
@@ -938,19 +958,23 @@ following call:
 
 ```python
 # either using validation_split
-hist = model.fit(X_train, y_train, validation_split=0.2,
-                 epochs=NUM_EPOCHS, batch_size=BATCH_SIZE)
+hist = model.fit(
+    X_train, y_train, validation_split = 0.2,
+    epochs = NUM_EPOCHS, batch_size = BATCH_SIZE
+)
 
 # or using validation_data
-hist = model.fit(X_train, y_train, validation_data=(X_val, y_val),
-                 epochs=NUM_EPOCHS, batch_size=BATCH_SIZE)
+hist = model.fit(
+    X_train, y_train, validation_data = (X_val, y_val),
+    epochs = NUM_EPOCHS, batch_size = BATCH_SIZE
+)
 ```
 
 All the above calls return the same kind of `history` object as before, so you can plot your model's `loss` and `acc`
 curves as before:
 
 ```python
-pytk.show_plots(hist, metric='acc', plot_title='Model performance metrics')
+pytk.show_plots(hist, metric = 'acc', plot_title = 'Model performance metrics')
 ```
 
 ### Evaluating model's performance
@@ -981,7 +1005,7 @@ path to the file where model state is to be saved. Example shown below:
 
 ```python
 # save model to ./model_states/cifar10.pt binary file
-save_path = os.path.join('.','model_states','cifar10.pt')
+save_path = os.path.join('.', 'model_states', 'cifar10.pt')
 model.save(save_path)
 ```
 
@@ -1044,16 +1068,22 @@ Here is how you use the `EarlyStopping` class:
 For example:
 
 ```python
-early_stopper = pytk.EarlyStopping(monitor='val_loss', patience=10, 
-                                   save_best_weights=True, verbose=False)
-model.fit(X_train, y_train, 
-          ....,  # other parameters...
-          early_stopping=early_stopper)
+early_stopper = pytk.EarlyStopping(
+    monitor = 'val_loss', patience = 10,
+    save_best_weights = True, verbose = False
+)
+model.fit(
+    X_train, y_train,
+    ....,  # other parameters...
+    early_stopping = early_stopper
+)
 
 # or, if using datasets
-model.fit_dataset(train_dataset,
-                  ....,  # other parameters...
-                  early_stopping=early_stopper)
+model.fit_dataset(
+    train_dataset,
+    ....,  # other parameters...
+    early_stopping = early_stopper
+)
 ```
 
 You specify the metric that the class with minitor (typically `val_loss`) and for how many epochs it should
@@ -1133,7 +1163,8 @@ of the model).
 
 ```python
 from torchvision import models
-vgg16_base = models.vgg16(pretrained=True)
+
+vgg16_base = models.vgg16(pretrained = True)
 print(vgg16_base)
 ```
 
@@ -1291,15 +1322,19 @@ LR_RATE, L2_REG = 0.001, 0.00002
 
 # assign our loss function, optimizer & metrics we want to track
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.SGD(params=model.parameters(), lr=LR_RATE, momentum=0.0, 
-                      nesterov=False, weight_decay=L2_REG)
-model.compile(loss=criterion, optimizer=optimizer, metrics=['acc'])
+optimizer = optim.SGD(
+    params = model.parameters(), lr = LR_RATE, momentum = 0.0,
+    nesterov = False, weight_decay = L2_REG
+)
+model.compile(loss = criterion, optimizer = optimizer, metrics = ['acc'])
 
 # finally fit the model - since ImageFolder is a dataset, we'll use fit_dataset
 NUM_EPOCHS, BATCH_SIZE = 50, 128
 
-hist = model.fit_dataset(train_dataset, validation_dataset=eval_dataset,
-                         epochs=NUM_EPOCHS, batch_size=BATCH_SIZE)
+hist = model.fit_dataset(
+    train_dataset, validation_dataset = eval_dataset,
+    epochs = NUM_EPOCHS, batch_size = BATCH_SIZE
+)
 ```
 
 You will see the usual output as below:

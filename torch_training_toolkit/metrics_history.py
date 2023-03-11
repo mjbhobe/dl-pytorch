@@ -22,7 +22,7 @@ import torch
 class MetricsHistory:
     """ class to calculate & store metrics across training batches """
 
-    def __init__(self, metrics_map, include_val_metrics=False):
+    def __init__(self, metrics_map, include_val_metrics = False):
         """ constructor of MetricsHistory class
             @params:
                 - metrics_map: map of metric alias and calculation function
@@ -102,7 +102,7 @@ class MetricsHistory:
                 }
         return metrics_history
 
-    def get_metric_vals(self, metrics_list, include_val_metrics=False):
+    def get_metric_vals(self, metrics_list, include_val_metrics = False):
         """ gets the last epoch value for each metric tracked """
         metrics_list2 = ["loss"] if metrics_list is None else metrics_list
         metric_vals = {
@@ -117,7 +117,7 @@ class MetricsHistory:
 
     def calculate_batch_metrics(
         self, preds: torch.tensor, targets: torch.tensor,
-        loss_val: float, val_metrics=False
+        loss_val: float, val_metrics = False
     ):
         if val_metrics:
             self.metrics_history["val_loss"]["batch_vals"].append(loss_val)
@@ -134,7 +134,7 @@ class MetricsHistory:
                 else:
                     self.metrics_history[metric_name]["batch_vals"].append(metric_val)
 
-    def calculate_epoch_metrics(self, val_metrics=False):
+    def calculate_epoch_metrics(self, val_metrics = False):
         """ calculates average value of the accumulated metrics from last batch & appends
             to epoch metrics list
         """
@@ -164,7 +164,7 @@ class MetricsHistory:
                 self.metrics_history[f"val_{metric}"]["batch_vals"].clear()
 
     def get_metrics_str(
-        self, batch_metrics=True, include_val_metrics=False
+        self, batch_metrics = True, include_val_metrics = False
     ):
         # will not include loss
         metric_names = self.tracked_metrics()
@@ -199,7 +199,7 @@ class MetricsHistory:
             metrics_str = metrics_str[:-3]
         return metrics_str
 
-    def plot_metrics(self, title=None, fig_size=None):
+    def plot_metrics(self, title = None, fig_size = None, col_count = 3):
         """ plots epoch metrics values across epochs to show how
             training progresses
         """
@@ -215,7 +215,7 @@ class MetricsHistory:
                     self.metrics_history[f"val_{metric_name}"]["epoch_vals"]
 
         # we will plot a max of 3 metrics per row
-        MAX_COL_COUNT = 3
+        MAX_COL_COUNT = col_count
         col_count = MAX_COL_COUNT if len(metric_names) > MAX_COL_COUNT \
             else len(metric_names)
         row_count = len(metric_names) // MAX_COL_COUNT
@@ -235,17 +235,23 @@ class MetricsHistory:
 
             if len(metric_names) == 1:
                 # only loss
-                plt.figure(figsize=fig_size)
-                plt.plot(x_vals, metric_vals["loss"], lw=2, markersize=7, color="steelblue")
+                plt.figure(figsize = fig_size)
+                plt.plot(
+                    x_vals, metric_vals["loss"], lw = 2, markersize = 7, color = "steelblue",
+                    marker = 'o'
+                )
                 if self.include_val_metrics:
-                    plt.plot(x_vals, metric_vals["val_loss"], lw=2, markersize=7, color="firebrick")
+                    plt.plot(
+                        x_vals, metric_vals["val_loss"], lw = 2, markersize = 7,
+                        color = "firebrick", marker = 'o'
+                    )
                 legend = ["train", "valid"] if self.include_val_metrics else ["train"]
                 plt_title = f"Training & Cross-validation  Loss vs Epochs" \
                     if len(legend) == 2 else f"Training Loss vs Epochs"
                 plt.title(plt_title)
-                plt.legend(legend, loc="best")
+                plt.legend(legend, loc = "best")
             else:
-                f, ax = plt.subplots(row_count, col_count, figsize=fig_size)
+                f, ax = plt.subplots(row_count, col_count, figsize = fig_size)
                 for r in range(row_count):
                     for c in range(col_count):
                         index = r * (col_count - 1) + c
@@ -253,31 +259,33 @@ class MetricsHistory:
                             metric_name = metric_names[index]
                             if row_count == 1:
                                 ax[c].plot(
-                                    x_vals, metric_vals[metric_name], lw=2, markersize=7
+                                    x_vals, metric_vals[metric_name], lw = 2, markersize = 7,
+                                    marker = 'o'
                                 )
                             else:
                                 ax[r, c].plot(
-                                    x_vals, metric_vals[metric_name], lw=2, markersize=7
+                                    x_vals, metric_vals[metric_name], lw = 2, markersize = 7,
+                                    marker = 'o'
                                 )
                             if self.include_val_metrics:
                                 if row_count == 1:
                                     ax[c].plot(
-                                        x_vals, metric_vals[f"val_{metric_name}"], lw=2,
-                                        markersize=7
+                                        x_vals, metric_vals[f"val_{metric_name}"], lw = 2,
+                                        markersize = 7, marker = 'o'
                                     )
                                 else:
                                     ax[r, c].plot(
-                                        x_vals, metric_vals[f"val_{metric_name}"], lw=2,
-                                        markersize=7
+                                        x_vals, metric_vals[f"val_{metric_name}"], lw = 2,
+                                        markersize = 7, marker = 'o'
                                     )
                             legend = ["train", "valid"] if self.include_val_metrics else ["train"]
                             ax_title = f"Training & Cross-validation \'{metric_name}\' vs Epochs" \
                                 if len(legend) == 2 else f"Training \'{metric_name}\' vs Epochs"
                             if row_count == 1:
-                                ax[c].legend(legend, loc="best")
+                                ax[c].legend(legend, loc = "best")
                                 ax[c].set_title(ax_title)
                             else:
-                                ax[r, c].legend(legend, loc="best")
+                                ax[r, c].legend(legend, loc = "best")
                                 ax[r, c].set_title(ax_title)
 
         if title is not None:

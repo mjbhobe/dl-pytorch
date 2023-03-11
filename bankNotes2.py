@@ -17,9 +17,9 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 # tweaks for libraries
-np.set_printoptions(precision=6, linewidth=1024, suppress=True)
+np.set_printoptions(precision = 6, linewidth = 1024, suppress = True)
 plt.style.use('seaborn')
-sns.set(style='whitegrid', font_scale=1.1, palette='muted')
+sns.set(style = 'whitegrid', font_scale = 1.1, palette = 'muted')
 
 # Pytorch imports
 import torch
@@ -59,12 +59,12 @@ class BankNotesDataset(torch.utils.data.Dataset):
 
     def __init__(self, data_file_path):
         all_data = np.loadtxt(
-            data_file_path, delimiter=',', dtype=np.float32
+            data_file_path, delimiter = ',', dtype = np.float32
         )
         # self.X = torch.FloatTensor(all_data[:, 0:4])
         # self.y = torch.FloatTensor(all_data[:, 4]).reshape(-1, 1)
-        self.X = torch.tensor(all_data[:, 0:4], dtype=torch.float32)
-        self.y = torch.tensor(all_data[:, 4], dtype=torch.float32).reshape(-1, 1)
+        self.X = torch.tensor(all_data[:, 0:4], dtype = torch.float32)
+        self.y = torch.tensor(all_data[:, 4], dtype = torch.float32).reshape(-1, 1)
 
     def __len__(self):
         return len(self.X)
@@ -113,9 +113,9 @@ DO_PREDS = True
 def main():
     # load the dataset
     dataset = BankNotesDataset(DATA_FILE_PATH)
-    print(f"Loaded {len(dataset)} records", flush=True)
+    print(f"Loaded {len(dataset)} records", flush = True)
     # set aside 10% as test dataset
-    train_dataset, test_dataset = t3.split_dataset(dataset, split_perc=0.1)
+    train_dataset, test_dataset = t3.split_dataset(dataset, split_perc = 0.1)
     print(
         f"train_dataset: {len(train_dataset)} recs, test_dataset: {len(test_dataset)} recs"
     )
@@ -126,19 +126,19 @@ def main():
     metrics_map = {
         "acc": BinaryAccuracy(),
         "f1": BinaryF1Score(),
-        "roc_auc": BinaryAUROC(thresholds=None)
+        "roc_auc": BinaryAUROC(thresholds = None)
     }
     trainer = t3.Trainer(
-        loss_fn=loss_fn, device=DEVICE, metrics_map=metrics_map,
-        epochs=NUM_EPOCHS, batch_size=BATCH_SIZE
+        loss_fn = loss_fn, device = DEVICE, metrics_map = metrics_map,
+        epochs = NUM_EPOCHS, batch_size = BATCH_SIZE
     )
 
     if DO_TRAINING:
         # cross-training with 20% validation data
         model = Net(4)
-        optimizer = torch.optim.SGD(model.parameters(), lr=LR)
-        hist = trainer.fit(model, optimizer, train_dataset, validation_split=0.2)
-        hist.plot_metrics(title="Model Performance", fig_size=(16, 8))
+        optimizer = torch.optim.SGD(model.parameters(), lr = LR)
+        hist = trainer.fit(model, optimizer, train_dataset, validation_split = 0.2)
+        hist.plot_metrics(title = "Model Performance", fig_size = (16, 8))
         t3.save_model(model, MODEL_SAVE_PATH)
         del model
 
@@ -147,11 +147,15 @@ def main():
         model = t3.load_model(model, MODEL_SAVE_PATH)
         print("Evaluating model performance...")
         metrics = trainer.evaluate(model, train_dataset)
-        print(f" - Training -> loss: {metrics['loss']:.4f} - acc: {metrics['acc']:.4f} - " +
-              f"f1: {metrics['f1']:.4f} - roc_auc: {metrics['roc_auc']:.4f}")
+        print(
+            f" - Training -> loss: {metrics['loss']:.4f} - acc: {metrics['acc']:.4f} - " +
+            f"f1: {metrics['f1']:.4f} - roc_auc: {metrics['roc_auc']:.4f}"
+        )
         metrics = trainer.evaluate(model, test_dataset)
-        print(f" - Testing -> loss: {metrics['loss']:.4f} - acc: {metrics['acc']:.4f} - " +
-              f"f1: {metrics['f1']:.4f} - roc_auc: {metrics['roc_auc']:.4f}")
+        print(
+            f" - Testing -> loss: {metrics['loss']:.4f} - acc: {metrics['acc']:.4f} - " +
+            f"f1: {metrics['f1']:.4f} - roc_auc: {metrics['roc_auc']:.4f}"
+        )
         del model
 
     if DO_PREDS:

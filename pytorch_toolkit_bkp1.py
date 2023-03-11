@@ -489,7 +489,7 @@ class EarlyStopping:
                 print(
                     f'   EarlyStopping (log): patience counter reset to 0 at epoch {epoch}' +
                     f'where best score of \'{self.monitor}\' is {self.best_score:.3f}'
-                    )
+                )
         else:
             self.counter += 1
             if self.verbose:
@@ -497,7 +497,7 @@ class EarlyStopping:
                     f'   EarlyStopping (log): patience counter increased to {self.counter}' +
                     f' - best_score of \'{self.monitor}\' is {self.best_score:.3f} at' +
                     f' epoch {self.best_epoch}'
-                    )
+                )
             if self.counter >= self.patience:
                 self.early_stop = True
                 print(
@@ -507,7 +507,7 @@ class EarlyStopping:
                 print(
                     '     - Best score: %.4f at epoch %d. Last %d scores -> %s' % (
                         self.best_score, self.best_epoch, len(self.metrics_log), self.metrics_log)
-                    )
+                )
             else:
                 self.metrics_log.append(curr_metric_val)
 
@@ -517,7 +517,7 @@ class EarlyStopping:
             print(
                 '   EarlyStopping (log): \'%s\' metric has \'improved\' - from %.4f to %.4f. Saving checkpoint...' % (
                     metric_name, self.best_score, curr_metric_val)
-                )
+            )
         mod = model
         if isinstance(model, PytkModuleWrapper):
             mod = model.model
@@ -540,13 +540,13 @@ def check_attribs__(model, loss_fn, optimizer = None, check_only_loss = False):
                 raise ValueError(
                     'FATAL ERROR: it appears that you have not set a value for loss_fn ' +
                     'Detected None value for both the loss_fn parameter and module.loss_fn attribute!'
-                    )
+                )
         except AttributeError as e:
             print(
                 "FATAL ERROR: when loss_fn parameter is None, the model's instance is expected " +
                 "to have the loss function defined with attribute self.loss_fn!\n" +
                 "This model's instance does not have a self.loss_fn attribute defined."
-                )
+            )
             raise e
 
     if not check_only_loss:
@@ -559,13 +559,13 @@ def check_attribs__(model, loss_fn, optimizer = None, check_only_loss = False):
                         'FATAL ERROR: it appears that you have not set a value ' +
                         'for optimizer. Detected None value for both the optimizer parameter and ' +
                         'module.optimizer attribute!'
-                        )
+                    )
             except AttributeError as e:
                 print(
                     "FATAL ERROR: when optimizer parameter is None, the model's instance is expected " +
                     "to have the optimizer function defined with attribute self.optimizer!\n" +
                     "This model's instance does not have a self.optimizer attribute defined."
-                    )
+                )
                 raise e
 
 
@@ -792,7 +792,7 @@ def train_model(
                 print(
                     'Training on %d samples, cross-validating on %d samples' %
                     (len(train_dataset), len(validation_dataset))
-                    )
+                )
             else:
                 print('Training on %d samples' % len(train_dataset))
 
@@ -896,7 +896,7 @@ def train_model(
                              len_tot_samples, samples, len_tot_samples, tot_samples,
                              metrics_str),
                             end = '', flush = True
-                            )
+                        )
                 elif verbose == 1:
                     if (epoch == 0) or ((epoch + 1) % report_interval == 0):
                         # verbose == 1 -> display progress counter only, no metrics
@@ -906,7 +906,7 @@ def train_model(
                             (len_num_epochs, epoch + 1, len_num_epochs, epochs,
                              len_tot_samples, samples, len_tot_samples, tot_samples),
                             end = '', flush = True
-                            )
+                        )
             else:
                 # all batches in train_loader dataset are complete...
 
@@ -929,7 +929,7 @@ def train_model(
                              len_tot_samples, samples, len_tot_samples, tot_samples,
                              metrics_str),
                             end = '' if validation_dataset is not None else '\n', flush = True
-                            )
+                        )
 
                 if validation_dataset is not None:
                     val_batch_size = batch_size if batch_size != -1 \
@@ -993,7 +993,7 @@ def train_model(
                                      len_tot_samples, samples, len_tot_samples, tot_samples,
                                      metrics_str),
                                     flush = True
-                                    )
+                                )
 
             # check for early stopping
             if early_stopping is not None:
@@ -1108,7 +1108,7 @@ def evaluate_model(
                     (len_tot_samples, samples, len_tot_samples, tot_samples,
                      metrics_str),
                     end = '', flush = True
-                    )
+                )
             else:
                 # compute average of all metrics provided in metrics list
                 for metric_name in metrics_list:
@@ -1122,7 +1122,7 @@ def evaluate_model(
                     (len_tot_samples, tot_samples, len_tot_samples, tot_samples,
                      metrics_str),
                     flush = True
-                    )
+                )
 
         if metrics is None:
             return cum_metrics['loss']
@@ -1583,7 +1583,7 @@ class PytkModule(nn.Module):
         raise NotImplementedError(
             "You have landed up calling PytModule.forward(). " +
             "You must re-implement this method in your derived class!"
-            )
+        )
 
     def fit_dataset(
         self, train_dataset, loss_fn = None, optimizer = None, validation_split = 0.0,

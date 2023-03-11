@@ -18,6 +18,7 @@ database.ini
 
 # ignore model_states folder (saves model states)
 model_states
+checkpoints
 
 # ignore __pycache__
 __pycache__
@@ -25,18 +26,17 @@ __pycache__
 # ignore pyc files
 *.pyc
 
-# ignore pt (checkpoint) files
+# ignore pt (checkpoint) files & model state files
 *.pt
-
-# ignore checkpoint files
 *.ckpt
+*.pyt
 
 # for lightning logs
 *.yaml
 lightning_logs
 
 # ignore tutorial folder (for now)
-tutorial
+# tutorial
 
 # any tar & zip files
 *.zip

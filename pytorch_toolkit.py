@@ -468,7 +468,11 @@ class EarlyStopping:
     """
 
     def __init__(
-        self, monitor = 'val_loss', min_delta = 0, patience = 5, mode = 'min',
+        self,
+        monitor = 'val_loss',
+        min_delta = 0,
+        patience = 5,
+        mode = 'min',
         verbose = False,
         save_best_weights = True, checkpoint_file_path = None
     ):
@@ -508,7 +512,7 @@ class EarlyStopping:
             now = datetime.now()
             dir_name = os.path.join(
                 os.getcwd(),
-                f"chkplogs{now.strftime('%Y%m%d%H%M%S')}"
+                f"checkpoint_{now.strftime('%Y%m%d%H%M%S')}"
             )
             self.checkpoint_file_path = dir_name
         os.mkdir(self.checkpoint_file_path)
@@ -555,7 +559,7 @@ class EarlyStopping:
                     '     - Best score: %.4f at epoch %d. Last %d scores -> %s' % (
                         self.best_score, self.best_epoch, len(self.metrics_log),
                         self.metrics_log)
-                    )
+                )
             else:
                 self.metrics_log.append(curr_metric_val)
 
@@ -577,6 +581,65 @@ class EarlyStopping:
         #     mod = model.model
         # # torch.save(mod.state_dict(), self.checkpoint_file_path)
         # mod.save(self.checkpoint_file_path)
+
+
+class EarlyStopping_New:
+    """Early stops the training if validation loss doesn't improve after a given patience."""
+
+    def __init__(
+        self, patience = 7, verbose = False, delta = 0, path = 'checkpoint.pt', trace_func = print
+    ):
+        """
+        Args:
+            patience (int): How long to wait after last time validation loss improved.
+                            Default: 7
+            verbose (bool): If True, prints a message for each validation loss improvement.
+                            Default: False
+            delta (float): Minimum change in the monitored quantity to qualify as an improvement.
+                            Default: 0
+            path (str): Path for the checkpoint to be saved to.
+                            Default: 'checkpoint.pt'
+            trace_func (function): trace print function.
+                            Default: print
+        """
+        self.patience = patience
+        self.verbose = verbose
+        self.counter = 0
+        self.best_score = None
+        self.early_stop = False
+        self.val_loss_min = np.Inf
+        self.delta = delta
+        self.path = pathlib.Path(os.getcwd()) / path
+        self.trace_func = trace_func
+
+    def __call__(self, val_loss, model):
+
+        score = -val_loss
+
+        if self.best_score is None:
+            self.best_score = score
+            self.save_checkpoint(val_loss, model)
+        elif score < self.best_score + self.delta:
+            self.counter += 1
+            self.trace_func(f'EarlyStopping counter: {self.counter} out of {self.patience}')
+            if self.counter >= self.patience:
+                self.early_stop = True
+        else:
+            self.best_score = score
+            self.save_checkpoint(val_loss, model)
+            self.counter = 0
+
+    def checkpoint_path(self) -> str:
+        return self.path
+
+    def save_checkpoint(self, val_loss, model):
+        '''Saves model when validation loss decrease.'''
+        if self.verbose:
+            self.trace_func(
+                f'Validation loss decreased ({self.val_loss_min:.6f} --> {val_loss:.6f}).  Saving model ...'
+            )
+        torch.save(model.state_dict(), self.path)
+        self.val_loss_min = val_loss
 
 
 # -------------------------------------------------------------------------------------
@@ -954,7 +1017,7 @@ def train_model(
                 print(
                     'Training on %d samples, cross-validating on %d samples' %
                     (len(train_dataset), len(validation_dataset))
-                    )
+                )
             else:
                 print('Training on %d samples' % len(train_dataset))
 
@@ -1096,7 +1159,7 @@ def train_model(
                          len_tot_samples, samples, len_tot_samples, tot_samples,
                          metrics_str),
                         end = '', flush = True
-                        )
+                    )
             else:
                 # all batches in train_loader dataset are complete...
 
@@ -1127,7 +1190,7 @@ def train_model(
                              metrics_str),
                             end = '' if validation_dataset is not None else '\n',
                             flush = True
-                            )
+                        )
 
                 if validation_dataset is not None:
                     # perform validation over validation dataset
@@ -1203,7 +1266,7 @@ def train_model(
                                      tot_samples,
                                      metrics_str),
                                     flush = True
-                                    )
+                                )
 
             # check for early stopping
             if early_stopping is not None:
@@ -1337,7 +1400,7 @@ def evaluate_model(
                     (len_tot_samples, samples, len_tot_samples, tot_samples,
                      metrics_str),
                     end = '', flush = True
-                    )
+                )
             else:
                 # compute average of all metrics provided in metrics list
                 # for metric_name in metrics_list:
@@ -1358,7 +1421,7 @@ def evaluate_model(
                     (len_tot_samples, tot_samples, len_tot_samples, tot_samples,
                      metrics_str),
                     flush = True
-                    )
+                )
 
         if metrics is None:
             # return cum_metrics['loss']
@@ -1833,7 +1896,7 @@ class PytkModule(nn.Module):
         raise NotImplementedError(
             "You have landed up calling PytModule.forward(). " +
             "You must re-implement this method in your derived class!"
-            )
+        )
 
     def fit_dataset(
         self, train_dataset, collate_fn = None, loss_fn = None,

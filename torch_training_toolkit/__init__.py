@@ -43,5 +43,6 @@ from .layers import Linear, Conv2d
 from .dataset_utils import split_dataset
 from .training import Trainer, load_model, save_model
 from .metrics_history import MetricsHistory
+from .early_stopping import EarlyStopping
 
 _logger = get_logger(__name__)

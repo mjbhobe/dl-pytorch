@@ -47,7 +47,7 @@ T3_FAV_SEED = 41
 # ----------------------------------------------------------------------------------
 # utility functions (utils.py)
 # ----------------------------------------------------------------------------------
-def seed_all(seed=None):
+def seed_all(seed = None):
     """seed all random number generators to ensure that you get consistent results
        across multiple runs ON SAME MACHINE - you may get different results
        on a different machine (architecture) & that is to be expected
@@ -89,9 +89,9 @@ def get_logger(name: str, level: int = logging.WARNING) -> logging.Logger:
 
 
 def plot_confusion_matrix(
-    cm, class_names=None, title="Confusion Matrix",
-    cmap=plt.cm.Purples,
-    fig_size=(8, 6)
+    cm, class_names = None, title = "Confusion Matrix",
+    cmap = plt.cm.Purples,
+    fig_size = (8, 6)
 ):
     """ graphical plot of the confusion matrix
         @params:
@@ -102,9 +102,9 @@ def plot_confusion_matrix(
     """
 
     class_names = ['0', '1'] if class_names is None else class_names
-    df = pd.DataFrame(cm, index=class_names, columns=class_names)
+    df = pd.DataFrame(cm, index = class_names, columns = class_names)
 
-    plt.figure(figsize=fig_size)
+    plt.figure(figsize = fig_size)
     with sns.axes_style("darkgrid"):
         # sns.set_context("notebook")  # , font_scale = 1.1)
         sns.set_style(
@@ -113,12 +113,12 @@ def plot_confusion_matrix(
                                     "DejaVu Sans", "Sans"]
             }
         )
-        hmap = sns.heatmap(df, annot=True, fmt="d", cmap=cmap)
+        hmap = sns.heatmap(df, annot = True, fmt = "d", cmap = cmap)
         hmap.yaxis.set_ticklabels(
-            hmap.yaxis.get_ticklabels(), rotation=0, ha='right'
+            hmap.yaxis.get_ticklabels(), rotation = 0, ha = 'right'
         )
         hmap.xaxis.set_ticklabels(
-            hmap.xaxis.get_ticklabels(), rotation=30, ha='right'
+            hmap.xaxis.get_ticklabels(), rotation = 30, ha = 'right'
         )
 
         plt.ylabel('True label')
@@ -127,12 +127,13 @@ def plot_confusion_matrix(
     plt.show()
     plt.close()
 
+
 # ----------------------------------------------------------------------------------
 # convenience functions to create layers with weights & biases initialized (layers.py)
 # ----------------------------------------------------------------------------------
 
 
-def Linear(in_features, out_features, bias=True, device=None, dtype=None):
+def Linear(in_features, out_features, bias = True, device = None, dtype = None):
     """
         (convenience function)
         creates a nn.Linear layer, with weights initiated using xavier_uniform initializer
@@ -152,9 +153,9 @@ def Linear(in_features, out_features, bias=True, device=None, dtype=None):
 
 
 def Conv2d(
-    in_channels, out_channels, kernel_size=3, stride=1, padding=1,
-    dilation=1, groups=1, bias=True, padding_mode='zeros',
-    device=None, dtype=None
+    in_channels, out_channels, kernel_size = 3, stride = 1, padding = 1,
+    dilation = 1, groups = 1, bias = True, padding_mode = 'zeros',
+    device = None, dtype = None
 ):
     """
         (convenience function)
@@ -166,10 +167,10 @@ def Conv2d(
             - instance of nn.Conv2d layer
     """
     layer = nn.Conv2d(
-        in_channels, out_channels, kernel_size=kernel_size,
-        stride=stride, padding=padding, dilation=dilation,
-        groups=groups, bias=bias, padding_mode=padding_mode,
-        device=device, dtype=dtype
+        in_channels, out_channels, kernel_size = kernel_size,
+        stride = stride, padding = padding, dilation = dilation,
+        groups = groups, bias = bias, padding_mode = padding_mode,
+        device = device, dtype = dtype
     )
     # @see: https://msdn.microsoft.com/en-us/magazine/mt833293.aspx for example
     torch.nn.init.xavier_uniform_(layer.weight)
@@ -206,6 +207,7 @@ def split_dataset(dataset: torch.utils.data.Dataset, split_perc: float = 0.20):
     else:
         return dataset, None
 
+
 # ----------------------------------------------------------------------------------
 # MetricsHistory (metrics_history.py)
 # ----------------------------------------------------------------------------------
@@ -214,7 +216,7 @@ def split_dataset(dataset: torch.utils.data.Dataset, split_perc: float = 0.20):
 class MetricsHistory:
     """ class to calculate & store metrics across training batches """
 
-    def __init__(self, metrics_map, include_val_metrics=False):
+    def __init__(self, metrics_map, include_val_metrics = False):
         """ constructor of MetricsHistory class
             @params:
                 - metrics_map: map of metric alias and calculation function
@@ -294,7 +296,7 @@ class MetricsHistory:
                 }
         return metrics_history
 
-    def get_metric_vals(self, metrics_list, include_val_metrics=False):
+    def get_metric_vals(self, metrics_list, include_val_metrics = False):
         """ gets the last epoch value for each metric tracked """
         metrics_list2 = ["loss"] if metrics_list is None else metrics_list
         metric_vals = {
@@ -309,7 +311,7 @@ class MetricsHistory:
 
     def calculate_batch_metrics(
         self, preds: torch.tensor, targets: torch.tensor,
-        loss_val: float, val_metrics=False
+        loss_val: float, val_metrics = False
     ):
         if val_metrics:
             self.metrics_history["val_loss"]["batch_vals"].append(loss_val)
@@ -326,7 +328,7 @@ class MetricsHistory:
                 else:
                     self.metrics_history[metric_name]["batch_vals"].append(metric_val)
 
-    def calculate_epoch_metrics(self, val_metrics=False):
+    def calculate_epoch_metrics(self, val_metrics = False):
         """ calculates average value of the accumulated metrics from last batch & appends
             to epoch metrics list
         """
@@ -356,7 +358,7 @@ class MetricsHistory:
                 self.metrics_history[f"val_{metric}"]["batch_vals"].clear()
 
     def get_metrics_str(
-        self, batch_metrics=True, include_val_metrics=False
+        self, batch_metrics = True, include_val_metrics = False
     ):
         # will not include loss
         metric_names = self.tracked_metrics()
@@ -391,7 +393,7 @@ class MetricsHistory:
             metrics_str = metrics_str[:-3]
         return metrics_str
 
-    def plot_metrics(self, title=None, fig_size=None):
+    def plot_metrics(self, title = None, fig_size = None):
         """ plots epoch metrics values across epochs to show how
             training progresses
         """
@@ -427,17 +429,20 @@ class MetricsHistory:
 
             if len(metric_names) == 1:
                 # only loss
-                plt.figure(figsize=fig_size)
-                plt.plot(x_vals, metric_vals["loss"], lw=2, markersize=7, color="steelblue")
+                plt.figure(figsize = fig_size)
+                plt.plot(x_vals, metric_vals["loss"], lw = 2, markersize = 7, color = "steelblue")
                 if self.include_val_metrics:
-                    plt.plot(x_vals, metric_vals["val_loss"], lw=2, markersize=7, color="firebrick")
+                    plt.plot(
+                        x_vals, metric_vals["val_loss"], lw = 2, markersize = 7,
+                        color = "firebrick"
+                    )
                 legend = ["train", "valid"] if self.include_val_metrics else ["train"]
                 plt_title = f"Training & Cross-validation  Loss vs Epochs" \
                     if len(legend) == 2 else f"Training Loss vs Epochs"
                 plt.title(plt_title)
-                plt.legend(legend, loc="best")
+                plt.legend(legend, loc = "best")
             else:
-                f, ax = plt.subplots(row_count, col_count, figsize=fig_size)
+                f, ax = plt.subplots(row_count, col_count, figsize = fig_size)
                 for r in range(row_count):
                     for c in range(col_count):
                         index = r * (col_count - 1) + c
@@ -445,37 +450,102 @@ class MetricsHistory:
                             metric_name = metric_names[index]
                             if row_count == 1:
                                 ax[c].plot(
-                                    x_vals, metric_vals[metric_name], lw=2, markersize=7
+                                    x_vals, metric_vals[metric_name], lw = 2, markersize = 7
                                 )
                             else:
                                 ax[r, c].plot(
-                                    x_vals, metric_vals[metric_name], lw=2, markersize=7
+                                    x_vals, metric_vals[metric_name], lw = 2, markersize = 7
                                 )
                             if self.include_val_metrics:
                                 if row_count == 1:
                                     ax[c].plot(
-                                        x_vals, metric_vals[f"val_{metric_name}"], lw=2,
-                                        markersize=7
+                                        x_vals, metric_vals[f"val_{metric_name}"], lw = 2,
+                                        markersize = 7
                                     )
                                 else:
                                     ax[r, c].plot(
-                                        x_vals, metric_vals[f"val_{metric_name}"], lw=2,
-                                        markersize=7
+                                        x_vals, metric_vals[f"val_{metric_name}"], lw = 2,
+                                        markersize = 7
                                     )
                             legend = ["train", "valid"] if self.include_val_metrics else ["train"]
                             ax_title = f"Training & Cross-validation \'{metric_name}\' vs Epochs" \
                                 if len(legend) == 2 else f"Training \'{metric_name}\' vs Epochs"
                             if row_count == 1:
-                                ax[c].legend(legend, loc="best")
+                                ax[c].legend(legend, loc = "best")
                                 ax[c].set_title(ax_title)
                             else:
-                                ax[r, c].legend(legend, loc="best")
+                                ax[r, c].legend(legend, loc = "best")
                                 ax[r, c].set_title(ax_title)
 
         if title is not None:
             plt.suptitle(title)
 
         plt.show()
+
+
+# ----------------------------------------------------------------------------------
+# EarlyStopping
+# NOTE: this class is copied from https://github.com/Bjarten/early-stopping-pytorch/blob/master/pytorchtools.py
+# Author of this class: Bjarte Mehus Sunde
+# Thank you Bjarte!!
+# ----------------------------------------------------------------------------------
+class EarlyStopping:
+    """Early stops the training if validation loss doesn't improve after a given patience."""
+
+    def __init__(
+        self, patience = 7, verbose = False, delta = 0, path = 'checkpoint.pt', trace_func = print
+    ):
+        """
+        Args:
+            patience (int): How long to wait after last time validation loss improved.
+                            Default: 7
+            verbose (bool): If True, prints a message for each validation loss improvement. 
+                            Default: False
+            delta (float): Minimum change in the monitored quantity to qualify as an improvement.
+                            Default: 0
+            path (str): Path for the checkpoint to be saved to.
+                            Default: 'checkpoint.pt'
+            trace_func (function): trace print function.
+                            Default: print            
+        """
+        self.patience = patience
+        self.verbose = verbose
+        self.counter = 0
+        self.best_score = None
+        self.early_stop = False
+        self.val_loss_min = np.Inf
+        self.delta = delta
+        self.path = pathlib.Path(os.getcwd()) / path
+        self.trace_func = trace_func
+
+    def __call__(self, val_loss, model):
+
+        score = -val_loss
+
+        if self.best_score is None:
+            self.best_score = score
+            self.save_checkpoint(val_loss, model)
+        elif score < self.best_score + self.delta:
+            self.counter += 1
+            self.trace_func(f'EarlyStopping counter: {self.counter} out of {self.patience}')
+            if self.counter >= self.patience:
+                self.early_stop = True
+        else:
+            self.best_score = score
+            self.save_checkpoint(val_loss, model)
+            self.counter = 0
+
+    def checkpoint_path(self) -> str:
+        return self.path
+
+    def save_checkpoint(self, val_loss, model):
+        '''Saves model when validation loss decrease.'''
+        if self.verbose:
+            self.trace_func(
+                f'Validation loss decreased ({self.val_loss_min:.6f} --> {val_loss:.6f}).  Saving model ...'
+            )
+        torch.save(model.state_dict(), self.path)
+        self.val_loss_min = val_loss
 
 
 # ----------------------------------------------------------------------------------
@@ -558,12 +628,12 @@ def cross_train_module(
     if val_dataset is not None:
         print(
             f"Cross training on \'{device}\' with {len(train_dataset)} training and " +
-            f"{len(val_dataset)} cross-validation records...", flush=True
+            f"{len(val_dataset)} cross-validation records...", flush = True
         )
     else:
         print(
             f"Training on \'{device}\' with {len(train_dataset)} records...",
-            flush=True
+            flush = True
         )
 
     if reporting_interval != 1:
@@ -596,9 +666,9 @@ def cross_train_module(
             # loop over records in training dataset (use DataLoader)
             train_dataloader = torch.utils.data.DataLoader(
                 train_dataset,
-                batch_size=train_batch_size,
-                shuffle=shuffle,
-                num_workers=num_workers
+                batch_size = train_batch_size,
+                shuffle = shuffle,
+                num_workers = num_workers
             )
             num_batches, samples = 0, 0
 
@@ -626,7 +696,7 @@ def cross_train_module(
                 preds = preds.to(device)
                 history.calculate_batch_metrics(
                     preds.to("cpu"), y.to("cpu"), loss_tensor.item(),
-                    val_metrics=False
+                    val_metrics = False
                 )
 
                 num_batches += 1
@@ -636,41 +706,41 @@ def cross_train_module(
                     # display progress with batch metrics - will display line like this:
                     # Epoch (  3/100): (  45/1024) -> loss: 3.456 - acc: 0.275
                     metricsStr = history.get_metrics_str(
-                        batch_metrics=True,
-                        include_val_metrics=False
+                        batch_metrics = True,
+                        include_val_metrics = False
                     )
                     print(
                         "\rEpoch (%*d/%*d): (%*d/%*d) -> %s" %
                         (len_num_epochs, epoch + 1, len_num_epochs, epochs,
                          len_tot_samples, samples, len_tot_samples, tot_samples,
-                         metricsStr), end='', flush=True
+                         metricsStr), end = '', flush = True
                     )
             else:
                 # all train batches are over - display average train metrics
-                history.calculate_epoch_metrics(val_metrics=False)
+                history.calculate_epoch_metrics(val_metrics = False)
                 if val_dataset is None:
                     if (epoch == 0) or ((epoch + 1) % reporting_interval == 0) \
-                            or ((epoch + 1) == epochs):
+                        or ((epoch + 1) == epochs):
                         metricsStr = history.get_metrics_str(
-                            batch_metrics=False,
-                            include_val_metrics=False
+                            batch_metrics = False,
+                            include_val_metrics = False
                         )
                         print(
                             "\rEpoch (%*d/%*d): (%*d/%*d) -> %s" %
                             (len_num_epochs, epoch + 1, len_num_epochs, epochs,
                              len_tot_samples, samples, len_tot_samples,
                              tot_samples,
-                             metricsStr), flush=True
+                             metricsStr), flush = True
                         )
                         # training ends here as there is no cross-validation dataset
                 else:
                     # we have a validation dataset
                     # same print as above except for trailing ... and end=''
                     if (epoch == 0) or ((epoch + 1) % reporting_interval == 0) \
-                            or ((epoch + 1) == epochs):
+                        or ((epoch + 1) == epochs):
                         metricsStr = history.get_metrics_str(
-                            batch_metrics=False,
-                            include_val_metrics=False
+                            batch_metrics = False,
+                            include_val_metrics = False
                         )
                         print(
                             "\rEpoch (%*d/%*d): (%*d/%*d) -> %s..." %
@@ -678,7 +748,7 @@ def cross_train_module(
                              len_tot_samples, samples, len_tot_samples,
                              tot_samples,
                              metricsStr),
-                            end='', flush=True
+                            end = '', flush = True
                         )
 
                     val_batch_size = batch_size if batch_size != -1 else len(val_dataset)
@@ -687,9 +757,9 @@ def cross_train_module(
                         # val_dataloader = None if val_dataset is None else \
                         val_dataloader = torch.utils.data.DataLoader(
                             val_dataset,
-                            batch_size=val_batch_size,
-                            shuffle=shuffle,
-                            num_workers=num_workers
+                            batch_size = val_batch_size,
+                            shuffle = shuffle,
+                            num_workers = num_workers
                         )
                         num_val_batches = 0
 
@@ -700,18 +770,18 @@ def cross_train_module(
                             val_batch_loss = loss_fxn(val_preds, val_y).item()
                             history.calculate_batch_metrics(
                                 val_preds.to("cpu"), val_y.to("cpu"), val_batch_loss,
-                                val_metrics=True
+                                val_metrics = True
                             )
                             num_val_batches += 1
                         else:
                             # loop over val_dataset completed - compute val average metrics
-                            history.calculate_epoch_metrics(val_metrics=True)
+                            history.calculate_epoch_metrics(val_metrics = True)
                             # display final metrics
                             if (epoch == 0) or ((epoch + 1) % reporting_interval == 0) \
-                                    or ((epoch + 1) == epochs):
+                                or ((epoch + 1) == epochs):
                                 metricsStr = history.get_metrics_str(
-                                    batch_metrics=False,
-                                    include_val_metrics=True
+                                    batch_metrics = False,
+                                    include_val_metrics = True
                                 )
                                 print(
                                     "\rEpoch (%*d/%*d): (%*d/%*d) -> %s" %
@@ -719,7 +789,7 @@ def cross_train_module(
                                      epochs,
                                      len_tot_samples, samples, len_tot_samples,
                                      tot_samples,
-                                     metricsStr), flush=True
+                                     metricsStr), flush = True
                                 )
 
             # step the learning rate scheduler at end of epoch
@@ -761,8 +831,8 @@ def evaluate_module(
             dataset = torch.utils.data.TensorDataset(X, y)
 
         loader = torch.utils.data.DataLoader(
-            dataset, batch_size=batch_size,
-            shuffle=False
+            dataset, batch_size = batch_size,
+            shuffle = False
         )
 
         tot_samples, samples, num_batches = len(dataset), 0, 0
@@ -783,32 +853,32 @@ def evaluate_module(
                 batch_loss = loss_fn(preds, y).item()
                 history.calculate_batch_metrics(
                     preds.to("cpu"), y.to("cpu"), batch_loss,
-                    val_metrics=False
+                    val_metrics = False
                 )
                 samples += len(y)
                 num_batches += 1
                 if verbose:
                     metricsStr = history.get_metrics_str(
-                        batch_metrics=True,
-                        include_val_metrics=False
+                        batch_metrics = True,
+                        include_val_metrics = False
                     )
                     print(
                         "\rEvaluating (%*d/%*d) -> %s" %
                         (len_tot_samples, samples, len_tot_samples, tot_samples,
-                         metricsStr), end='', flush=True
+                         metricsStr), end = '', flush = True
                     )
             else:
                 # iteration over batch completed
                 # calculate average metrics across all batches
-                history.calculate_epoch_metrics(val_metrics=False)
+                history.calculate_epoch_metrics(val_metrics = False)
                 metricsStr = history.get_metrics_str(
-                    batch_metrics=False,
-                    include_val_metrics=False
+                    batch_metrics = False,
+                    include_val_metrics = False
                 )
                 print(
                     "\rEvaluating (%*d/%*d) -> %s" %
                     (len_tot_samples, samples, len_tot_samples, tot_samples,
-                     metricsStr), flush=True
+                     metricsStr), flush = True
                 )
         return history.get_metric_vals(history.tracked_metrics())
     finally:
@@ -834,8 +904,8 @@ def predict_module(
             dataset = torch.utils.data.TensorDataset(X, y)
 
         loader = torch.utils.data.DataLoader(
-            dataset, batch_size=batch_size,
-            shuffle=False
+            dataset, batch_size = batch_size,
+            shuffle = False
         )
         preds, actuals = [], []
 
@@ -880,7 +950,7 @@ def predict_array(
         with torch.no_grad():
             model.eval()
             if isinstance(data, np.ndarray):
-                data = torch.tensor(data, dtype=torch.float32)
+                data = torch.tensor(data, dtype = torch.float32)
             data = data.to(device)
             # forward pass
             logits = model(data)
@@ -1027,7 +1097,7 @@ class Trainer:
         train_dataset: Union[NumpyArrayTuple, torch.utils.data.Dataset],
         validation_dataset: Union[NumpyArrayTuple, torch.utils.data.Dataset] = None,
         validation_split: float = 0.0,
-        l1_reg=None,
+        l1_reg = None,
         lr_scheduler: Union[LRSchedulerType, ReduceLROnPlateauType] = None,
         verbose: bool = True
     ) -> MetricsHistory:
@@ -1067,12 +1137,12 @@ class Trainer:
                 "torch.optim._LRScheduler or ReduceLROnPlateau"
 
         history = cross_train_module(
-            model, train_dataset, self.loss_fn, optimizer, device=self.device,
-            validation_split=validation_split, validation_dataset=validation_dataset,
-            metrics_map=self.metrics_map, epochs=self.epochs, batch_size=self.batch_size,
-            l1_reg=l1_reg,
-            reporting_interval=self.reporting_interval, lr_scheduler=lr_scheduler,
-            shuffle=self.shuffle, num_workers=self.num_workers, verbose=verbose
+            model, train_dataset, self.loss_fn, optimizer, device = self.device,
+            validation_split = validation_split, validation_dataset = validation_dataset,
+            metrics_map = self.metrics_map, epochs = self.epochs, batch_size = self.batch_size,
+            l1_reg = l1_reg,
+            reporting_interval = self.reporting_interval, lr_scheduler = lr_scheduler,
+            shuffle = self.shuffle, num_workers = self.num_workers, verbose = verbose
         )
         return history
 
@@ -1083,8 +1153,8 @@ class Trainer:
         verbose: bool = True
     ) -> dict:
         return evaluate_module(
-            model, dataset, self.loss_fn, device=self.device, metrics_map=self.metrics_map,
-            batch_size=self.batch_size, verbose=verbose
+            model, dataset, self.loss_fn, device = self.device, metrics_map = self.metrics_map,
+            batch_size = self.batch_size, verbose = verbose
         )
 
     # def predict_dataset(self, model: nn.Module, dataset: torch.utils.data.Dataset) -> tuple:

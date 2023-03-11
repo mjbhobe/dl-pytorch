@@ -1,14 +1,20 @@
 # -*- coding: utf-8 -*-
-import warnings
-
 """
-pyt_fashion_mnist_dnn4.py: multiclass classification of Zolando's Fashion MNIST dataset.
+pyt_fashion_mnist_dnn.py: Multiclass classification of Zolando's Fashion MNIST dataset.
+Part-3 of the tutorial for torch training toolkit, where we add L1 regularization &
+a learning scheduler during training.
+
+NOTE: This is a tutorial that illustrates how to use torch training toolkit. So we do
+not focus on how to optimize model performance or loading data - topics such as regularization,
+dropout etc. have been dropped. The intention is to understand how to use torch training toolkit
+to ease the training process & not on how to optimize model performance.
 
 @author: Manish Bhobe
 My experiments with Python, Machine Learning & Deep Learning.
 This code is meant for education purposes only & is not intended for commercial/production use!
 Use at your own risk!! I am not responsible if your CPU or GPU gets fried :D
 """
+import warnings
 
 warnings.filterwarnings('ignore')
 
@@ -18,7 +24,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 # tweaks for libraries
-np.set_printoptions(precision = 6, linewidth = 1024, suppress = True)
+np.set_printoptions(precision = 4, linewidth = 1024, suppress = True)
 plt.style.use('seaborn')
 sns.set(style = 'darkgrid', context = 'notebook', font_scale = 1.20)
 
@@ -27,18 +33,16 @@ import torch
 
 print('Using Pytorch version: ', torch.__version__)
 import torch.nn as nn
-from torchvision import datasets, transforms
 import torchmetrics
 import torchsummary
-# My helper functions for training/evaluating etc.
-import pytorch_training_toolkit as t3
+from torchvision import datasets, transforms
+# import the Pytorch training toolkit (t3)
+import torch_training_toolkit as t3
 
 # to ensure that you get consistent results across runs & machines
-# @see: https://discuss.pytorch.org/t/reproducibility-over-different-machines/63047
-SEED = t3.seed_all()
-DEVICE = torch.device("cuda:0") \
-    if torch.cuda.is_available() else torch.device("cpu")
-print(f"Training model on {DEVICE}")
+seed = 123
+t3.seed_all(seed)
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def load_data():
@@ -66,7 +70,8 @@ def load_data():
     print("No of test records: %d" % len(test_dataset))
 
     # lets split the test dataset into val_dataset & test_dataset -> 8000:2000 records
-    val_dataset, test_dataset = torch.utils.data.random_split(test_dataset, [8000, 2000])
+    # val_dataset, test_dataset = torch.utils.data.random_split(test_dataset, [8000, 2000])
+    val_dataset, test_dataset = t3.split_dataset(test_dataset, split_perc = 0.2)
     print("No of cross-val records: %d" % len(val_dataset))
     print("No of test records: %d" % len(test_dataset))
 
@@ -165,17 +170,13 @@ IMAGE_HEIGHT, IMAGE_WIDTH, NUM_CHANNELS, NUM_CLASSES = 28, 28, 1, 10
 class FMNISTNet(nn.Module):
     def __init__(self):
         super(FMNISTNet, self).__init__()
+        # our network - using Sequential API
         self.net = nn.Sequential(
             nn.Flatten(),
-
             t3.Linear(IMAGE_HEIGHT * IMAGE_WIDTH * NUM_CHANNELS, 256),
             nn.ReLU(),
-            nn.Dropout(p = 0.20),
-
             t3.Linear(256, 128),
             nn.ReLU(),
-            nn.Dropout(p = 0.20),
-
             t3.Linear(128, NUM_CLASSES)
         )
 
@@ -188,7 +189,7 @@ class FMNISTConvNet(nn.Module):
     def __init__(self):
         super(FMNISTConvNet, self).__init__()
         self.net = nn.Sequential(
-            t3.Conv2d(1, 128, kernel_size = 3),
+            t3.Conv2d(NUM_CHANNELS, 128, kernel_size = 3),
             nn.ReLU(),
             nn.MaxPool2d(2),
             nn.Dropout(0.2),
@@ -200,11 +201,11 @@ class FMNISTConvNet(nn.Module):
 
             nn.Flatten(),
 
-            t3.Linear(7 * 7 * 64, 512),
+            t3.Linear(64 * 7 * 7, 512),
             nn.ReLU(),
             nn.Dropout(0.2),
 
-            nn.Linear(512, NUM_CLASSES)
+            t3.Linear(512, NUM_CLASSES)
         )
 
     def forward(self, x):
@@ -213,30 +214,39 @@ class FMNISTConvNet(nn.Module):
 
 DO_TRAINING = True
 DO_PREDICTION = True
-SHOW_SAMPLE = True
+SHOW_SAMPLE = False
 USE_CNN = False  # if False, will use an ANN
 
 MODEL_SAVE_NAME = 'pyt_mnist_cnn.pyt' if USE_CNN else 'pyt_mnist_dnn.pyt'
-MODEL_SAVE_PATH = os.path.join(os.path.dirname(__file__), 'model_states', MODEL_SAVE_NAME)
-NUM_EPOCHS, BATCH_SIZE, LEARNING_RATE, L2_REG = \
-    (25 if USE_CNN else 50), 64, 0.001, 0.0005
+MODEL_SAVE_PATH = os.path.join('..', 'model_states', MODEL_SAVE_NAME)
+NUM_EPOCHS, BATCH_SIZE, LEARNING_RATE, L1_REG, L2_REG = 25, 64, 0.001, 5e-4, 2e-4
 
 
 def main():
     print('Loading datasets...')
     train_dataset, val_dataset, test_dataset = load_data()
+
+    # declare loss functions
     loss_fn = nn.CrossEntropyLoss()
+    # metrics map - metrics to track during training
     metrics_map = {
-        "acc": torchmetrics.classification.MulticlassAccuracy(num_classes = NUM_CLASSES)
+        # accuracy
+        "acc": torchmetrics.classification.MulticlassAccuracy(num_classes = NUM_CLASSES),
+        # overall f1-score
+        "f1": torchmetrics.classification.MulticlassF1Score(num_classes = NUM_CLASSES)
     }
+    # define the trainer
+    trainer = t3.Trainer(
+        loss_fn = loss_fn, device = DEVICE,
+        epochs = NUM_EPOCHS, batch_size = BATCH_SIZE,
+        metrics_map = metrics_map
+    )
 
     if SHOW_SAMPLE:
         # display sample from test dataset
         print('Displaying sample from train dataset...')
-        trainloader = torch.utils.data.DataLoader(
-            test_dataset, batch_size = 64, shuffle = True
-        )
-        data_iter = iter(trainloader)
+        testloader = torch.utils.data.DataLoader(test_dataset, batch_size = 64, shuffle = True)
+        data_iter = iter(testloader)
         images, labels = next(data_iter)  # fetch first batch of 64 images & labels
         display_sample(
             images.cpu().numpy(), labels.cpu().numpy(),
@@ -246,63 +256,61 @@ def main():
     if DO_TRAINING:
         print(f'Using {"CNN" if USE_CNN else "ANN"} model...')
         model = FMNISTConvNet() if USE_CNN else FMNISTNet()
-        optimizer = torch.optim.Adam(
-            params = model.parameters(), lr = LEARNING_RATE, weight_decay = L2_REG
+        model = model.to(DEVICE)
+        # display Keras like summary
+        print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
+        # optimizer is required only during training!
+        optimizer = torch.optim.Adam(model.parameters(), lr = LEARNING_RATE, weight_decay = L2_REG)
+        # add L1 regularization & a learning scheduler
+        from torch.optim.lr_scheduler import StepLR
+        scheduler = StepLR(optimizer, step_size = NUM_EPOCHS // 5, gamma = 0.1, verbose = True)
+        hist = trainer.fit(
+            model, optimizer, train_dataset,
+            validation_dataset = val_dataset,
+            lr_scheduler = scheduler
         )
-        print(torchsummary.summary(model, (NUM_CLASSES, IMAGE_WIDTH, IMAGE_HEIGHT)))
-        import sys
-        sys.exit(-1)
+        # display the tracked metrics
+        hist.plot_metrics("Model Performance")
 
-        early_stopping = t3.EarlyStopping(patience = 5)
-
-        hist = t3.cross_train_model(
-            model, train_dataset, loss_fn, optimizer, device = DEVICE,
-            validation_dataset = val_dataset, metrics_map = metrics_map,
-            epochs = NUM_EPOCHS, batch_size = BATCH_SIZE, early_stopping = early_stopping
-        )
-        hist.plot_metrics(title = "Model Performance", fig_size = (10, 8))
-
-        # evaluate model performance after training
+        # evaluate model performance on train/eval & test datasets
         print('Evaluating model performance...')
-        metrics = t3.evaluate_model(
-            model, train_dataset, loss_fn, device = DEVICE, metrics_map = metrics_map
+        metrics = trainer.evaluate(model, train_dataset)
+        print(
+            f"  Training dataset  -> loss: {metrics['loss']:.4f} - acc: {metrics['acc']:.4f} - f1: {metrics['f1']:.4f}"
         )
-        print(f"Training metrics -> {metrics}")
-        metrics = t3.evaluate_model(
-            model, val_dataset, loss_fn, device = DEVICE, metrics_map = metrics_map
+        metrics = trainer.evaluate(model, val_dataset)
+        print(
+            f"  Cross-val dataset -> loss: {metrics['loss']:.4f} - acc: {metrics['acc']:.4f} - f1: {metrics['f1']:.4f}"
         )
-        print(f"Cross-val metrics -> {metrics}")
-        metrics = t3.evaluate_model(
-            model, test_dataset, loss_fn, device = DEVICE, metrics_map = metrics_map
+        metrics = trainer.evaluate(model, test_dataset)
+        print(
+            f"  Testing dataset   -> loss: {metrics['loss']:.4f} - acc: {metrics['acc']:.4f} - f1: {metrics['f1']:.4f}"
         )
-        print(f"Testing metrics -> {metrics}")
-
         # save model state
         t3.save_model(model, MODEL_SAVE_PATH)
         del model
 
     if DO_PREDICTION:
-        print(f'Using {"CNN" if USE_CNN else "ANN"} model...')
+        # load model state from .pt file
         model = FMNISTConvNet() if USE_CNN else FMNISTNet()
-        optimizer = torch.optim.Adam(
-            params = model.parameters(), lr = LEARNING_RATE, weight_decay = L2_REG
-        )
-        print(torchsummary.summary(model, (NUM_CLASSES, IMAGE_WIDTH, IMAGE_HEIGHT)))
+        model = t3.load_model(model, MODEL_SAVE_PATH)
+        print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
 
-        y_pred, y_true = t3.predict_dataset(model, test_dataset, device = DEVICE)
+        y_pred, y_true = trainer.predict(model, test_dataset)
         y_pred = np.argmax(y_pred, axis = 1)
         print('Sample labels (50): ', y_true[:50])
         print('Sample predictions: ', y_true[:50])
-        print(f"We got {(y_pred != y_true).sum()} of {len(y_true)} incorrect!")
+        print(
+            'We got %d/%d incorrect!' %
+            ((y_pred != y_true).sum(), len(y_true))
+        )
 
         # display sample from test dataset
         print('Displaying sample predictions...')
-        trainloader = torch.utils.data.DataLoader(
-            test_dataset, batch_size = 64, shuffle = True
-        )
-        data_iter = iter(trainloader)
-        images, labels = next(data_iter)  # fetch a batch of 64 random images
-        preds = np.argmax(t3.predict(model, images, device = DEVICE), axis = 1)
+        testloader = torch.utils.data.DataLoader(test_dataset, batch_size = 64, shuffle = True)
+        data_iter = iter(testloader)
+        images, labels = next(data_iter)
+        preds = np.argmax(trainer.predict(model, images.cpu().numpy()), axis = 1)
         display_sample(
             images.cpu().numpy(), labels.cpu().numpy(), sample_predictions = preds,
             grid_shape = (8, 8), plot_title = 'Sample Predictions'
