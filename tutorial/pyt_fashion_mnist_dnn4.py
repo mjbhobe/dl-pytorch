@@ -263,11 +263,11 @@ def main():
         optimizer = torch.optim.Adam(model.parameters(), lr = LEARNING_RATE, weight_decay = L2_REG)
         # add L1 regularization & a learning scheduler
         from torch.optim.lr_scheduler import StepLR
-        scheduler = StepLR(optimizer, step_size = NUM_EPOCHS // 5, gamma = 0.1, verbose = True)
+        scheduler = StepLR(optimizer, step_size = NUM_EPOCHS // 5, gamma = 0.1)
         # add an EarlyStopping
         early_stopping = t3.EarlyStopping(
-            model, metrics_map, using_val_dataset = True, monitor = "val_loss", patience = 5,
-            verbose = True
+            model, metrics_map, using_val_dataset = True,
+            monitor = "val_loss", patience = 5,
         )
         hist = trainer.fit(
             model, optimizer, train_dataset,
@@ -282,15 +282,15 @@ def main():
         print('Evaluating model performance...')
         metrics = trainer.evaluate(model, train_dataset)
         print(
-            f"  Training dataset  -> loss: {metrics['loss']:.4f} - acc: {metrics['acc']:.4f} - f1: {metrics['f1']:.4f}"
+            f"  Training dataset  -> loss: {metrics['loss']:.4f} - acc: {metrics['acc']:.4f}"
         )
         metrics = trainer.evaluate(model, val_dataset)
         print(
-            f"  Cross-val dataset -> loss: {metrics['loss']:.4f} - acc: {metrics['acc']:.4f} - f1: {metrics['f1']:.4f}"
+            f"  Cross-val dataset -> loss: {metrics['loss']:.4f} - acc: {metrics['acc']:.4f}"
         )
         metrics = trainer.evaluate(model, test_dataset)
         print(
-            f"  Testing dataset   -> loss: {metrics['loss']:.4f} - acc: {metrics['acc']:.4f} - f1: {metrics['f1']:.4f}"
+            f"  Testing dataset   -> loss: {metrics['loss']:.4f} - acc: {metrics['acc']:.4f}"
         )
         # save model state
         t3.save_model(model, MODEL_SAVE_PATH)

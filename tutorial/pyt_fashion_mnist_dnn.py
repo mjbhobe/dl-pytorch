@@ -51,7 +51,7 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def load_data():
     """
-    load the data using datasets API. We also split the test_dataset into 
+    load the data using datasets API. We also split the test_dataset into
     cross-val/test datasets using 80:20 ration
     """
     mean, std = 0.5, 0.5
@@ -216,7 +216,7 @@ class FMNISTConvNet(nn.Module):
         return self.net(x)
 
 
-DO_TRAINING = False
+DO_TRAINING = True
 DO_PREDICTION = True
 SHOW_SAMPLE = False
 USE_CNN = False  # if False, will use an ANN
@@ -252,6 +252,9 @@ def main():
     if DO_TRAINING:
         print(f'Using {"CNN" if USE_CNN else "ANN"} model...')
         model = FMNISTConvNet() if USE_CNN else FMNISTNet()
+        # use Pytorch 2 compile() call to speed up model - does not work on Windows :(
+        if (int(torch.__version__.split(".")[0]) >= 2) and (sys.platform != "win32"):
+            torch.compile(model)
         model = model.to(DEVICE)
         # display Keras like summary
         print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
@@ -282,6 +285,8 @@ def main():
         # load model state from .pt file
         model = FMNISTConvNet() if USE_CNN else FMNISTNet()
         model = t3.load_model(model, MODEL_SAVE_PATH)
+        if (int(torch.__version__.split(".")[0]) >= 2) and (sys.platform != "win32"):
+            torch.compile(model)
         print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
 
         y_pred, y_true = trainer.predict(model, test_dataset)

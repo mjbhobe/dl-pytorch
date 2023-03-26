@@ -121,12 +121,13 @@ class EarlyStopping:
                 )
         else:
             self.counter += 1
-            if self.verbose:
-                self.trace_func(
-                    f'EarlyStopping counter : {self.counter} of {self.patience}' +
-                    f' - best score of \'{self.monitor}\' is {self.best_score:.3f} at' +
-                    f' epoch {self.best_epoch}'
-                )
+            self.trace_func(f"EarlyStopping counter : {self.counter} of {self.patience}")
+            # if self.verbose:
+            #     self.trace_func(
+            #         f'EarlyStopping counter : {self.counter} of {self.patience}' +
+            #         f' - best score of \'{self.monitor}\' is {self.best_score:.3f} at' +
+            #         f' epoch {self.best_epoch}'
+            #     )
             if self.counter >= self.patience:
                 self.early_stop = True
                 self.trace_func(
@@ -134,7 +135,7 @@ class EarlyStopping:
                     f" \'{self.monitor}\' has not improved for past {self.patience} epochs!"
                 )
                 self.trace_func(
-                    '     - Best score: %.4f at epoch %d. Last %d scores -> %s' % (
+                    "     - Best score: %.4f at epoch %d. Last %d scores -> %s" % (
                         self.best_score, self.best_epoch, len(self.metrics_log),
                         self.metrics_log)
                 )
