@@ -2,12 +2,14 @@
 
 import warnings
 
-warnings.filterwarnings('ignore')
+warnings.filterwarnings("ignore")
 
 import sys
 
 if sys.version_info < (3,):
-    raise Exception("pytorch_toolkit does not support Python 2. Please use a Python 3+ interpreter!")
+    raise Exception(
+        "pytorch_toolkit does not support Python 2. Please use a Python 3+ interpreter!"
+    )
 
 import os
 import random
@@ -29,12 +31,14 @@ from torch.utils.data import DataLoader
 from torch.utils.data.dataset import Dataset
 
 
-def accuracy(logits, labels):
+def accuracy__(logits, labels):
     acc = torchmetrics.functional.accuracy(logits, labels)
     return acc
 
 
-def train_model(model, device, train_dataset, loss_fn, optimizer, val_dataset=None, epochs=5, batch_size=64):
+def train_model(
+    model, device, train_dataset, loss_fn, optimizer, val_dataset=None, epochs=5, batch_size=64
+):
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     num_train_recs = len(train_dataset)
     num_batches = len(train_dataloader)
@@ -42,19 +46,20 @@ def train_model(model, device, train_dataset, loss_fn, optimizer, val_dataset=No
     len_num_epochs, len_num_train_recs = len(str(epochs)), len(str(num_train_recs))
 
     # epoch-wise metrics history
-    history = {
-        'loss': [],
-        'acc': []
-    }
+    history = {"loss": [], "acc": []}
+    accuracy = torchmetrics.classification.MulticlassAccuracy(num_classes=10)
 
     if val_dataset is not None:
         # also add validation metrics
-        history['val_loss'] = []
-        history['val_acc'] = []
+        history["val_loss"] = []
+        history["val_acc"] = []
 
     try:
         print(f"Training model on {device} for {epochs} epochs with batch size of {batch_size}...")
         model = model.to(device)
+        accuracy = accuracy.to(device)
+        loss_fn = loss_fn.to(device)
+        # optimizer = optimizer.to(device)
 
         for epoch in range(epochs):
             epoch_train_loss, epoch_train_acc = 0.0, 0.0
@@ -75,25 +80,52 @@ def train_model(model, device, train_dataset, loss_fn, optimizer, val_dataset=No
 
                 # display progress
                 train_recs_so_far += len(X)
-                print("\rEpoch (%*d/%*d): (%*d/%*d) -> loss: %.4f - acc: %.4f" %
-                      (len_num_epochs, epoch + 1, len_num_epochs, epochs,
-                       len_num_train_recs, train_recs_so_far, len_num_train_recs, num_train_recs,
-                       batch_loss, batch_acc), end="", flush=True)
+                print(
+                    "\rEpoch (%*d/%*d): (%*d/%*d) -> loss: %.4f - acc: %.4f"
+                    % (
+                        len_num_epochs,
+                        epoch + 1,
+                        len_num_epochs,
+                        epochs,
+                        len_num_train_recs,
+                        train_recs_so_far,
+                        len_num_train_recs,
+                        num_train_recs,
+                        batch_loss,
+                        batch_acc,
+                    ),
+                    end="",
+                    flush=True,
+                )
             else:
                 # all batches of train_dataset done, compute & display epoch train loss & acc
                 epoch_train_loss /= num_batches
                 epoch_train_acc /= num_batches
 
                 # append epoch training metrics to history
-                history['loss'].append(epoch_train_loss.item())
-                history['acc'].append(epoch_train_acc.item())
+                history["loss"].append(epoch_train_loss.item())
+                history["acc"].append(epoch_train_acc.item())
 
                 train_batch_end = "\n" if val_dataset is None else ""
                 train_batch_continue = "" if val_dataset is None else "..."
-                print("\rEpoch (%*d/%*d): (%*d/%*d) -> loss: %.4f - acc: %.4f%s" %
-                      (len_num_epochs, epoch + 1, len_num_epochs, epochs,
-                       len_num_train_recs, train_recs_so_far, len_num_train_recs, num_train_recs,
-                       epoch_train_loss, epoch_train_acc, train_batch_continue), end=train_batch_end, flush=True)
+                print(
+                    "\rEpoch (%*d/%*d): (%*d/%*d) -> loss: %.4f - acc: %.4f%s"
+                    % (
+                        len_num_epochs,
+                        epoch + 1,
+                        len_num_epochs,
+                        epochs,
+                        len_num_train_recs,
+                        train_recs_so_far,
+                        len_num_train_recs,
+                        num_train_recs,
+                        epoch_train_loss,
+                        epoch_train_acc,
+                        train_batch_continue,
+                    ),
+                    end=train_batch_end,
+                    flush=True,
+                )
 
                 if val_dataset is not None:
                     val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=True)
@@ -113,13 +145,27 @@ def train_model(model, device, train_dataset, loss_fn, optimizer, val_dataset=No
                     val_acc /= num_val_batches
 
                     # append to history
-                    history['val_loss'].append(val_loss.item())
-                    history['val_acc'].append(val_acc.item())
+                    history["val_loss"].append(val_loss.item())
+                    history["val_acc"].append(val_acc.item())
 
-                    print("\rEpoch (%*d/%*d): (%*d/%*d) -> loss: %.4f - acc: %.4f - val_loss: %.4f - val_acc: %.4f" %
-                          (len_num_epochs, epoch + 1, len_num_epochs, epochs,
-                           len_num_train_recs, train_recs_so_far, len_num_train_recs, num_train_recs,
-                           epoch_train_loss, epoch_train_acc, val_loss, val_acc), flush=True)
+                    print(
+                        "\rEpoch (%*d/%*d): (%*d/%*d) -> loss: %.4f - acc: %.4f - val_loss: %.4f - val_acc: %.4f"
+                        % (
+                            len_num_epochs,
+                            epoch + 1,
+                            len_num_epochs,
+                            epochs,
+                            len_num_train_recs,
+                            train_recs_so_far,
+                            len_num_train_recs,
+                            num_train_recs,
+                            epoch_train_loss,
+                            epoch_train_acc,
+                            val_loss,
+                            val_acc,
+                        ),
+                        flush=True,
+                    )
         return history
     finally:
         model = model.to("cpu")
@@ -143,16 +189,21 @@ def evaluate_model(model, device, dataset, loss_fn, batch_size=64):
                 loss += batch_loss
                 acc += batch_acc
                 recs_so_far += len(X)
-                print("\rEvaluating (%*d/%*d) -> loss: %.4f - acc: %.4f" %
-                      (len_num_recs, recs_so_far, len_num_recs, num_records,
-                       batch_loss, batch_acc), end='', flush=True)
+                print(
+                    "\rEvaluating (%*d/%*d) -> loss: %.4f - acc: %.4f"
+                    % (len_num_recs, recs_so_far, len_num_recs, num_records, batch_loss, batch_acc),
+                    end="",
+                    flush=True,
+                )
             else:
                 loss /= num_batches
                 acc /= num_batches
 
-                print("\rEvaluating (%*d/%*d) -> loss: %.4f - acc: %.4f" %
-                      (len_num_recs, recs_so_far, len_num_recs, num_records,
-                       loss, acc), flush=True)
+                print(
+                    "\rEvaluating (%*d/%*d) -> loss: %.4f - acc: %.4f"
+                    % (len_num_recs, recs_so_far, len_num_recs, num_records, loss, acc),
+                    flush=True,
+                )
 
         return loss.item(), acc.item()
     finally:
@@ -198,7 +249,9 @@ def save_model(model, model_save_path, verbose=1):
 def load_model(model, model_state_dict_path, verbose=1):
     model_save_path = pathlib.Path(model_state_dict_path).absolute()
     if not os.path.exists(model_save_path):
-        raise IOError(f"ERROR: can't load model from {model_state_dict_path} - file does not exist!")
+        raise IOError(
+            f"ERROR: can't load model from {model_state_dict_path} - file does not exist!"
+        )
 
     state_dict = torch.load(model_state_dict_path)
     model.load_state_dict(state_dict)
@@ -207,25 +260,23 @@ def load_model(model, model_state_dict_path, verbose=1):
     model.eval()
 
 
-def show_plots(history, metric='acc', plot_title=None, fig_size=None):
+def show_plots(history, metric="acc", plot_title=None, fig_size=None):
     assert type(history) is dict
 
-    assert 'loss' in history.keys(), \
-        f"ERROR: expecting \'loss\' as one of the metrics in history object"
+    assert (
+        "loss" in history.keys()
+    ), f"ERROR: expecting 'loss' as one of the metrics in history object"
     if metric is not None:
-        assert isinstance(metric, str), \
-            "ERROR: expecting a string value for the \'metric\' parameter"
-        assert metric in history.keys(), \
-            f"{metric} is not tracked in training history!"
+        assert isinstance(metric, str), "ERROR: expecting a string value for the 'metric' parameter"
+        assert metric in history.keys(), f"{metric} is not tracked in training history!"
 
-    loss_metrics = ['loss']
-    if 'val_loss' in history.keys():
-        loss_metrics.append('val_loss')
+    loss_metrics = ["loss"]
+    if "val_loss" in history.keys():
+        loss_metrics.append("val_loss")
 
     other_metrics = []
     if metric is not None:
-        assert metric in history.keys(), \
-            f"ERROR: {metric} is not a metric being tracked!"
+        assert metric in history.keys(), f"ERROR: {metric} is not a metric being tracked!"
         other_metrics.append(metric)
         if f"val_{metric}" in history.keys():
             other_metrics.append(f"val_{metric}")
@@ -235,11 +286,11 @@ def show_plots(history, metric='acc', plot_title=None, fig_size=None):
 
     with sns.axes_style("darkgrid"):
         sns.set_context("notebook", font_scale=1.2)
-        sns.set_style(
-            {"font.sans-serif": ["SF Pro Display", "Arial", "Calibri", "DejaVu Sans"]})
+        sns.set_style({"font.sans-serif": ["SF Pro Display", "Arial", "Calibri", "DejaVu Sans"]})
 
-        f, ax = plt.subplots(nrows=1, ncols=col_count,
-                             figsize=((16, 5) if fig_size is None else fig_size))
+        f, ax = plt.subplots(
+            nrows=1, ncols=col_count, figsize=((16, 5) if fig_size is None else fig_size)
+        )
         axs = ax[0] if col_count == 2 else ax
 
         # plot the losses
@@ -247,8 +298,11 @@ def show_plots(history, metric='acc', plot_title=None, fig_size=None):
         losses_df.plot(ax=axs)
         # ax[0].set_ylim(0.0, 1.0)
         axs.grid(True)
-        losses_title = 'Training \'loss\' vs Epochs' if len(
-            loss_metrics) == 1 else 'Training & Validation \'loss\' vs Epochs'
+        losses_title = (
+            "Training 'loss' vs Epochs"
+            if len(loss_metrics) == 1
+            else "Training & Validation 'loss' vs Epochs"
+        )
         axs.title.set_text(losses_title)
 
         # plot the metric, if specified
@@ -257,8 +311,11 @@ def show_plots(history, metric='acc', plot_title=None, fig_size=None):
             metrics_df.plot(ax=ax[1])
             # ax[1].set_ylim(0.0, 1.0)
             ax[1].grid(True)
-            metrics_title = f'Training \'{other_metrics[0]}\' vs Epochs' if len(other_metrics) == 1 \
-                else f'Training & Validation \'{other_metrics[0]}\' vs Epochs'
+            metrics_title = (
+                f"Training '{other_metrics[0]}' vs Epochs"
+                if len(other_metrics) == 1
+                else f"Training & Validation '{other_metrics[0]}' vs Epochs"
+            )
             ax[1].title.set_text(metrics_title)
 
         if plot_title is not None:
