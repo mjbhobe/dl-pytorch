@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 """
 pyt_fashion_mnist_dnn.py: Multiclass classification of Zolando's Fashion MNIST dataset.
-Part-1 of the tutorial for torch training toolkit, where we setup the basic training
+Part-1 of the tutorial for Torch Training Toolkit (T3), where we setup the basic training
 harness & fit our model, evaluate results and run predictions.
 
-NOTE: This is a tutorial that illustrates how to use torch training toolkit. So we do
+NOTE: This is a tutorial that illustrates how to use Torch Training Toolkit (T3). So we do
 not focus on how to optimize model performance or loading data - topics such as regularization,
-dropout etc. have been dropped. The intention is to understand how to use torch training toolkit
+dropout etc. have been dropped. The intention is to understand how to use Torch Training Toolkit
 to ease the training process & not on how to optimize model performance.
 
 @author: Manish Bhobe
@@ -16,7 +16,7 @@ Use at your own risk!! I am not responsible if your CPU or GPU gets fried :D
 """
 import warnings
 
-warnings.filterwarnings('ignore')
+warnings.filterwarnings("ignore")
 
 import sys
 import os
@@ -26,26 +26,28 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 # tweaks for libraries
-np.set_printoptions(precision = 4, linewidth = 1024, suppress = True)
-plt.style.use('seaborn')
-sns.set(style = 'darkgrid', context = 'notebook', font_scale = 1.20)
+np.set_printoptions(precision=4, linewidth=1024, suppress=True)
+plt.style.use("seaborn")
+sns.set(style="darkgrid", context="notebook", font_scale=1.20)
 
 # Pytorch imports
 import torch
 
-print('Using Pytorch version: ', torch.__version__)
+print("Using Pytorch version: ", torch.__version__)
 import torch.nn as nn
 import torchmetrics
 import torchsummary
 import torch.nn.functional as F
 from torchvision import datasets, transforms
 from torch import optim
+
 # import the Pytorch training toolkit (t3)
 import torch_training_toolkit as t3
 
 # to ensure that you get consistent results across runs & machines
 seed = 123
 t3.seed_all(seed)
+# define a device to train on
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
@@ -56,26 +58,23 @@ def load_data():
     """
     mean, std = 0.5, 0.5
     transformations = transforms.Compose(
-        [
-            transforms.ToTensor(),
-            transforms.Normalize(mean, std)
-        ]
+        [transforms.ToTensor(), transforms.Normalize(mean, std)]
     )
 
     train_dataset = datasets.FashionMNIST(
-        root = './data', train = True, download = True, transform = transformations
+        root="./data", train=True, download=True, transform=transformations
     )
 
     print("No of training records: %d" % len(train_dataset))
 
     test_dataset = datasets.FashionMNIST(
-        './data', train = False, download = True, transform = transformations
+        "./data", train=False, download=True, transform=transformations
     )
     print("No of test records: %d" % len(test_dataset))
 
     # lets split the test dataset into val_dataset & test_dataset -> 8000:2000 records
     # val_dataset, test_dataset = torch.utils.data.random_split(test_dataset, [8000, 2000])
-    val_dataset, test_dataset = t3.split_dataset(test_dataset, split_perc = 0.2)
+    val_dataset, test_dataset = t3.split_dataset(test_dataset, split_perc=0.2)
     print("No of cross-val records: %d" % len(val_dataset))
     print("No of test records: %d" % len(test_dataset))
 
@@ -83,57 +82,72 @@ def load_data():
 
 
 def display_sample(
-    sample_images, sample_labels, grid_shape = (10, 10), plot_title = None,
-    sample_predictions = None
+    sample_images,
+    sample_labels,
+    grid_shape=(10, 10),
+    plot_title=None,
+    sample_predictions=None,
 ):
     # just in case these are not imported!
     import matplotlib.pyplot as plt
     import seaborn as sns
-    plt.style.use('seaborn')
+
+    plt.style.use("seaborn")
 
     num_rows, num_cols = grid_shape
     assert sample_images.shape[0] == num_rows * num_cols
 
     # a dict to help encode/decode the labels
     FASHION_LABELS = {
-        0: 'T-shirt/top',
-        1: 'Trouser',
-        2: 'Pullover',
-        3: 'Dress',
-        4: 'Coat',
-        5: 'Sandal',
-        6: 'Shirt',
-        7: 'Sneaker',
-        8: 'Bag',
-        9: 'Ankle boot',
+        0: "T-shirt/top",
+        1: "Trouser",
+        2: "Pullover",
+        3: "Dress",
+        4: "Coat",
+        5: "Sandal",
+        6: "Shirt",
+        7: "Sneaker",
+        8: "Bag",
+        9: "Ankle boot",
     }
 
     with sns.axes_style("whitegrid"):
-        sns.set_context("notebook", font_scale = 0.98)
+        sns.set_context("notebook", font_scale=0.98)
         sns.set_style(
-            {"font.sans-serif": ["SF UI Text", "Calibri", "Arial", "DejaVu Sans", "sans"]}
+            {
+                "font.sans-serif": [
+                    "SF UI Text",
+                    "Calibri",
+                    "Arial",
+                    "DejaVu Sans",
+                    "sans",
+                ]
+            }
         )
 
         f, ax = plt.subplots(
-            num_rows, num_cols, figsize = (14, 10),
-            gridspec_kw = {"wspace": 0.05, "hspace": 0.35}, squeeze = True
+            num_rows,
+            num_cols,
+            figsize=(14, 10),
+            gridspec_kw={"wspace": 0.05, "hspace": 0.35},
+            squeeze=True,
         )  # 0.03, 0.25
         # fig = ax[0].get_figure()
         f.tight_layout()
-        f.subplots_adjust(top = 0.90)  # 0.93
+        f.subplots_adjust(top=0.90)  # 0.93
 
         for r in range(num_rows):
             for c in range(num_cols):
                 image_index = r * num_cols + c
                 ax[r, c].axis("off")
                 # de-normalize image
-                sample_images[image_index] = \
-                    (sample_images[image_index] * 0.5) / 0.5
+                sample_images[image_index] = (sample_images[image_index] * 0.5) / 0.5
 
                 # show selected image
                 ax[r, c].imshow(
                     sample_images[image_index].squeeze(),
-                    cmap = "Greys", interpolation = 'nearest'
+                    cmap="Greys",
+                    interpolation="nearest",
                 )
 
                 if sample_predictions is None:
@@ -143,22 +157,23 @@ def display_sample(
                     )
                 else:
                     pred_matches_actual = (
-                        sample_labels[image_index] == sample_predictions[image_index])
+                        sample_labels[image_index] == sample_predictions[image_index]
+                    )
                     # show prediction from model as image title
-                    title = '%s' % FASHION_LABELS[sample_predictions[image_index]]
+                    title = "%s" % FASHION_LABELS[sample_predictions[image_index]]
                     if pred_matches_actual:
                         # if matches, title color is green
-                        title_color = 'g'
+                        title_color = "g"
                     else:
                         # else title color is red
                         # title = '%s/%s' % (FASHION_LABELS[sample_labels[image_index]],
                         #                    FASHION_LABELS[sample_predictions[image_index]])
-                        title_color = 'r'
+                        title_color = "r"
 
                     # but show the prediction in the title
                     title = ax[r, c].set_title(title)
                     # if prediction is incorrect title color is red, else green
-                    plt.setp(title, color = title_color)
+                    plt.setp(title, color=title_color)
 
         if plot_title is not None:
             plt.suptitle(plot_title)
@@ -181,7 +196,7 @@ class FMNISTNet(nn.Module):
             nn.ReLU(),
             t3.Linear(256, 128),
             nn.ReLU(),
-            t3.Linear(128, NUM_CLASSES)
+            t3.Linear(128, NUM_CLASSES),
         )
 
     def forward(self, x):
@@ -193,23 +208,19 @@ class FMNISTConvNet(nn.Module):
     def __init__(self):
         super(FMNISTConvNet, self).__init__()
         self.net = nn.Sequential(
-            t3.Conv2d(NUM_CHANNELS, 128, kernel_size = 3),
+            t3.Conv2d(NUM_CHANNELS, 128, kernel_size=3),
             nn.ReLU(),
             nn.MaxPool2d(2),
             nn.Dropout(0.2),
-
-            t3.Conv2d(128, 64, kernel_size = 3),
+            t3.Conv2d(128, 64, kernel_size=3),
             nn.ReLU(),
             nn.MaxPool2d(2),
             nn.Dropout(0.2),
-
             nn.Flatten(),
-
             t3.Linear(64 * 7 * 7, 512),
             nn.ReLU(),
             nn.Dropout(0.2),
-
-            t3.Linear(512, NUM_CLASSES)
+            t3.Linear(512, NUM_CLASSES),
         )
 
     def forward(self, x):
@@ -221,32 +232,35 @@ DO_PREDICTION = True
 SHOW_SAMPLE = False
 USE_CNN = False  # if False, will use an ANN
 
-MODEL_SAVE_NAME = 'pyt_mnist_cnn.pyt' if USE_CNN else 'pyt_mnist_dnn.pyt'
-MODEL_SAVE_PATH = os.path.join('..', 'model_states', MODEL_SAVE_NAME)
+MODEL_SAVE_NAME = "pyt_mnist_cnn.pyt" if USE_CNN else "pyt_mnist_dnn.pyt"
+MODEL_SAVE_PATH = os.path.join("..", "model_states", MODEL_SAVE_NAME)
 NUM_EPOCHS, BATCH_SIZE, LEARNING_RATE, L2_REG = 25, 64, 0.001, 0.0005
 
 
 def main():
-    print('Loading datasets...')
+    print("Loading datasets...")
     train_dataset, val_dataset, test_dataset = load_data()
 
     # declare loss functions
     loss_fn = nn.CrossEntropyLoss()
     # define the trainer
     trainer = t3.Trainer(
-        loss_fn = loss_fn, device = DEVICE,
-        epochs = NUM_EPOCHS, batch_size = BATCH_SIZE
+        loss_fn=loss_fn, device=DEVICE, epochs=NUM_EPOCHS, batch_size=BATCH_SIZE
     )
 
     if SHOW_SAMPLE:
         # display sample from test dataset
-        print('Displaying sample from train dataset...')
-        testloader = torch.utils.data.DataLoader(test_dataset, batch_size = 64, shuffle = True)
+        print("Displaying sample from train dataset...")
+        testloader = torch.utils.data.DataLoader(
+            test_dataset, batch_size=64, shuffle=True
+        )
         data_iter = iter(testloader)
         images, labels = next(data_iter)  # fetch first batch of 64 images & labels
         display_sample(
-            images.cpu().numpy(), labels.cpu().numpy(),
-            grid_shape = (8, 8), plot_title = 'Sample Images'
+            images.cpu().numpy(),
+            labels.cpu().numpy(),
+            grid_shape=(8, 8),
+            plot_title="Sample Images",
         )
 
     if DO_TRAINING:
@@ -259,17 +273,19 @@ def main():
         # display Keras like summary
         print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
         # optimizer is required only during training!
-        optimizer = torch.optim.Adam(model.parameters(), lr = LEARNING_RATE)
+        optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
         # train model -> will return metrics tracked across epochs (default - only loss metrics
         hist = trainer.fit(
-            model, optimizer, train_dataset,
-            validation_dataset = val_dataset,
+            model,
+            optimizer,
+            train_dataset,
+            validation_dataset=val_dataset,
         )
         # display the tracked metrics
         hist.plot_metrics("Model Performance")
 
         # evaluate model performance on train/eval & test datasets
-        print('Evaluating model performance...')
+        print("Evaluating model performance...")
         metrics = trainer.evaluate(model, train_dataset)
         print(f"  Training dataset  -> loss: {metrics['loss']:.4f}")
         metrics = trainer.evaluate(model, val_dataset)
@@ -290,23 +306,25 @@ def main():
         print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
 
         y_pred, y_true = trainer.predict(model, test_dataset)
-        y_pred = np.argmax(y_pred, axis = 1)
-        print('Sample labels (50): ', y_true[:50])
-        print('Sample predictions: ', y_true[:50])
-        print(
-            'We got %d/%d incorrect!' %
-            ((y_pred != y_true).sum(), len(y_true))
-        )
+        y_pred = np.argmax(y_pred, axis=1)
+        print("Sample labels (50): ", y_true[:50])
+        print("Sample predictions: ", y_true[:50])
+        print("We got %d/%d incorrect!" % ((y_pred != y_true).sum(), len(y_true)))
 
         # display sample from test dataset
-        print('Displaying sample predictions...')
-        testloader = torch.utils.data.DataLoader(test_dataset, batch_size = 64, shuffle = True)
+        print("Displaying sample predictions...")
+        testloader = torch.utils.data.DataLoader(
+            test_dataset, batch_size=64, shuffle=True
+        )
         data_iter = iter(testloader)
         images, labels = next(data_iter)
-        preds = np.argmax(trainer.predict(model, images.cpu().numpy()), axis = 1)
+        preds = np.argmax(trainer.predict(model, images.cpu().numpy()), axis=1)
         display_sample(
-            images.cpu().numpy(), labels.cpu().numpy(), sample_predictions = preds,
-            grid_shape = (8, 8), plot_title = 'Sample Predictions'
+            images.cpu().numpy(),
+            labels.cpu().numpy(),
+            sample_predictions=preds,
+            grid_shape=(8, 8),
+            plot_title="Sample Predictions",
         )
 
 

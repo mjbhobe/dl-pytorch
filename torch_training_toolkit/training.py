@@ -13,6 +13,7 @@ if sys.version_info < (2,):
         "torch_training_toolkit does not support Python 1. Please use a Python 3+ interpreter!"
     )
 
+
 from .metrics_history import *
 from .dataset_utils import *
 from .layers import *
@@ -418,7 +419,10 @@ def predict_module(
 
 
 def predict_array(
-    model: nn.Module, data: np.ndarray, device: torch.device, batch_size: int = 64
+    model: nn.Module,
+    data: Union[np.ndarray, torch.Tensor],
+    device: torch.device,
+    batch_size: int = 64
 ) -> np.ndarray:
     """
     runs predictions on Numpy Array (use for classification ONLY)
@@ -431,9 +435,8 @@ def predict_array(
     """
     try:
         assert isinstance(model, nn.Module), "predict() works with instances of nn.Module only!"
-        assert (isinstance(data, np.ndarray)) or (
-            isinstance(data, torch.Tensor)
-        ), "data must be an instance of Numpy ndarray or torch.tensor"
+        assert (isinstance(data, np.ndarray)) or (isinstance(data, torch.Tensor)), \
+            "data must be an instance of Numpy ndarray or torch.tensor"
         # train on GPU if you can
         model = model.to(device)
 
@@ -667,9 +670,9 @@ class Trainer:
     def predict(
         self,
         model: nn.Module,
-        dataset: Union[np.ndarray, NumpyArrayTuple, torch.utils.data.Dataset],
+        dataset: Union[np.ndarray, torch.Tensor, NumpyArrayTuple, torch.utils.data.Dataset],
     ) -> Union[np.ndarray, NumpyArrayTuple]:
-        if isinstance(dataset, np.ndarray):
+        if isinstance(dataset, np.ndarray) or isinstance(dataset, torch.Tensor):
             return predict_array(model, dataset, self.device, self.batch_size)
         else:
             return predict_module(model, dataset, self.device, self.batch_size)

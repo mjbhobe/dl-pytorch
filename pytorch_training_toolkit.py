@@ -925,7 +925,7 @@ def predict_module(
 
 def predict_array(
     model: nn.Module,
-    data: np.ndarray,
+    data: Union[np.ndarray, torch.Tensor],
     device: torch.device,
     batch_size: int = 64
 ) -> np.ndarray:
@@ -1163,9 +1163,9 @@ class Trainer:
     def predict(
         self,
         model: nn.Module,
-        dataset: Union[np.ndarray, NumpyArrayTuple, torch.utils.data.Dataset]
+        dataset: Union[np.ndarray, torch.Tensor, NumpyArrayTuple, torch.utils.data.Dataset]
     ) -> Union[np.ndarray, NumpyArrayTuple]:
-        if isinstance(dataset, np.ndarray):
+        if isinstance(dataset, np.ndarray) or isinstance(dataset, torch.Tensor):
             return predict_array(model, dataset, self.device, self.batch_size)
         else:
             return predict_module(model, dataset, self.device, self.batch_size)

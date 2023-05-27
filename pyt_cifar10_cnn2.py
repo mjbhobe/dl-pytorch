@@ -30,7 +30,7 @@ from torchvision import datasets, transforms
 import torchmetrics
 import torchsummary
 # My helper functions for training/evaluating etc.
-import pytorch_training_toolkit as t3
+import torch_training_toolkit as t3
 
 # to ensure that you get consistent results across runs & machines
 # @see: https://discuss.pytorch.org/t/reproducibility-over-different-machines/63047
@@ -220,10 +220,10 @@ def build_model():
     return model
 
 
-DO_TRAINING = True
-DO_EVALUATION = True
+DO_TRAINING = False
+DO_EVALUATION = False
 DO_PREDICTION = True
-SHOW_SAMPLE = True
+SHOW_SAMPLE = False
 
 MODEL_SAVE_NAME = 'pyt_cifar10_cnn.pyt'
 MODEL_SAVE_PATH = os.path.join(os.path.dirname(__file__), 'model_states', MODEL_SAVE_NAME)
@@ -270,7 +270,8 @@ def main():
         #     validation_dataset = val_dataset, metrics_map = metrics_map,
         #     epochs = NUM_EPOCHS, batch_size = BATCH_SIZE
         # )
-        hist = trainer.fit(model, optimizer, train_dataset, validation_dataset = val_dataset)
+        hist = trainer.fit(model, optimizer, train_dataset, 
+                           validation_dataset = val_dataset)
         hist.plot_metrics(title = "Training Metrics", fig_size = (10, 8))
 
         # save model state
@@ -299,7 +300,7 @@ def main():
         model = t3.load_model(model, MODEL_SAVE_PATH)
         print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_WIDTH, IMAGE_HEIGHT)))
 
-        y_pred, y_true = trainer.predict_dataset(model, test_dataset)
+        y_pred, y_true = trainer.predict(model, test_dataset)
         y_pred = np.argmax(y_pred, axis = 1)
         print('Sample labels (50): ', y_true[:50])
         print('Sample predictions: ', y_true[:50])
@@ -315,7 +316,8 @@ def main():
         preds = trainer.predict(model, images)
         preds = np.argmax(preds, axis = 1)
         display_sample(
-            images.cpu().numpy(), labels.cpu().numpy(), sample_predictions = preds,
+            images.cpu().numpy(), labels.cpu().numpy(), 
+            sample_predictions = preds,
             grid_shape = (8, 8), plot_title = 'Sample Predictions'
         )
 
