@@ -15,146 +15,139 @@ This code is meant for education purposes only & is not intended for commercial/
 Use at your own risk!! I am not responsible if your CPU or GPU gets fried :D
 """
 import warnings
+import logging
+import logging.config
 
-warnings.filterwarnings('ignore')
+warnings.filterwarnings("ignore")
+logging.config.fileConfig(fname="logging.config")
 
+import sys
 import os
+import pathlib
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
 # tweaks for libraries
-np.set_printoptions(precision = 4, linewidth = 1024, suppress = True)
-plt.style.use('seaborn')
-sns.set(style = 'darkgrid', context = 'notebook', font_scale = 1.20)
+np.set_printoptions(precision=4, linewidth=1024, suppress=True)
+plt.style.use("seaborn")
+sns.set(style="darkgrid", context="notebook", font_scale=1.20)
 
 # Pytorch imports
 import torch
 
-print('Using Pytorch version: ', torch.__version__)
+print("Using Pytorch version: ", torch.__version__)
 import torch.nn as nn
 import torchmetrics
 import torchsummary
 from torchvision import datasets, transforms
+
 # import the Pytorch training toolkit (t3)
 import torch_training_toolkit as t3
 
 # to ensure that you get consistent results across runs & machines
 seed = 123
 t3.seed_all(seed)
+
+logger = logging.getLogger(__name__)
+
+# define a device to train on
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+DATA_PATH = pathlib.Path(__file__).parent.parent / "data"
+
+logger.info(f"Will train model on {DEVICE}")
+logger.info(f"DATA_PATH = {DATA_PATH}")
 
 
 def load_data():
     """
-    load the data using datasets API. We also split the test_dataset into 
+    load the data using datasets API. We also split the test_dataset into
     cross-val/test datasets using 80:20 ration
     """
     mean, std = 0.5, 0.5
-    transformations = transforms.Compose(
-        [
-            transforms.ToTensor(),
-            transforms.Normalize(mean, std)
-        ]
-    )
+    transformations = transforms.Compose([transforms.ToTensor(), transforms.Normalize(mean, std)])
 
-    train_dataset = datasets.FashionMNIST(
-        root = './data', train = True, download = True, transform = transformations
-    )
+    train_dataset = datasets.FashionMNIST(root=DATA_PATH, train=True, download=True, transform=transformations)
 
     print("No of training records: %d" % len(train_dataset))
 
-    test_dataset = datasets.FashionMNIST(
-        './data', train = False, download = True, transform = transformations
-    )
+    test_dataset = datasets.FashionMNIST(root=DATA_PATH, train=False, download=True, transform=transformations)
     print("No of test records: %d" % len(test_dataset))
 
     # lets split the test dataset into val_dataset & test_dataset -> 8000:2000 records
     # val_dataset, test_dataset = torch.utils.data.random_split(test_dataset, [8000, 2000])
-    val_dataset, test_dataset = t3.split_dataset(test_dataset, split_perc = 0.2)
+    val_dataset, test_dataset = t3.split_dataset(test_dataset, split_perc=0.2)
     print("No of cross-val records: %d" % len(val_dataset))
     print("No of test records: %d" % len(test_dataset))
 
     return train_dataset, val_dataset, test_dataset
 
 
-def display_sample(
-    sample_images, sample_labels, grid_shape = (10, 10), plot_title = None,
-    sample_predictions = None
-):
+def display_sample(sample_images, sample_labels, grid_shape=(10, 10), plot_title=None, sample_predictions=None):
     # just in case these are not imported!
     import matplotlib.pyplot as plt
     import seaborn as sns
-    plt.style.use('seaborn')
+
+    plt.style.use("seaborn")
 
     num_rows, num_cols = grid_shape
     assert sample_images.shape[0] == num_rows * num_cols
 
     # a dict to help encode/decode the labels
     FASHION_LABELS = {
-        0: 'T-shirt/top',
-        1: 'Trouser',
-        2: 'Pullover',
-        3: 'Dress',
-        4: 'Coat',
-        5: 'Sandal',
-        6: 'Shirt',
-        7: 'Sneaker',
-        8: 'Bag',
-        9: 'Ankle boot',
+        0: "T-shirt/top",
+        1: "Trouser",
+        2: "Pullover",
+        3: "Dress",
+        4: "Coat",
+        5: "Sandal",
+        6: "Shirt",
+        7: "Sneaker",
+        8: "Bag",
+        9: "Ankle boot",
     }
 
     with sns.axes_style("whitegrid"):
-        sns.set_context("notebook", font_scale = 0.98)
-        sns.set_style(
-            {"font.sans-serif": ["SF UI Text", "Calibri", "Arial", "DejaVu Sans", "sans"]}
-        )
+        sns.set_context("notebook", font_scale=0.98)
+        sns.set_style({"font.sans-serif": ["SF UI Text", "Calibri", "Arial", "DejaVu Sans", "sans"]})
 
         f, ax = plt.subplots(
-            num_rows, num_cols, figsize = (14, 10),
-            gridspec_kw = {"wspace": 0.05, "hspace": 0.35}, squeeze = True
+            num_rows, num_cols, figsize=(14, 10), gridspec_kw={"wspace": 0.05, "hspace": 0.35}, squeeze=True
         )  # 0.03, 0.25
         # fig = ax[0].get_figure()
         f.tight_layout()
-        f.subplots_adjust(top = 0.90)  # 0.93
+        f.subplots_adjust(top=0.90)  # 0.93
 
         for r in range(num_rows):
             for c in range(num_cols):
                 image_index = r * num_cols + c
                 ax[r, c].axis("off")
                 # de-normalize image
-                sample_images[image_index] = \
-                    (sample_images[image_index] * 0.5) / 0.5
+                sample_images[image_index] = (sample_images[image_index] * 0.5) / 0.5
 
                 # show selected image
-                ax[r, c].imshow(
-                    sample_images[image_index].squeeze(),
-                    cmap = "Greys", interpolation = 'nearest'
-                )
+                ax[r, c].imshow(sample_images[image_index].squeeze(), cmap="Greys", interpolation="nearest")
 
                 if sample_predictions is None:
                     # show the text label as image title
-                    title = ax[r, c].set_title(
-                        f"{FASHION_LABELS[sample_labels[image_index]]}"
-                    )
+                    title = ax[r, c].set_title(f"{FASHION_LABELS[sample_labels[image_index]]}")
                 else:
-                    pred_matches_actual = (
-                        sample_labels[image_index] == sample_predictions[image_index])
+                    pred_matches_actual = sample_labels[image_index] == sample_predictions[image_index]
                     # show prediction from model as image title
-                    title = '%s' % FASHION_LABELS[sample_predictions[image_index]]
+                    title = "%s" % FASHION_LABELS[sample_predictions[image_index]]
                     if pred_matches_actual:
                         # if matches, title color is green
-                        title_color = 'g'
+                        title_color = "g"
                     else:
                         # else title color is red
                         # title = '%s/%s' % (FASHION_LABELS[sample_labels[image_index]],
                         #                    FASHION_LABELS[sample_predictions[image_index]])
-                        title_color = 'r'
+                        title_color = "r"
 
                     # but show the prediction in the title
                     title = ax[r, c].set_title(title)
                     # if prediction is incorrect title color is red, else green
-                    plt.setp(title, color = title_color)
+                    plt.setp(title, color=title_color)
 
         if plot_title is not None:
             plt.suptitle(plot_title)
@@ -177,7 +170,7 @@ class FMNISTNet(nn.Module):
             nn.ReLU(),
             t3.Linear(256, 128),
             nn.ReLU(),
-            t3.Linear(128, NUM_CLASSES)
+            t3.Linear(128, NUM_CLASSES),
         )
 
     def forward(self, x):
@@ -189,41 +182,43 @@ class FMNISTConvNet(nn.Module):
     def __init__(self):
         super(FMNISTConvNet, self).__init__()
         self.net = nn.Sequential(
-            t3.Conv2d(NUM_CHANNELS, 128, kernel_size = 3),
+            t3.Conv2d(NUM_CHANNELS, 128, kernel_size=3),
             nn.ReLU(),
             nn.MaxPool2d(2),
             nn.Dropout(0.2),
-
-            t3.Conv2d(128, 64, kernel_size = 3),
+            t3.Conv2d(128, 64, kernel_size=3),
             nn.ReLU(),
             nn.MaxPool2d(2),
             nn.Dropout(0.2),
-
             nn.Flatten(),
-
             t3.Linear(64 * 7 * 7, 512),
             nn.ReLU(),
             nn.Dropout(0.2),
-
-            t3.Linear(512, NUM_CLASSES)
+            t3.Linear(512, NUM_CLASSES),
         )
 
     def forward(self, x):
         return self.net(x)
 
 
-DO_TRAINING = True
-DO_PREDICTION = True
-SHOW_SAMPLE = False
-USE_CNN = False  # if False, will use an ANN
+# DO_TRAINING = True
+# DO_PREDICTION = True
+# SHOW_SAMPLE = False
+# USE_CNN = False  # if False, will use an ANN
 
-MODEL_SAVE_NAME = 'pyt_mnist_cnn.pyt' if USE_CNN else 'pyt_mnist_dnn.pyt'
-MODEL_SAVE_PATH = os.path.join('..', 'model_states', MODEL_SAVE_NAME)
-NUM_EPOCHS, BATCH_SIZE, LEARNING_RATE, L1_REG, L2_REG = 25, 64, 0.001, 5e-4, 2e-4
+# MODEL_SAVE_NAME = 'pyt_mnist_cnn.pyt' if USE_CNN else 'pyt_mnist_dnn.pyt'
+# MODEL_SAVE_PATH = os.path.join('..', 'model_states', MODEL_SAVE_NAME)
+# NUM_EPOCHS, BATCH_SIZE, LEARNING_RATE, L1_REG, L2_REG = 25, 64, 0.001, 5e-4, 2e-4
+
+from cmd_opts import parse_command_line
 
 
 def main():
-    print('Loading datasets...')
+    args = parse_command_line()
+    MODEL_SAVE_NAME = "pyt_mnist_cnn.pyt" if args.use_cnn else "pyt_mnist_dnn.pyt"
+    MODEL_SAVE_PATH = os.path.join("..", "model_states", MODEL_SAVE_NAME)
+
+    print("Loading datasets...")
     train_dataset, val_dataset, test_dataset = load_data()
 
     # declare loss functions
@@ -231,49 +226,41 @@ def main():
     # metrics map - metrics to track during training
     metrics_map = {
         # accuracy
-        "acc": torchmetrics.classification.MulticlassAccuracy(num_classes = NUM_CLASSES),
+        "acc": torchmetrics.classification.MulticlassAccuracy(num_classes=NUM_CLASSES),
         # overall f1-score
-        "f1": torchmetrics.classification.MulticlassF1Score(num_classes = NUM_CLASSES)
+        "f1": torchmetrics.classification.MulticlassF1Score(num_classes=NUM_CLASSES),
     }
     # define the trainer
     trainer = t3.Trainer(
-        loss_fn = loss_fn, device = DEVICE,
-        epochs = NUM_EPOCHS, batch_size = BATCH_SIZE,
-        metrics_map = metrics_map
+        loss_fn=loss_fn, device=DEVICE, epochs=args.epochs, batch_size=args.batch_size, metrics_map=metrics_map
     )
 
-    if SHOW_SAMPLE:
+    if args.show_sample:
         # display sample from test dataset
-        print('Displaying sample from train dataset...')
-        testloader = torch.utils.data.DataLoader(test_dataset, batch_size = 64, shuffle = True)
+        print("Displaying sample from train dataset...")
+        testloader = torch.utils.data.DataLoader(test_dataset, batch_size=64, shuffle=True)
         data_iter = iter(testloader)
         images, labels = next(data_iter)  # fetch first batch of 64 images & labels
-        display_sample(
-            images.cpu().numpy(), labels.cpu().numpy(),
-            grid_shape = (8, 8), plot_title = 'Sample Images'
-        )
+        display_sample(images.cpu().numpy(), labels.cpu().numpy(), grid_shape=(8, 8), plot_title="Sample Images")
 
-    if DO_TRAINING:
-        print(f'Using {"CNN" if USE_CNN else "ANN"} model...')
-        model = FMNISTConvNet() if USE_CNN else FMNISTNet()
+    if args.train:
+        print(f'Using {"CNN" if args.use_cnn else "ANN"} model...')
+        model = FMNISTConvNet() if args.use_cnn else FMNISTNet()
         model = model.to(DEVICE)
         # display Keras like summary
         print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
         # optimizer is required only during training!
-        optimizer = torch.optim.Adam(model.parameters(), lr = LEARNING_RATE, weight_decay = L2_REG)
+        optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.l2_reg)
         # add L1 regularization & a learning scheduler
         from torch.optim.lr_scheduler import StepLR
-        scheduler = StepLR(optimizer, step_size = NUM_EPOCHS // 5, gamma = 0.1, verbose = True)
-        hist = trainer.fit(
-            model, optimizer, train_dataset,
-            validation_dataset = val_dataset,
-            lr_scheduler = scheduler
-        )
+
+        scheduler = StepLR(optimizer, step_size=args.epochs // 5, gamma=0.1, verbose=True)
+        hist = trainer.fit(model, optimizer, train_dataset, validation_dataset=val_dataset, lr_scheduler=scheduler)
         # display the tracked metrics
         hist.plot_metrics("Model Performance")
 
         # evaluate model performance on train/eval & test datasets
-        print('Evaluating model performance...')
+        print("Evaluating model performance...")
         metrics = trainer.evaluate(model, train_dataset)
         print(
             f"  Training dataset  -> loss: {metrics['loss']:.4f} - acc: {metrics['acc']:.4f} - f1: {metrics['f1']:.4f}"
@@ -290,30 +277,30 @@ def main():
         t3.save_model(model, MODEL_SAVE_PATH)
         del model
 
-    if DO_PREDICTION:
+    if args.pred:
         # load model state from .pt file
-        model = FMNISTConvNet() if USE_CNN else FMNISTNet()
+        model = FMNISTConvNet() if args.use_cnn else FMNISTNet()
         model = t3.load_model(model, MODEL_SAVE_PATH)
         print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
 
         y_pred, y_true = trainer.predict(model, test_dataset)
-        y_pred = np.argmax(y_pred, axis = 1)
-        print('Sample labels (50): ', y_true[:50])
-        print('Sample predictions: ', y_true[:50])
-        print(
-            'We got %d/%d incorrect!' %
-            ((y_pred != y_true).sum(), len(y_true))
-        )
+        y_pred = np.argmax(y_pred, axis=1)
+        print("Sample labels (50): ", y_true[:50])
+        print("Sample predictions: ", y_true[:50])
+        print("We got %d/%d incorrect!" % ((y_pred != y_true).sum(), len(y_true)))
 
         # display sample from test dataset
-        print('Displaying sample predictions...')
-        testloader = torch.utils.data.DataLoader(test_dataset, batch_size = 64, shuffle = True)
+        print("Displaying sample predictions...")
+        testloader = torch.utils.data.DataLoader(test_dataset, batch_size=64, shuffle=True)
         data_iter = iter(testloader)
         images, labels = next(data_iter)
-        preds = np.argmax(trainer.predict(model, images.cpu().numpy()), axis = 1)
+        preds = np.argmax(trainer.predict(model, images.cpu().numpy()), axis=1)
         display_sample(
-            images.cpu().numpy(), labels.cpu().numpy(), sample_predictions = preds,
-            grid_shape = (8, 8), plot_title = 'Sample Predictions'
+            images.cpu().numpy(),
+            labels.cpu().numpy(),
+            sample_predictions=preds,
+            grid_shape=(8, 8),
+            plot_title="Sample Predictions",
         )
 
 

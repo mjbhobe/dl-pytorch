@@ -9,9 +9,7 @@ warnings.filterwarnings("ignore")
 import sys
 
 if sys.version_info < (2,):
-    raise Exception(
-        "torch_training_toolkit does not support Python 1. Please use a Python 3+ interpreter!"
-    )
+    raise Exception("torch_training_toolkit does not support Python 2.x. Please use a Python 3+ interpreter!")
 
 
 from .metrics_history import *
@@ -57,9 +55,7 @@ def cross_train_module(
     This function is used internally by the Trainer class - see Trainer.fit(...)
     """
     # validate parameters passed into function
-    assert (
-        0.0 <= validation_split < 1.0
-    ), "cross_train_module: 'validation_split' must be a float between (0.0, 1.0]"
+    assert 0.0 <= validation_split < 1.0, "cross_train_module: 'validation_split' must be a float between (0.0, 1.0]"
     if loss_fxn is None:
         raise ValueError("cross_train_module: 'loss_fxn' cannot be None")
     if optimizer is None:
@@ -137,7 +133,7 @@ def cross_train_module(
                 preds = model(X)
                 # calculate loss
                 loss_tensor = loss_fxn(preds, y)
-                # add L1 if mentioned
+                # add L1 if mentioned - L2 Regularization is handled by optimizer!
                 if l1_reg is not None:
                     reg_loss = 0
                     for param in model.parameters():
@@ -150,9 +146,7 @@ def cross_train_module(
 
                 # compute batch metric(s)
                 preds = preds.to(device)
-                history.calculate_batch_metrics(
-                    preds.to("cpu"), y.to("cpu"), loss_tensor.item(), val_metrics=False
-                )
+                history.calculate_batch_metrics(preds.to("cpu"), y.to("cpu"), loss_tensor.item(), val_metrics=False)
 
                 num_batches += 1
                 samples += len(X)
@@ -160,9 +154,7 @@ def cross_train_module(
                 if (reporting_interval == 1) and verbose:
                     # display progress with batch metrics - will display line like this:
                     # Epoch (  3/100): (  45/1024) -> loss: 3.456 - acc: 0.275
-                    metricsStr = history.get_metrics_str(
-                        batch_metrics=True, include_val_metrics=False
-                    )
+                    metricsStr = history.get_metrics_str(batch_metrics=True, include_val_metrics=False)
                     print(
                         "\rEpoch (%*d/%*d): (%*d/%*d) -> %s"
                         % (
@@ -183,14 +175,8 @@ def cross_train_module(
                 # all train batches are over - display average train metrics
                 history.calculate_epoch_metrics(val_metrics=False)
                 if val_dataset is None:
-                    if (
-                        (epoch == 0)
-                        or ((epoch + 1) % reporting_interval == 0)
-                        or ((epoch + 1) == epochs)
-                    ):
-                        metricsStr = history.get_metrics_str(
-                            batch_metrics=False, include_val_metrics=False
-                        )
+                    if (epoch == 0) or ((epoch + 1) % reporting_interval == 0) or ((epoch + 1) == epochs):
+                        metricsStr = history.get_metrics_str(batch_metrics=False, include_val_metrics=False)
                         print(
                             "\rEpoch (%*d/%*d): (%*d/%*d) -> %s"
                             % (
@@ -210,14 +196,8 @@ def cross_train_module(
                 else:
                     # we have a validation dataset
                     # same print as above except for trailing ... and end=''
-                    if (
-                        (epoch == 0)
-                        or ((epoch + 1) % reporting_interval == 0)
-                        or ((epoch + 1) == epochs)
-                    ):
-                        metricsStr = history.get_metrics_str(
-                            batch_metrics=False, include_val_metrics=False
-                        )
+                    if (epoch == 0) or ((epoch + 1) % reporting_interval == 0) or ((epoch + 1) == epochs):
+                        metricsStr = history.get_metrics_str(batch_metrics=False, include_val_metrics=False)
                         print(
                             "\rEpoch (%*d/%*d): (%*d/%*d) -> %s..."
                             % (
@@ -263,14 +243,8 @@ def cross_train_module(
                             # loop over val_dataset completed - compute val average metrics
                             history.calculate_epoch_metrics(val_metrics=True)
                             # display final metrics
-                            if (
-                                (epoch == 0)
-                                or ((epoch + 1) % reporting_interval == 0)
-                                or ((epoch + 1) == epochs)
-                            ):
-                                metricsStr = history.get_metrics_str(
-                                    batch_metrics=False, include_val_metrics=True
-                                )
+                            if (epoch == 0) or ((epoch + 1) % reporting_interval == 0) or ((epoch + 1) == epochs):
+                                metricsStr = history.get_metrics_str(batch_metrics=False, include_val_metrics=True)
                                 print(
                                     "\rEpoch (%*d/%*d): (%*d/%*d) -> %s"
                                     % (
@@ -325,6 +299,8 @@ def evaluate_module(
     batch_size: int = 64,
     verbose: bool = True,
 ) -> MetricsValType:
+    """evaluate module performance.
+    Internal function used by Trainer.evaluate() - please see Trainer class for details"""
     try:
         model = model.to(device)
 
@@ -354,15 +330,11 @@ def evaluate_module(
                 preds = model(X)
                 # compute batch loss
                 batch_loss = loss_fn(preds, y).item()
-                history.calculate_batch_metrics(
-                    preds.to("cpu"), y.to("cpu"), batch_loss, val_metrics=False
-                )
+                history.calculate_batch_metrics(preds.to("cpu"), y.to("cpu"), batch_loss, val_metrics=False)
                 samples += len(y)
                 num_batches += 1
                 if verbose:
-                    metricsStr = history.get_metrics_str(
-                        batch_metrics=True, include_val_metrics=False
-                    )
+                    metricsStr = history.get_metrics_str(batch_metrics=True, include_val_metrics=False)
                     print(
                         "\rEvaluating (%*d/%*d) -> %s"
                         % (len_tot_samples, samples, len_tot_samples, tot_samples, metricsStr),
@@ -390,6 +362,8 @@ def predict_module(
     device: torch.device,
     batch_size: int = 64,
 ) -> NumpyArrayTuple:
+    """make predictions from array or dataset
+    Internal function used by Trainer.predict() - please see Trainer class for details"""
     try:
         model = model.to(device)
 
@@ -419,10 +393,7 @@ def predict_module(
 
 
 def predict_array(
-    model: nn.Module,
-    data: Union[np.ndarray, torch.Tensor],
-    device: torch.device,
-    batch_size: int = 64
+    model: nn.Module, data: Union[np.ndarray, torch.Tensor], device: torch.device, batch_size: int = 64
 ) -> np.ndarray:
     """
     runs predictions on Numpy Array (use for classification ONLY)
@@ -435,8 +406,9 @@ def predict_array(
     """
     try:
         assert isinstance(model, nn.Module), "predict() works with instances of nn.Module only!"
-        assert (isinstance(data, np.ndarray)) or (isinstance(data, torch.Tensor)), \
-            "data must be an instance of Numpy ndarray or torch.tensor"
+        assert (isinstance(data, np.ndarray)) or (
+            isinstance(data, torch.Tensor)
+        ), "data must be an instance of Numpy ndarray or torch.tensor"
         # train on GPU if you can
         model = model.to(device)
 
@@ -457,7 +429,7 @@ def predict_array(
 def save_model(model: nn.Module, model_save_path: str, verbose: bool = True):
     """saves Pytorch state (state_dict) to disk
     @params:
-        - model: instance of model derived from nn.Module (or instance of pytk.PytModel or pytk.PytSequential)
+        - model: instance of model derived from nn.Module
         - model_save_path: absolute or relative path where model's state-dict should be saved
           (NOTE:
              - the model_save_path file is overwritten at destination without warning
@@ -501,9 +473,7 @@ def load_model(model: nn.Module, model_state_dict_path: str, verbose: bool = Tru
     # convert model_state_dict_path to absolute path
     model_save_path = pathlib.Path(model_state_dict_path).absolute()
     if not os.path.exists(model_save_path):
-        raise IOError(
-            f"ERROR: can't load model from {model_state_dict_path} - file does not exist!"
-        )
+        raise IOError(f"ERROR: can't load model from {model_state_dict_path} - file does not exist!")
 
     # load state dict from path
     state_dict = torch.load(model_save_path)
@@ -534,31 +504,47 @@ class Trainer:
          - device (type torch.device): the device on which training/evaluation etc.
              should happen (e.g., torch.device("cuda") for GPU or torch.device("cpu"))
          - metrics_map (optional, default None): declares the metrics ** IN ADDITION TO ** loss
-             that should be tracked across epochs as the model trains/evaluates. It is optional,
-             which means that only loss will be tracked, else loss + all metrics defined in the map
-             will be tracked across epochs.
-             A metrics_map is of type `Dict[str, torchmetric.Metric]` & you can define several
-             metrics to be monitored during the training process. Each metric has a user-defined
+             that should be tracked across epochs as the model trains/evaluates. The `loss` metric
+             will always be tracked even if no additional metrics are specified. Metrics are tracked
+             across epochs for the training set and, if specified, the validation set too. It is derived
+             from the loss function (`loss_fn` parameter above), so should not be specified in `matrics_map`.
+             A `metrics_map` is of type `Dict[str, torchmetric.Metric]`. You can define several
+             metrics to be monitored during the training/validation process. Each metric has a user-defined
              abbreviation (the `str` part of the Dict) and an associated torchmetric.Metric _formula_
              to calculate the metric
-             Example of metrics_maps:
+             Example of `metrics_map`(s):
                 # measures accuracy (abbreviated 'acc' [user can choose any abbreviation here!])
                 metric_map = {
+                    # here "acc" is user-defined name (can be any name you choose that makes sense to you)
+                    # the formula on the right of : specifies how you calculate the value of this metric
+                    # Here we use `torchmetrics`, but you can point it to any method you define.
                     "acc": torchmetrics.classification.BinaryAccuracy()
                 }
+                # you can track multiple metrics also
                 # this one trackes 3 metrics - accuracy (acc),
                 metrics_map = {
                     "acc": torchmetrics.classification.BinaryAccuracy(),
                     "f1": torchmetrics.classification.BinaryF1Score(),
                     "roc_auc": torchmetrics.classification.BinaryAUROC(thresholds = None)
                 }
+                # you can also use your own function to calculate the metric
+                def my_metric_calc(logits, labels):
+                    metric = ....
+                    return metric
+                metrics_map = {
+                    "my_metric" : my_metric_calc(),
+                    "acc": torchmetrics.classification.BinaryAccuracy(),
+                }
          - epochs (int, default 5) - number of epochs for which the module should train
-         - batch_size (int, default 64) - size of batch used during training
+         - batch_size (int, default 64) - size of batch used during training. Specify a
+           negative value if you want to use the _entire_ dataset as the batch (not a good
+           practice, unless your dataset itself is very small)
          - reporting_interval (int, default 1) - interval (i.e. number of epochs) after
-             which progress must be reported when training. By default, the class
-             reports progress after each epoch. Set this value to change the interval
+             which progress must be reported when training. By default, training progress
+             is reported/printes after each epoch. Set this value to change the interval
              for example, if reporting_interval = 5, progress will be reported on the
-             first, then every fifth and the last epoch.
+             first, then every fifth thereafter and the last epoch (example: if epochs=22,
+             then progress will be reported on 1, 5, 10, 15, 20 and 22 epoch).
          - shuffle (bool, default=True) - should the data be shuffled during training?
              If True, it is shuffled else not. It is a good practice to always shuffle
              data between epochs. This setting should be left to the default value,
@@ -596,7 +582,8 @@ class Trainer:
         early_stopping: EarlyStopping = None,
         verbose: bool = True,
     ) -> MetricsHistory:
-        """fits (i.e cross-trains) the model using provided training data (and optionally
+        """
+        fits (i.e cross-trains) the model using provided training data (and optionally
         cross-validation data).
         @params:
           - model (type nn.Module, required) - an instance of the model (derived from nn.Module) to
@@ -615,13 +602,35 @@ class Trainer:
               split into train & cross-validation datasets. Specify a percentage (between 0.0 and 1.0) of train
               dataset that would be set aside for cross-validation.
               For example, if validation_split = 0.2, then 20% of train dataset will be set aside for cross-validation.
-              NOTE: if both validation_dataset and validation_split are specified, the former is used and latter IGNORED.
+              NOTE: if both `validation_dataset` and `validation_split` are specified, the former is used and latter
+              is IGNORED.
+          @returns:
+            - MetricsHistory object, which is basically a dict of metric names (the same value in the key of the
+              `metrics_map` parameter to the Trainer object) and their epoch-wise mean values.
+              Example:
+                 # suppose you created a Trainer object like this
+                    metrics_map = {
+                        "acc": torchmetrics.classification.BinaryAccuracy(),
+                        "f1": torchmetrics.classification.BinaryF1Score(),
+                    }
+                    trainer = Trainer(..., metrics_map=metrics_map)
+                    module = nn.Module(...)  # your model
+                    metrics = trainer.fit(...train_dataset=train_dataset, validation_dataset=val_dataset,...)
+                    # now the metrics will be something like
+                    metrics = {
+                        "loss" : [...],     # list of floats, len = # epochs, each value = average "loss" per epoch
+                        "val_loss" : [...], # the corresponding "loss" valued for validation dataset
+                        "acc" :  [...],     # list of floats, len = # epochs, each value = average "acc" per epoch
+                        "val_acc" : [...],  # the corresponding values for validation dataset
+                        "f1: : [...],
+                        "val_f1" : [...],
+                    }
+                    # NOTE: if validation_dataset (or validation_split) is not specified during the trainer.fit(...)
+                    # call, then all the "val_XXX" keys & values will be missing.
         """
         assert model is not None, "FATAL ERROR: Trainer.fit() -> 'model' cannot be None"
         assert optimizer is not None, "FATAL ERROR: Trainer.fit() -> 'optimizer' cannot be None"
-        assert (
-            train_dataset is not None
-        ), "FATAL ERROR: Trainer.fit() -> 'train_dataset' cannot be None"
+        assert train_dataset is not None, "FATAL ERROR: Trainer.fit() -> 'train_dataset' cannot be None"
         # if lr_scheduler is not None:
         #     # NOTE:  ReduceLROnPlateau is NOT derived from _LRScheduler, but from object, which
         #     # is odd as all other schedulers derive from _LRScheduler
@@ -657,6 +666,17 @@ class Trainer:
         dataset: Union[NumpyArrayTuple, torch.utils.data.Dataset],
         verbose: bool = True,
     ) -> dict:
+        """
+        evaluates mode performance on a dataset. The model is put into an evaluation
+        stage before running throughs the rows of the dataset.
+        @params:
+           - model (type nn.Module, requred): an instance of the module being evaluated
+           - dataset (a Numpy `ndarray tuple` OR `torch.utils.data.Dataset`, required)  - the dataset
+             on which the model's performance is to be evaluated
+           - verbose (type bool, optional, default=True) - flag to display (or not) the progress as
+             the model evaluates performance
+        @returns:
+        """
         return evaluate_module(
             model,
             dataset,

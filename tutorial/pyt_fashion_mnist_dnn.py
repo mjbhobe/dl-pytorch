@@ -15,12 +15,15 @@ This code is meant for education purposes only & is not intended for commercial/
 Use at your own risk!! I am not responsible if your CPU or GPU gets fried :D
 """
 import warnings
+import logging
+import logging.config
 
 warnings.filterwarnings("ignore")
+logging.config.fileConfig(fname="logging.config")
 
 import sys
 import os
-import random
+import pathlib
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -35,11 +38,8 @@ import torch
 
 print("Using Pytorch version: ", torch.__version__)
 import torch.nn as nn
-import torchmetrics
 import torchsummary
-import torch.nn.functional as F
 from torchvision import datasets, transforms
-from torch import optim
 
 # import the Pytorch training toolkit (t3)
 import torch_training_toolkit as t3
@@ -47,8 +47,15 @@ import torch_training_toolkit as t3
 # to ensure that you get consistent results across runs & machines
 seed = 123
 t3.seed_all(seed)
+
+logger = logging.getLogger(__name__)
+
 # define a device to train on
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+DATA_PATH = pathlib.Path(__file__).parent.parent / "data"
+
+logger.info(f"Will train model on {DEVICE}")
+logger.info(f"DATA_PATH = {DATA_PATH}")
 
 
 def load_data():
@@ -57,19 +64,13 @@ def load_data():
     cross-val/test datasets using 80:20 ration
     """
     mean, std = 0.5, 0.5
-    transformations = transforms.Compose(
-        [transforms.ToTensor(), transforms.Normalize(mean, std)]
-    )
+    transformations = transforms.Compose([transforms.ToTensor(), transforms.Normalize(mean, std)])
 
-    train_dataset = datasets.FashionMNIST(
-        root="./data", train=True, download=True, transform=transformations
-    )
+    train_dataset = datasets.FashionMNIST(root=DATA_PATH, train=True, download=True, transform=transformations)
 
     print("No of training records: %d" % len(train_dataset))
 
-    test_dataset = datasets.FashionMNIST(
-        "./data", train=False, download=True, transform=transformations
-    )
+    test_dataset = datasets.FashionMNIST(DATA_PATH, train=False, download=True, transform=transformations)
     print("No of test records: %d" % len(test_dataset))
 
     # lets split the test dataset into val_dataset & test_dataset -> 8000:2000 records
@@ -81,13 +82,7 @@ def load_data():
     return train_dataset, val_dataset, test_dataset
 
 
-def display_sample(
-    sample_images,
-    sample_labels,
-    grid_shape=(10, 10),
-    plot_title=None,
-    sample_predictions=None,
-):
+def display_sample(sample_images, sample_labels, grid_shape=(10, 10), plot_title=None, sample_predictions=None):
     # just in case these are not imported!
     import matplotlib.pyplot as plt
     import seaborn as sns
@@ -152,13 +147,9 @@ def display_sample(
 
                 if sample_predictions is None:
                     # show the text label as image title
-                    title = ax[r, c].set_title(
-                        f"{FASHION_LABELS[sample_labels[image_index]]}"
-                    )
+                    title = ax[r, c].set_title(f"{FASHION_LABELS[sample_labels[image_index]]}")
                 else:
-                    pred_matches_actual = (
-                        sample_labels[image_index] == sample_predictions[image_index]
-                    )
+                    pred_matches_actual = sample_labels[image_index] == sample_predictions[image_index]
                     # show prediction from model as image title
                     title = "%s" % FASHION_LABELS[sample_predictions[image_index]]
                     if pred_matches_actual:
@@ -227,33 +218,29 @@ class FMNISTConvNet(nn.Module):
         return self.net(x)
 
 
-DO_TRAINING = True
-DO_PREDICTION = True
-SHOW_SAMPLE = False
-USE_CNN = False  # if False, will use an ANN
+# NUM_EPOCHS, BATCH_SIZE, LEARNING_RATE, L2_REG = 25, 64, 0.001, 0.0005
 
-MODEL_SAVE_NAME = "pyt_mnist_cnn.pyt" if USE_CNN else "pyt_mnist_dnn.pyt"
-MODEL_SAVE_PATH = os.path.join("..", "model_states", MODEL_SAVE_NAME)
-NUM_EPOCHS, BATCH_SIZE, LEARNING_RATE, L2_REG = 25, 64, 0.001, 0.0005
+from cmd_opts import parse_command_line
 
 
 def main():
+    # setup command line parser
+    args = parse_command_line()
+    MODEL_SAVE_NAME = "pyt_mnist_cnn.pyt" if args.use_cnn else "pyt_mnist_dnn.pyt"
+    MODEL_SAVE_PATH = os.path.join("..", "model_states", MODEL_SAVE_NAME)
+
     print("Loading datasets...")
     train_dataset, val_dataset, test_dataset = load_data()
 
     # declare loss functions
     loss_fn = nn.CrossEntropyLoss()
     # define the trainer
-    trainer = t3.Trainer(
-        loss_fn=loss_fn, device=DEVICE, epochs=NUM_EPOCHS, batch_size=BATCH_SIZE
-    )
+    trainer = t3.Trainer(loss_fn=loss_fn, device=DEVICE, epochs=args.epochs, batch_size=args.batch_size)
 
-    if SHOW_SAMPLE:
+    if args.show_sample:
         # display sample from test dataset
         print("Displaying sample from train dataset...")
-        testloader = torch.utils.data.DataLoader(
-            test_dataset, batch_size=64, shuffle=True
-        )
+        testloader = torch.utils.data.DataLoader(test_dataset, batch_size=args.batch_size, shuffle=True)
         data_iter = iter(testloader)
         images, labels = next(data_iter)  # fetch first batch of 64 images & labels
         display_sample(
@@ -263,9 +250,9 @@ def main():
             plot_title="Sample Images",
         )
 
-    if DO_TRAINING:
-        print(f'Using {"CNN" if USE_CNN else "ANN"} model...')
-        model = FMNISTConvNet() if USE_CNN else FMNISTNet()
+    if args.train:
+        print(f'Using {"CNN" if args.use_cnn else "ANN"} model...')
+        model = FMNISTConvNet() if args.use_cnn else FMNISTNet()
         # use Pytorch 2 compile() call to speed up model - does not work on Windows :(
         if (int(torch.__version__.split(".")[0]) >= 2) and (sys.platform != "win32"):
             torch.compile(model)
@@ -273,7 +260,7 @@ def main():
         # display Keras like summary
         print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
         # optimizer is required only during training!
-        optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
+        optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
         # train model -> will return metrics tracked across epochs (default - only loss metrics
         hist = trainer.fit(
             model,
@@ -297,9 +284,9 @@ def main():
         t3.save_model(model, MODEL_SAVE_PATH)
         del model
 
-    if DO_PREDICTION:
+    if args.pred:
         # load model state from .pt file
-        model = FMNISTConvNet() if USE_CNN else FMNISTNet()
+        model = FMNISTConvNet() if args.use_cnn else FMNISTNet()
         model = t3.load_model(model, MODEL_SAVE_PATH)
         if (int(torch.__version__.split(".")[0]) >= 2) and (sys.platform != "win32"):
             torch.compile(model)
@@ -313,9 +300,7 @@ def main():
 
         # display sample from test dataset
         print("Displaying sample predictions...")
-        testloader = torch.utils.data.DataLoader(
-            test_dataset, batch_size=64, shuffle=True
-        )
+        testloader = torch.utils.data.DataLoader(test_dataset, batch_size=64, shuffle=True)
         data_iter = iter(testloader)
         images, labels = next(data_iter)
         preds = np.argmax(trainer.predict(model, images.cpu().numpy()), axis=1)
