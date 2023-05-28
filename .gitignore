@@ -43,3 +43,6 @@ lightning_logs
 *.tgz
 *.tar
 *.tar.gz
+
+# ignore log files
+*.log

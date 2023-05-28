@@ -7,47 +7,45 @@ This code is meant for education purposes only & is not intended for commercial/
 Use at your own risk!! I am not responsible if your CPU or GPU gets fried :D
 """
 import warnings
+import logging
+import logging.config
 
-warnings.filterwarnings('ignore')
+warnings.filterwarnings("ignore")
+logging.config.fileConfig(fname="logging.config")
 
+import sys
 import os
-import random
+import pathlib
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
 # tweaks for libraries
-np.set_printoptions(precision = 6, linewidth = 1024, suppress = True)
-plt.style.use('seaborn')
-sns.set(style = 'whitegrid', font_scale = 1.1, palette = 'muted')
+np.set_printoptions(precision=6, linewidth=1024, suppress=True)
+plt.style.use("seaborn")
+sns.set(style="whitegrid", font_scale=1.1, palette="muted")
 
 # Pytorch imports
 import torch
 import torch.nn as nn
 
-print('Using Pytorch version: ', torch.__version__)
+print("Using Pytorch version: ", torch.__version__)
 import torchmetrics
-from torchmetrics.classification import (
-    BinaryAccuracy, BinaryF1Score,
-    BinaryAUROC
-)
-
-print(f"Using torchmetrics: {torchmetrics.__version__}")
+from torchmetrics.classification import BinaryAccuracy, BinaryF1Score, BinaryAUROC
 
 # My helper functions for training/evaluating etc.
 import torch_training_toolkit as t3
 
 SEED = t3.seed_all()
 
-DATA_FILE_PATH = os.path.join(
-    os.getcwd(), "csv_files",
-    "data_banknote_authentication.txt"
-)
-assert os.path.exists(DATA_FILE_PATH), \
-    f"FATAL: {DATA_FILE_PATH} - data file does not exist!"
-print(f"Using data file {DATA_FILE_PATH}")
+logger = logging.getLogger(__name__)
+
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print(f"Training model on {DEVICE}")
+DATA_FILE_PATH = pathlib.Path(__file__).parent / "csv_files" / "data_banknote_authentication.txt"
+assert os.path.exists(DATA_FILE_PATH), f"FATAL: {DATA_FILE_PATH} - data file does not exist!"
+
+logger.info(f"Training model on {DEVICE}")
+logger.info(f"Using data file {DATA_FILE_PATH}")
 
 
 # CSV dataset structure
@@ -55,16 +53,14 @@ print(f"Training model on {DEVICE}")
 # variance,skewness,kurtosis,entropy,class
 # (where 0 = authentic, 1 = forgery)  # verified
 class BankNotesDataset(torch.utils.data.Dataset):
-    """ custom dataset for our CSV text file """
+    """custom dataset for our CSV text file"""
 
     def __init__(self, data_file_path):
-        all_data = np.loadtxt(
-            data_file_path, delimiter = ',', dtype = np.float32
-        )
+        all_data = np.loadtxt(data_file_path, delimiter=",", dtype=np.float32)
         # self.X = torch.FloatTensor(all_data[:, 0:4])
         # self.y = torch.FloatTensor(all_data[:, 4]).reshape(-1, 1)
-        self.X = torch.tensor(all_data[:, 0:4], dtype = torch.float32)
-        self.y = torch.tensor(all_data[:, 4], dtype = torch.float32).reshape(-1, 1)
+        self.X = torch.tensor(all_data[:, 0:4], dtype=torch.float32)
+        self.y = torch.tensor(all_data[:, 4], dtype=torch.float32).reshape(-1, 1)
 
     def __len__(self):
         return len(self.X)
@@ -76,7 +72,7 @@ class BankNotesDataset(torch.utils.data.Dataset):
 
 
 class Net(nn.Module):
-    """ our classification model """
+    """our classification model"""
 
     def __init__(self, num_features):
         super(Net, self).__init__()
@@ -88,77 +84,77 @@ class Net(nn.Module):
             nn.ReLU(),
             t3.Linear(8, 1),
             # Binary classifier should end in Sigmoid()
-            nn.Sigmoid()
+            nn.Sigmoid(),
         )
 
     def forward(self, x):
         return self.net(x)
 
 
-DO_TRAINING = True
-DO_TESTING = True
-MODEL_SAVE_PATH = os.path.join(
-    os.getcwd(), "model_states", "bank_notes_model.pyt"
-)
-# hyperparameters for training
-NUM_EPOCHS = 25
-BATCH_SIZE = 64
-LR = 0.01
+from cmd_opts import parse_command_line
 
-DO_TRAINING = True
-DO_EVAL = True
-DO_PREDS = True
+
+# DO_TRAINING = True
+# DO_TESTING = True
+# NUM_EPOCHS = 25
+# BATCH_SIZE = 64
+# LR = 0.01
+
+# DO_TRAINING = True
+# DO_EVAL = True
+# DO_PREDS = True
+
+MODEL_SAVE_PATH = os.path.join(os.getcwd(), "model_states", "bank_notes_model.pyt")
 
 
 def main():
+    args = parse_command_line()
+
     # load the dataset
     dataset = BankNotesDataset(DATA_FILE_PATH)
-    print(f"Loaded {len(dataset)} records", flush = True)
+    print(f"Loaded {len(dataset)} records", flush=True)
     # set aside 10% as test dataset
-    train_dataset, test_dataset = t3.split_dataset(dataset, split_perc = 0.1)
-    print(
-        f"train_dataset: {len(train_dataset)} recs, test_dataset: {len(test_dataset)} recs"
-    )
+    train_dataset, test_dataset = t3.split_dataset(dataset, split_perc=0.1)
+    print(f"train_dataset: {len(train_dataset)} recs, test_dataset: {len(test_dataset)} recs")
 
     # loss function to use during cross-training & model evaluation
     loss_fn = torch.nn.BCELoss()
 
-    metrics_map = {
-        "acc": BinaryAccuracy(),
-        "f1": BinaryF1Score(),
-        "roc_auc": BinaryAUROC(thresholds = None)
-    }
+    metrics_map = {"acc": BinaryAccuracy(), "f1": BinaryF1Score(), "roc_auc": BinaryAUROC(thresholds=None)}
     trainer = t3.Trainer(
-        loss_fn = loss_fn, device = DEVICE, metrics_map = metrics_map,
-        epochs = NUM_EPOCHS, batch_size = BATCH_SIZE
+        loss_fn=loss_fn,
+        device=DEVICE,
+        metrics_map=metrics_map,
+        epochs=args.epochs,
+        batch_size=args.batch_size,
     )
 
-    if DO_TRAINING:
+    if args.train:
         # cross-training with 20% validation data
         model = Net(4)
-        optimizer = torch.optim.SGD(model.parameters(), lr = LR)
-        hist = trainer.fit(model, optimizer, train_dataset, validation_split = 0.2)
-        hist.plot_metrics(title = "Model Performance", fig_size = (16, 8))
+        optimizer = torch.optim.SGD(model.parameters(), lr=args.lr)
+        hist = trainer.fit(model, optimizer, train_dataset, validation_split=0.2)
+        hist.plot_metrics(title="Model Performance", fig_size=(16, 8))
         t3.save_model(model, MODEL_SAVE_PATH)
         del model
 
-    if DO_EVAL:
+    if args.eval:
         model = Net(4)
         model = t3.load_model(model, MODEL_SAVE_PATH)
         print("Evaluating model performance...")
         metrics = trainer.evaluate(model, train_dataset)
         print(
-            f" - Training -> loss: {metrics['loss']:.4f} - acc: {metrics['acc']:.4f} - " +
-            f"f1: {metrics['f1']:.4f} - roc_auc: {metrics['roc_auc']:.4f}"
+            f" - Training -> loss: {metrics['loss']:.4f} - acc: {metrics['acc']:.4f} - "
+            + f"f1: {metrics['f1']:.4f} - roc_auc: {metrics['roc_auc']:.4f}"
         )
         metrics = trainer.evaluate(model, test_dataset)
         print(
-            f" - Testing -> loss: {metrics['loss']:.4f} - acc: {metrics['acc']:.4f} - " +
-            f"f1: {metrics['f1']:.4f} - roc_auc: {metrics['roc_auc']:.4f}"
+            f" - Testing -> loss: {metrics['loss']:.4f} - acc: {metrics['acc']:.4f} - "
+            + f"f1: {metrics['f1']:.4f} - roc_auc: {metrics['roc_auc']:.4f}"
         )
         del model
 
-    if DO_PREDS:
+    if args.pred:
         model = Net(4)
         print("Running predictionson test dataset...")
         model = t3.load_model(model, MODEL_SAVE_PATH)
@@ -170,9 +166,7 @@ def main():
         print(f"Actuals    : {actuals[:count]}")
         print(f"Predictions: {preds[:count]}")
         incorrect_counts = (preds != actuals).sum()
-        print(
-            f"We got {incorrect_counts} of {len(actuals)} incorrect predictions"
-        )
+        print(f"We got {incorrect_counts} of {len(actuals)} incorrect predictions")
         del model
 
 
