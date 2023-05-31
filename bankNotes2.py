@@ -93,17 +93,6 @@ class Net(nn.Module):
 
 from cmd_opts import parse_command_line
 
-
-# DO_TRAINING = True
-# DO_TESTING = True
-# NUM_EPOCHS = 25
-# BATCH_SIZE = 64
-# LR = 0.01
-
-# DO_TRAINING = True
-# DO_EVAL = True
-# DO_PREDS = True
-
 MODEL_SAVE_PATH = os.path.join(os.getcwd(), "model_states", "bank_notes_model.pyt")
 
 
@@ -120,7 +109,11 @@ def main():
     # loss function to use during cross-training & model evaluation
     loss_fn = torch.nn.BCELoss()
 
-    metrics_map = {"acc": BinaryAccuracy(), "f1": BinaryF1Score(), "roc_auc": BinaryAUROC(thresholds=None)}
+    metrics_map = {
+        "acc": BinaryAccuracy(),
+        "f1": BinaryF1Score(),
+        "roc_auc": BinaryAUROC(thresholds=None),
+    }
     trainer = t3.Trainer(
         loss_fn=loss_fn,
         device=DEVICE,

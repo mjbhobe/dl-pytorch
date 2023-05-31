@@ -393,7 +393,10 @@ def predict_module(
 
 
 def predict_array(
-    model: nn.Module, data: Union[np.ndarray, torch.Tensor], device: torch.device, batch_size: int = 64
+    model: nn.Module,
+    data: Union[np.ndarray, torch.Tensor],
+    device: torch.device,
+    batch_size: int = 64,
 ) -> np.ndarray:
     """
     runs predictions on Numpy Array (use for classification ONLY)
