@@ -9,10 +9,12 @@ This code is meant for education purposes only & is not intended for commercial/
 Use at your own risk!! I am not responsible if your CPU or GPU gets fried :D
 """
 import warnings
+import pathlib
 import logging
 import logging.config
 
 warnings.filterwarnings("ignore")
+# logging.config.fileConfig(fname=pathlib.Path(__file__).parent / "logging.config")
 logging.config.fileConfig(fname="logging.config")
 
 import sys
@@ -87,7 +89,8 @@ def main():
     parser.add_argument(
         "-i",
         "--image",
-        required=True,
+        required=False,
+        default="./images/cat_dog_images/dog-01.jpg",
         help="Full path of image to classify",
     )
     args = parser.parse_args()
@@ -95,7 +98,7 @@ def main():
     image_path = args.image
     if pathlib.Path(image_path).exists():
         image = Image.open(image_path)
-        imshow(image, title=str(image_path))
+        # imshow(image, title=str(image_path))
     else:
         raise ValueError(f"FATAL ERROR: path does not exist {image_path}!")
 
@@ -118,12 +121,15 @@ def main():
     resnet = get_model()
     resnet.eval()
     out = resnet(batch)
-    print(out)
-    # find the index of max value
-    value, index = torch.max(out, 1)
-    print(f"Max value is {value.item():.2f} at index {index[0]}")
-    print(f"Prediction(s): {classes[index[0].item()]}")
-    image_title = f"{image_path}\nPredictions: ({classes[index[0].item()]})"
+    # print(out)
+    # find the index of max value (this returns an 1D tensor!)
+    value, indexes = torch.max(out, 1)
+    # convert out to %age probabilities
+    probabilities = torch.nn.functional.softmax(out, dim=1)[0] * 100.0
+    index, probability = indexes[0].item(), probabilities[indexes[0].item()].item()
+    print(f"Max value is {value.item():.2f} at index {index}")
+    print(f"Prediction(s): {classes[index]} with {probability:.2f}% confidence")
+    image_title = f"{image_path}\nPredictions: ({classes[index]}, {probability:.2f}% confidence)"
     imshow(image, title=str(image_title))
 
 
