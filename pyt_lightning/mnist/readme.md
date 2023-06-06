@@ -1,0 +1,2 @@
+# Multiclass Classification of MNIST (Digits) Dataset with Pytorch &amp; Lightning
+This code illustrates multi-class classification of the MNIST Digits dataset using a **Pytorch  ANN**. Training is done using Pytorch Lightning.
