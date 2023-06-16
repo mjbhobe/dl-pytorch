@@ -120,11 +120,27 @@ def predict_module(
     dataset: Union[NumpyArrayTuple, torch.utils.data.Dataset, torch.utils.data.DataLoader],
     device: torch.device,
     batch_size: int = 64,
+    num_iters=-1,
 ) -> NumpyArrayTuple:
-    """make predictions from array or dataset
-    Internal function used by Trainer.predict() - please see Trainer class for details"""
+    """make predictions from array or dataset or DataLoader
+    @params:
+       - model: instance of nn.Module (or LightningModule)
+       - dataset: instance of Numpy array tuple (X, y) or torch Dataset or torch DataLoader
+       - device: device on which to run predictions (GPU or CPU)
+       - batch_size (optional, default=64): batch size to use when iterating over Dataset
+         or DataLoader (applies only if dataset parameter is an instance of Dataset or
+         DataLoader, ignored otherwise)
+       - num_iters (optional, default=-1): number of iterations to run over dataset to generate
+         predictions. -1 means run over all records. P\
+    @returns:
+       - Tuple T of numpy arrays: T[0] - predictions, T[1] actual values
+         len(T[0]) == len(T[1]) == len(dataset)
+         for a multi-class classification problem, don't forget to run a
+         np.argmax(T[0], axis=1) after this call, so that predictions are reduces to class nos
+    """
     try:
         model = model.to(device)
+        num_iters = -1 if num_iters <= 0 else num_iters
 
         with torch.no_grad():
             model.eval()
@@ -148,6 +164,7 @@ def predict_module(
                     f"Dataset is incorrect type - expecting one of [NumpyArrayTuple, torch.utils.data.Dataset, torch.utils.data.Dataloader]"
                 )
 
+            iter_count = 0
             for X, y in loader:
                 X = X.to(device)
                 y = y.to(device)
@@ -157,6 +174,10 @@ def predict_module(
                     batch_actuals = list(y.to("cpu").numpy())
                     preds.extend(batch_preds)
                     actuals.extend(batch_actuals)
+                iter_count += 1
+                if (num_iters != -1) and (iter_count >= num_iters):
+                    break
+
             return (np.array(preds), np.array(actuals))
     finally:
         model = model.to("cpu")

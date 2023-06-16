@@ -14,7 +14,7 @@ kaggle.json
 .ipynb_checkpoints
 
 # ignore configuration files
-database.ini
+*.ini
 
 # ignore model_states folder (saves model states)
 model_states
