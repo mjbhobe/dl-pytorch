@@ -191,5 +191,4 @@ class MetricsLogger(Logger):
 
 
 if __name__ == "__main__":
-    hist = MetricsHistory()
-    print(hist.history)
+    raise RuntimeError("FATAL ERROR: this is a re-useable functions module. Cannot run it independently.")

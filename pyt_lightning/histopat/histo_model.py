@@ -24,8 +24,10 @@ import torch.nn as nn
 import pytorch_lightning as pl
 import torchmetrics
 
+from base_model import BaseLightningModule
 
-class HistoCancerModel(pl.LightningModule):
+
+class HistoCancerModel(BaseLightningModule):
     def __init__(self, num_channels, num_classes, lr):
         super(HistoCancerModel, self).__init__()
 
@@ -66,8 +68,8 @@ class HistoCancerModel(pl.LightningModule):
         # define metrics
         self.acc = torchmetrics.classification.MulticlassAccuracy(num_classes=self.num_classes)
 
-    def forward(self, x):
-        return self.net(x)
+    # def forward(self, x):
+    #     return self.net(x)
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.lr, weight_decay=0.0025)
@@ -86,16 +88,16 @@ class HistoCancerModel(pl.LightningModule):
             self.log(f"{dataset_name}_acc", acc, prog_bar=True)
         return loss, acc
 
-    def training_step(self, batch, batch_idx):
-        """training step"""
-        metrics = self.process_batch(batch, batch_idx, "train")
-        return metrics[0]
+    # def training_step(self, batch, batch_idx):
+    #     """training step"""
+    #     metrics = self.process_batch(batch, batch_idx, "train")
+    #     return metrics[0]
 
-    def validation_step(self, batch, batch_idx):
-        """cross-validation step"""
-        metrics = self.process_batch(batch, batch_idx, "val")
-        return metrics[0]
+    # def validation_step(self, batch, batch_idx):
+    #     """cross-validation step"""
+    #     metrics = self.process_batch(batch, batch_idx, "val")
+    #     return metrics[0]
 
-    def predict_step(self, batch, batch_idx, dataloader_idx=0):
-        """run predictions on a batch"""
-        return self.forward(batch)
+    # def predict_step(self, batch, batch_idx, dataloader_idx=0):
+    #     """run predictions on a batch"""
+    #     return self.forward(batch)

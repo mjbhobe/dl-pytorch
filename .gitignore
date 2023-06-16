@@ -28,8 +28,11 @@ __pycache__
 
 # ignore pt (checkpoint) files & model state files
 *.pt
+*.pth
 *.ckpt
 *.pyt
+*.pkl
+
 
 # for lightning logs
 *.yaml
