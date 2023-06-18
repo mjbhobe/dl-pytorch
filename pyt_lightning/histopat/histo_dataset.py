@@ -55,6 +55,7 @@ def get_datasets(download_path, force_download=False, force_recreate=False):
     downsample_train_path = downsample_base_path / "train"
     downsample_eval_path = downsample_base_path / "eval"
     downsample_test_path = downsample_base_path / "test"
+    num_benign, num_malignant = None, None
 
     if (not downsample_base_path.exists()) or force_recreate:
         train_data_path = download_base_path / "train"
@@ -131,7 +132,7 @@ def get_datasets(download_path, force_download=False, force_recreate=False):
                 shutil.copy(image_source_path, image_target_path)
                 logger.info(f"  shutil.copy('{image_source_path}', '{image_target_path}')")
 
-    # display countd
+    # display counts
     # fmt:off
     benign_image_count, malignant_image_count = \
         len(os.listdir(downsample_train_path / "benign")), len(os.listdir(downsample_train_path / "malignant"))
@@ -153,8 +154,9 @@ def get_datasets(download_path, force_download=False, force_recreate=False):
     train_xforms = transforms.Compose(
         [
             transforms.CenterCrop(32),
-            transforms.RandomHorizontalFlip(),
-            transforms.RandomVerticalFlip(),
+            transforms.RandomHorizontalFlip(p=0.5),
+            transforms.RandomVerticalFlip(p=0.5),
+            transforms.RandomRotation(25),
             transforms.ToTensor(),
         ]
     )
@@ -165,11 +167,19 @@ def get_datasets(download_path, force_download=False, force_recreate=False):
         ]
     )
 
+    # check bincounts of labels for imbalance - the loss fuction will have
+    # to be weighted accordingly
+    np.random.seed(42)
+    train_labels_file = download_base_path / "train_labels.csv"
+    labels_df = pd.read_csv(str(train_labels_file))
+    num_benign, num_malignant = np.bincount(labels_df["label"])
+    logger.info(f"Label distribution -> benign: {num_benign} - malignant: {num_malignant}")
+
     train_dataset = ImageFolder(str(downsample_train_path), transform=train_xforms)
     val_dataset = ImageFolder(str(downsample_eval_path), transform=test_xforms)
     test_dataset = ImageFolder(str(downsample_test_path), transform=test_xforms)
 
-    return train_dataset, val_dataset, test_dataset
+    return num_benign, num_malignant, train_dataset, val_dataset, test_dataset
 
 
 def display_sample(
@@ -196,7 +206,18 @@ def display_sample(
 
     with sns.axes_style("whitegrid"):
         sns.set_context("notebook", font_scale=0.98)
-        sns.set_style({"font.sans-serif": ["Verdana", "Arial", "Calibri", "DejaVu Sans"]})
+        sns.set_style(
+            {
+                "font.sans-serif": [
+                    "SF Pro Display",
+                    "Segoe UI",
+                    "Calibri",
+                    "Arial",
+                    "DejaVu Sans",
+                    "Sans",
+                ],
+            }
+        )
 
         f, ax = plt.subplots(
             num_rows,

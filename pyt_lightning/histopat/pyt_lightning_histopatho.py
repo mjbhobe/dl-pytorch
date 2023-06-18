@@ -69,11 +69,13 @@ from histo_model import HistoCancerModel
 def main():
     args = parse_command_line()
 
-    train_dataset, val_dataset, test_dataset = get_datasets(
+    num_benign, num_malignant, train_dataset, val_dataset, test_dataset = get_datasets(
         DATA_FILE_PATH,
         force_download=False,
         force_recreate=False,
     )
+
+    print(f"Label counts -> num_benign: {num_benign} - num_malignant: {num_malignant}")
 
     train_loader = DataLoader(
         train_dataset,
@@ -109,7 +111,13 @@ def main():
         )
 
     if args.train:
-        model = HistoCancerModel(NUM_CHANNELS, NUM_CLASSES, args.lr)
+        model = HistoCancerModel(
+            num_benign,
+            num_malignant,
+            NUM_CHANNELS,
+            NUM_CLASSES,
+            args.lr,
+        )
         print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
 
         metrics_history = MetricsLogger()
@@ -131,7 +139,7 @@ def main():
         del model
 
     if args.eval:
-        model = HistoCancerModel(NUM_CHANNELS, NUM_CLASSES, args.lr)
+        model = HistoCancerModel(num_benign, num_malignant, NUM_CHANNELS, NUM_CLASSES, args.lr)
         model = load_model(model, MODEL_STATE_PATH)
         print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
 
@@ -147,7 +155,7 @@ def main():
         del model
 
     if args.pred:
-        model = HistoCancerModel(NUM_CHANNELS, NUM_CLASSES, args.lr)
+        model = HistoCancerModel(num_benign, num_malignant, NUM_CHANNELS, NUM_CLASSES, args.lr)
         model = load_model(model, MODEL_STATE_PATH)
         print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
 
@@ -185,7 +193,7 @@ if __name__ == "__main__":
 
 # -----------------------------------------------
 # Model Performance
-#   - Epochs: 50, Batch Size: 64, lr: 0.001
+#   - Epochs: 100, Batch Size: 64, lr: 0.001
 # Train Dataset -> loss: 0.1298 - acc: 0.9517
 # Valid Dataset -> loss: 0.6437 - acc: 0.7886
 # Test  Dataset -> loss: 0.6730 - acc: 0.7868

@@ -28,9 +28,11 @@ from base_model import BaseLightningModule
 
 
 class HistoCancerModel(BaseLightningModule):
-    def __init__(self, num_channels, num_classes, lr):
+    def __init__(self, num_benign, num_malignant, num_channels, num_classes, lr):
         super(HistoCancerModel, self).__init__()
 
+        self.num_benign = num_benign
+        self.num_malignant = num_malignant
         self.num_channels = num_channels
         self.num_classes = num_classes
         self.lr = lr
@@ -51,7 +53,7 @@ class HistoCancerModel(BaseLightningModule):
             nn.Flatten(),
             nn.Linear(64 * 4 * 4, 512),
             nn.ReLU(),
-            nn.Dropout(p=0.2),
+            nn.Dropout(p=0.25),
             nn.Linear(512, 256),
             nn.ReLU(),
             nn.Dropout(p=0.2),
@@ -64,7 +66,10 @@ class HistoCancerModel(BaseLightningModule):
             nn.Linear(64, num_classes),
         )
 
-        self.loss_fn = nn.CrossEntropyLoss()
+        class_counts = [self.num_benign, self.num_malignant]
+        weights = torch.FloatTensor(class_counts) / (self.num_benign + self.num_malignant)
+        # we may have imbalanced labels, apply weights to loss fn
+        self.loss_fn = nn.CrossEntropyLoss(weight=weights, reduction="sum")
         # define metrics
         self.acc = torchmetrics.classification.MulticlassAccuracy(num_classes=self.num_classes)
 
