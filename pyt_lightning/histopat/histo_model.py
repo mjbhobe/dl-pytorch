@@ -69,7 +69,7 @@ class HistoCancerModel(BaseLightningModule):
         class_counts = [self.num_benign, self.num_malignant]
         weights = torch.FloatTensor(class_counts) / (self.num_benign + self.num_malignant)
         # we may have imbalanced labels, apply weights to loss fn
-        self.loss_fn = nn.CrossEntropyLoss(weight=weights, reduction="sum")
+        self.loss_fn = nn.CrossEntropyLoss() # (weight=weights, reduction="sum")
         # define metrics
         self.acc = torchmetrics.classification.MulticlassAccuracy(num_classes=self.num_classes)
 

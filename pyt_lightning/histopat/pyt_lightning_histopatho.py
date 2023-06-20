@@ -18,7 +18,9 @@ import logging.config
 # need Python >= 3.2 for pathlib
 # fmt: off
 if sys.version_info < (3, 2,):
-    raise ValueError(f"{__file__} required Python version >= 3.2. You are using Python {platform.python_version}")
+    raise ValueError(
+        f"{__file__} required Python version >= 3.2. You are using Python "
+        f"{platform.python_version}")
 # fmt: on
 
 BASE_PATH = pathlib.Path(__file__).parent.parent
@@ -42,7 +44,7 @@ from torch.utils.data import DataLoader
 import pytorch_lightning as pl
 import torchsummary
 
-from cl_options import parse_command_line
+from cl_options import TrainingArgsParser
 from utils import save_model, load_model, predict_module, predict_array
 from metrics_logger import MetricsLogger
 
@@ -67,7 +69,10 @@ from histo_model import HistoCancerModel
 
 
 def main():
-    args = parse_command_line()
+    parser = TrainingArgsParser()
+    args = parser.parse_args()
+    # parser.show_parsed_args(True)
+    # sys.exit(-1)
 
     num_benign, num_malignant, train_dataset, val_dataset, test_dataset = get_datasets(
         DATA_FILE_PATH,
@@ -183,7 +188,7 @@ def main():
                 actuals,
                 sample_predictions=preds,
                 grid_shape=(8, 8),
-                plot_title=f"Sample Predictions ({accu*100:.2f}% accuracy for sample)",
+                plot_title=f"Sample Predictions ({accu * 100:.2f}% accuracy for sample)",
             )
         del model
 

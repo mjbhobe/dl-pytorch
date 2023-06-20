@@ -205,7 +205,7 @@ def display_sample(
     }
 
     with sns.axes_style("whitegrid"):
-        sns.set_context("notebook", font_scale=0.98)
+        sns.set_context("notebook", font_scale=0.75)
         sns.set_style(
             {
                 "font.sans-serif": [

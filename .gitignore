@@ -17,8 +17,8 @@ kaggle.json
 *.ini
 
 # ignore model_states folder (saves model states)
-model_states
-checkpoints
+model_states/
+checkpoints/
 
 # ignore __pycache__
 __pycache__
@@ -36,7 +36,7 @@ __pycache__
 
 # for lightning logs
 *.yaml
-lightning_logs
+lightning_logs/
 
 # ignore tutorial folder (for now)
 # tutorial
