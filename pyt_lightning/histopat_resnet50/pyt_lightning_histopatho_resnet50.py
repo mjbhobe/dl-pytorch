@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-pyt_lightning_histopatho.py: Binary classification using CNN of Histopathological Cancer
+pyt_lightning_histopatho_resnet50.py: Binary classification using CNN of Histopathological Cancer
     dataset to detect metastatic cancer cells in the center 32x32px.
 
 @author: Manish Bhobe
@@ -56,29 +56,34 @@ SEED = pl.seed_everything()
 logger = logging.getLogger(__name__)
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-DATA_FILE_PATH = pathlib.Path(__file__).parent / "data"
-MODEL_STATE_NAME = "pyt_histo_cnn.pth"
+# NOTE: using the same folder for data as used in the histopat example
+DATA_FILE_PATH = pathlib.Path(__file__).parent.parent / "histopat" / "data"
+MODEL_STATE_NAME = "pyt_histo_resnet50.pth"
 MODEL_STATE_PATH = pathlib.Path(__file__).parent / "model_state" / MODEL_STATE_NAME
-IMAGE_HEIGHT, IMAGE_WIDTH, NUM_CHANNELS, NUM_CLASSES = 32, 32, 3, 2
+IMAGE_HEIGHT, IMAGE_WIDTH, NUM_CHANNELS, NUM_CLASSES = 224, 224, 3, 2
 
 logger.info(f"Training model on {DEVICE}")
 logger.info(f"Using data file {DATA_FILE_PATH}")
 
 from histo_dataset import get_datasets, display_sample
-from histo_model import HistoCancerModel
+from histo_model_resnet50 import HistoCancerModelResnet50
 
 
 def main():
     parser = TrainingArgsParser()
     args = parser.parse_args()
     # parser.show_parsed_args(True)
+    print(f"Data folder: {DATA_FILE_PATH}")
+    assert pathlib.Path(DATA_FILE_PATH).exists(), f"FATAL: Data path {DATA_FILE_PATH} does not exist!"
     # sys.exit(-1)
 
     num_benign, num_malignant, train_dataset, val_dataset, test_dataset = get_datasets(
         DATA_FILE_PATH,
         force_download=False,
-        force_recreate=False,
+        force_recreate=True,
+        random_state=SEED,
     )
+    sys.exit(-1)
 
     print(f"Label counts -> num_benign: {num_benign} - num_malignant: {num_malignant}")
 
@@ -116,7 +121,7 @@ def main():
         )
 
     if args.train:
-        model = HistoCancerModel(
+        model = HistoCancerModelResnet50(
             num_benign,
             num_malignant,
             NUM_CHANNELS,
@@ -144,7 +149,7 @@ def main():
         del model
 
     if args.eval:
-        model = HistoCancerModel(num_benign, num_malignant, NUM_CHANNELS, NUM_CLASSES, args.lr)
+        model = HistoCancerModelResnet50(num_benign, num_malignant, NUM_CHANNELS, NUM_CLASSES, args.lr)
         model = load_model(model, MODEL_STATE_PATH)
         print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
 
@@ -160,7 +165,7 @@ def main():
         del model
 
     if args.pred:
-        model = HistoCancerModel(num_benign, num_malignant, NUM_CHANNELS, NUM_CLASSES, args.lr)
+        model = HistoCancerModelResnet50(num_benign, num_malignant, NUM_CHANNELS, NUM_CLASSES, args.lr)
         model = load_model(model, MODEL_STATE_PATH)
         print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
 
@@ -198,7 +203,7 @@ if __name__ == "__main__":
 
 # -----------------------------------------------
 # Model Performance
-#   - Epochs: 100, Batch Size: 64, lr: 0.001
+#   - Epochs: 25, Batch Size: 64, lr: 0.001
 # Train Dataset -> loss: 0.4124 - acc: 0.8171
 # Valid Dataset -> loss: 0.4129 - acc: 0.8139
 # Test  Dataset -> loss: 0.4352 - acc: 0.7970
