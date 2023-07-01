@@ -135,9 +135,10 @@ def cross_train_module(
                 loss_tensor = loss_fxn(preds, y)
                 # add L1 if mentioned - L2 Regularization is handled by optimizer!
                 if l1_reg is not None:
-                    reg_loss = 0
-                    for param in model.parameters():
-                        reg_loss += l1_penalty(param)
+                    # reg_loss = 0.0
+                    reg_loss = sum([l1_penalty(param) for param in model.parameters()])
+                    # for param in model.parameters():
+                    #     reg_loss += l1_penalty(param)
                     loss_tensor += reg_loss * l1_reg
                 # compute gradients
                 loss_tensor.backward()
