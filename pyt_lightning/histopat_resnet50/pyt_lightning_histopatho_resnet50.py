@@ -71,6 +71,7 @@ from histo_model_resnet50 import HistoCancerModelResnet50
 
 def main():
     parser = TrainingArgsParser()
+    # you can add additional command line options here
     args = parser.parse_args()
     # parser.show_parsed_args(True)
     print(f"Data folder: {DATA_FILE_PATH}")

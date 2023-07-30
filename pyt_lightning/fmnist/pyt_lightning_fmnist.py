@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-pyt_lightning_fmnist.py: Multi-class classification of the Fashion MNIST dataset using a CNN with Pytorch Lightning
+pyt_lightning_fmnist.py: Multi-class classification of the Fashion MNIST dataset using a CNN
+    with Pytorch Lightning
 
 @author: Manish Bhobe
 My experiments with Python, Machine Learning & Deep Learning.
@@ -158,8 +159,8 @@ if __name__ == "__main__":
 
 # -----------------------------------------------
 # Model Performance
-#   - Epochs: 50, Batch Size: 64, lr: 0.001
-# Train Dataset -> loss: 0.00867 - acc: 0.996
-# Valid Dataset -> loss: 0.56511 - acc: 0.9339
-# Test  Dataset -> loss: 0.71186 - acc: 0.9269
+#   - Epochs: 25, Batch Size: 64, lr: 0.001
+# Train Dataset -> loss: 0.0128 - acc: 0.996
+# Valid Dataset -> loss: 0.4292 - acc: 0.929
+# Test  Dataset -> loss: 0.4629 - acc: 0.937
 # -----------------------------------------------

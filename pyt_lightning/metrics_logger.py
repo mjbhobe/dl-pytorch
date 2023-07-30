@@ -25,7 +25,7 @@ class MetricsLogger(Logger):
 
     @property
     def name(self):
-        return "Metrics History Logger"
+        return "Metrics History Logger for Pytorch"
 
     @property
     def version(self):
