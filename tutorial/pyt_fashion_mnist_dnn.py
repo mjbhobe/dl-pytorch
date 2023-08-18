@@ -53,36 +53,57 @@ logger = logging.getLogger(__name__)
 # define a device to train on
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 DATA_PATH = pathlib.Path(__file__).parent.parent / "data"
+IMAGES_MEAN, IMAGES_STD = 0.5, 0.5
 
 logger.info(f"Will train model on {DEVICE}")
 logger.info(f"DATA_PATH = {DATA_PATH}")
 
 
-def load_data():
+def load_data(args):
     """
     load the data using datasets API. We also split the test_dataset into
     cross-val/test datasets using 80:20 ration
     """
-    mean, std = 0.5, 0.5
-    transformations = transforms.Compose([transforms.ToTensor(), transforms.Normalize(mean, std)])
+    transformations = transforms.Compose(
+        [
+            transforms.ToTensor(),
+            transforms.Normalize(IMAGES_MEAN, IMAGES_STD),
+        ]
+    )
 
-    train_dataset = datasets.FashionMNIST(root=DATA_PATH, train=True, download=True, transform=transformations)
+    train_dataset = datasets.FashionMNIST(
+        root=DATA_PATH,
+        train=True,
+        download=True,
+        transform=transformations,
+    )
 
     print("No of training records: %d" % len(train_dataset))
 
-    test_dataset = datasets.FashionMNIST(DATA_PATH, train=False, download=True, transform=transformations)
+    test_dataset = datasets.FashionMNIST(
+        DATA_PATH,
+        train=False,
+        download=True,
+        transform=transformations,
+    )
     print("No of test records: %d" % len(test_dataset))
 
     # lets split the test dataset into val_dataset & test_dataset -> 8000:2000 records
     # val_dataset, test_dataset = torch.utils.data.random_split(test_dataset, [8000, 2000])
-    val_dataset, test_dataset = t3.split_dataset(test_dataset, split_perc=0.2)
+    val_dataset, test_dataset = t3.split_dataset(test_dataset, split_perc=args.test_split)
     print("No of cross-val records: %d" % len(val_dataset))
     print("No of test records: %d" % len(test_dataset))
 
     return train_dataset, val_dataset, test_dataset
 
 
-def display_sample(sample_images, sample_labels, grid_shape=(10, 10), plot_title=None, sample_predictions=None):
+def display_sample(
+    sample_images,
+    sample_labels,
+    grid_shape=(10, 10),
+    plot_title=None,
+    sample_predictions=None,
+):
     # just in case these are not imported!
     import matplotlib.pyplot as plt
     import seaborn as sns
@@ -111,7 +132,7 @@ def display_sample(sample_images, sample_labels, grid_shape=(10, 10), plot_title
         sns.set_style(
             {
                 "font.sans-serif": [
-                    "SF UI Text",
+                    "SF Pro Display",
                     "Calibri",
                     "Arial",
                     "DejaVu Sans",
@@ -136,7 +157,7 @@ def display_sample(sample_images, sample_labels, grid_shape=(10, 10), plot_title
                 image_index = r * num_cols + c
                 ax[r, c].axis("off")
                 # de-normalize image
-                sample_images[image_index] = (sample_images[image_index] * 0.5) / 0.5
+                sample_images[image_index] = (sample_images[image_index] * IMAGES_STD) + IMAGES_MEAN
 
                 # show selected image
                 ax[r, c].imshow(
@@ -220,22 +241,37 @@ class FMNISTConvNet(nn.Module):
 
 # NUM_EPOCHS, BATCH_SIZE, LEARNING_RATE, L2_REG = 25, 64, 0.001, 0.0005
 
-from cmd_opts import parse_command_line
+from cmd_opts import TrainingArgsParser  # parse_command_line
 
 
 def main():
     # setup command line parser
-    args = parse_command_line()
+    # args = parse_command_line()
+    parser = TrainingArgsParser()
+    parser.add_argument(
+        "--use_cnn",
+        dest="use_cnn",
+        action="store_true",
+        help="Flag to choose CNN model over ANN",
+    )
+    parser.set_defaults(use_cnn=False)  # don't use CNN by default
+    args = parser.parse_args()
+
     MODEL_SAVE_NAME = "pyt_mnist_cnn.pyt" if args.use_cnn else "pyt_mnist_dnn.pyt"
     MODEL_SAVE_PATH = os.path.join("..", "model_states", MODEL_SAVE_NAME)
 
     print("Loading datasets...")
-    train_dataset, val_dataset, test_dataset = load_data()
+    train_dataset, val_dataset, test_dataset = load_data(args)
 
     # declare loss functions
     loss_fn = nn.CrossEntropyLoss()
     # define the trainer
-    trainer = t3.Trainer(loss_fn=loss_fn, device=DEVICE, epochs=args.epochs, batch_size=args.batch_size)
+    trainer = t3.Trainer(
+        loss_fn=loss_fn,
+        device=DEVICE,
+        epochs=args.epochs,
+        batch_size=args.batch_size,
+    )
 
     if args.show_sample:
         # display sample from test dataset
@@ -254,8 +290,8 @@ def main():
         print(f'Using {"CNN" if args.use_cnn else "ANN"} model...')
         model = FMNISTConvNet() if args.use_cnn else FMNISTNet()
         # use Pytorch 2 compile() call to speed up model - does not work on Windows :(
-        if (int(torch.__version__.split(".")[0]) >= 2) and (sys.platform != "win32"):
-            torch.compile(model)
+        # if (int(torch.__version__.split(".")[0]) >= 2) and (sys.platform != "win32"):
+        #     torch.compile(model)
         model = model.to(DEVICE)
         # display Keras like summary
         print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
