@@ -4,6 +4,8 @@ pyt_fashion_mnist_dnn.py: Multiclass classification of Zolando's Fashion MNIST d
 Part-1 of the tutorial for Torch Training Toolkit (T3), where we setup the basic training
 harness & fit our model, evaluate results and run predictions.
 
+Step01 - setting up the basic harness to train/evaluate/test a Pytorch model
+
 NOTE: This is a tutorial that illustrates how to use Torch Training Toolkit (T3). So we do
 not focus on how to optimize model performance or loading data - topics such as regularization,
 dropout etc. have been dropped. The intention is to understand how to use Torch Training Toolkit

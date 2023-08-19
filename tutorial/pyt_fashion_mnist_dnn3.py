@@ -4,6 +4,8 @@ pyt_fashion_mnist_dnn.py: Multiclass classification of Zolando's Fashion MNIST d
 Part-3 of the tutorial for torch training toolkit, where we add L1 regularization &
 a learning scheduler during training.
 
+Step03 - adding a learning-rate scheduler
+
 NOTE: This is a tutorial that illustrates how to use torch training toolkit. So we do
 not focus on how to optimize model performance or loading data - topics such as regularization,
 dropout etc. have been dropped. The intention is to understand how to use torch training toolkit
@@ -59,31 +61,49 @@ logger.info(f"Will train model on {DEVICE}")
 logger.info(f"DATA_PATH = {DATA_PATH}")
 
 
-def load_data():
+def load_data(args):
     """
     load the data using datasets API. We also split the test_dataset into
     cross-val/test datasets using 80:20 ration
     """
     mean, std = 0.5, 0.5
-    transformations = transforms.Compose([transforms.ToTensor(), transforms.Normalize(mean, std)])
+    transformations = transforms.Compose(
+        [transforms.ToTensor(), transforms.Normalize(mean, std)],
+    )
 
-    train_dataset = datasets.FashionMNIST(root=DATA_PATH, train=True, download=True, transform=transformations)
+    train_dataset = datasets.FashionMNIST(
+        root=DATA_PATH,
+        train=True,
+        download=True,
+        transform=transformations,
+    )
 
     print("No of training records: %d" % len(train_dataset))
 
-    test_dataset = datasets.FashionMNIST(root=DATA_PATH, train=False, download=True, transform=transformations)
+    test_dataset = datasets.FashionMNIST(
+        root=DATA_PATH,
+        train=False,
+        download=True,
+        transform=transformations,
+    )
     print("No of test records: %d" % len(test_dataset))
 
     # lets split the test dataset into val_dataset & test_dataset -> 8000:2000 records
     # val_dataset, test_dataset = torch.utils.data.random_split(test_dataset, [8000, 2000])
-    val_dataset, test_dataset = t3.split_dataset(test_dataset, split_perc=0.2)
+    val_dataset, test_dataset = t3.split_dataset(test_dataset, split_perc=args.test_split)
     print("No of cross-val records: %d" % len(val_dataset))
     print("No of test records: %d" % len(test_dataset))
 
     return train_dataset, val_dataset, test_dataset
 
 
-def display_sample(sample_images, sample_labels, grid_shape=(10, 10), plot_title=None, sample_predictions=None):
+def display_sample(
+    sample_images,
+    sample_labels,
+    grid_shape=(10, 10),
+    plot_title=None,
+    sample_predictions=None,
+):
     # just in case these are not imported!
     import matplotlib.pyplot as plt
     import seaborn as sns
@@ -210,20 +230,32 @@ class FMNISTConvNet(nn.Module):
 # MODEL_SAVE_PATH = os.path.join('..', 'model_states', MODEL_SAVE_NAME)
 # NUM_EPOCHS, BATCH_SIZE, LEARNING_RATE, L1_REG, L2_REG = 25, 64, 0.001, 5e-4, 2e-4
 
-from cmd_opts import parse_command_line
+from cmd_opts import TrainingArgsParser  # parse_command_line
 
 
 def main():
-    args = parse_command_line()
+    # setup command line parser
+    # args = parse_command_line()
+    parser = TrainingArgsParser()
+    parser.add_argument(
+        "--use_cnn",
+        dest="use_cnn",
+        action="store_true",
+        help="Flag to choose CNN model over ANN",
+    )
+    parser.set_defaults(use_cnn=False)  # don't use CNN by default
+    args = parser.parse_args()
+
     MODEL_SAVE_NAME = "pyt_mnist_cnn.pyt" if args.use_cnn else "pyt_mnist_dnn.pyt"
     MODEL_SAVE_PATH = os.path.join("..", "model_states", MODEL_SAVE_NAME)
 
     print("Loading datasets...")
-    train_dataset, val_dataset, test_dataset = load_data()
+    train_dataset, val_dataset, test_dataset = load_data(args)
 
     # declare loss functions
     loss_fn = nn.CrossEntropyLoss()
     # metrics map - metrics to track during training
+    # NOTE: loss is always tracked via the loss function
     metrics_map = {
         # accuracy
         "acc": torchmetrics.classification.MulticlassAccuracy(num_classes=NUM_CLASSES),
@@ -232,7 +264,11 @@ def main():
     }
     # define the trainer
     trainer = t3.Trainer(
-        loss_fn=loss_fn, device=DEVICE, epochs=args.epochs, batch_size=args.batch_size, metrics_map=metrics_map
+        loss_fn=loss_fn,
+        device=DEVICE,
+        epochs=args.epochs,
+        batch_size=args.batch_size,
+        metrics_map=metrics_map,
     )
 
     if args.show_sample:
@@ -251,11 +287,19 @@ def main():
         print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
         # optimizer is required only during training!
         optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.l2_reg)
+
         # add L1 regularization & a learning scheduler
         from torch.optim.lr_scheduler import StepLR
 
         scheduler = StepLR(optimizer, step_size=args.epochs // 5, gamma=0.1, verbose=True)
-        hist = trainer.fit(model, optimizer, train_dataset, validation_dataset=val_dataset, lr_scheduler=scheduler)
+
+        hist = trainer.fit(
+            model,
+            optimizer,
+            train_dataset,
+            validation_dataset=val_dataset,
+            lr_scheduler=scheduler,
+        )
         # display the tracked metrics
         hist.plot_metrics("Model Performance")
 

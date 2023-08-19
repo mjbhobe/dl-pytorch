@@ -218,7 +218,7 @@ class TrainingArgsParser(argparse.ArgumentParser):
 
     def parse_args(self, args=None, namespace=None):
         self.args = super().parse_args(args, namespace)
-        self.show_default_args()
+        # self.show_default_args()
         return self.args
 
     def show_default_args(self, print_args=False):
