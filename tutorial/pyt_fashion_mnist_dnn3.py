@@ -221,15 +221,6 @@ class FMNISTConvNet(nn.Module):
         return self.net(x)
 
 
-# DO_TRAINING = True
-# DO_PREDICTION = True
-# SHOW_SAMPLE = False
-# USE_CNN = False  # if False, will use an ANN
-
-# MODEL_SAVE_NAME = 'pyt_mnist_cnn.pyt' if USE_CNN else 'pyt_mnist_dnn.pyt'
-# MODEL_SAVE_PATH = os.path.join('..', 'model_states', MODEL_SAVE_NAME)
-# NUM_EPOCHS, BATCH_SIZE, LEARNING_RATE, L1_REG, L2_REG = 25, 64, 0.001, 5e-4, 2e-4
-
 from cmd_opts import TrainingArgsParser  # parse_command_line
 
 

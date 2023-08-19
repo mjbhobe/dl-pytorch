@@ -241,8 +241,6 @@ class FMNISTConvNet(nn.Module):
         return self.net(x)
 
 
-# NUM_EPOCHS, BATCH_SIZE, LEARNING_RATE, L2_REG = 25, 64, 0.001, 0.0005
-
 from cmd_opts import TrainingArgsParser  # parse_command_line
 
 

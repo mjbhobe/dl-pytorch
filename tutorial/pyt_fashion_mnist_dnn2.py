@@ -223,13 +223,6 @@ class FMNISTConvNet(nn.Module):
         return self.net(x)
 
 
-# DO_TRAINING = True
-# DO_PREDICTION = True
-# SHOW_SAMPLE = False
-# USE_CNN = False  # if False, will use an ANN
-
-# NUM_EPOCHS, BATCH_SIZE, LEARNING_RATE, L2_REG = 25, 64, 0.001, 0.0005
-
 from cmd_opts import TrainingArgsParser  # parse_command_line
 
 
