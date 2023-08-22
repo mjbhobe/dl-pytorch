@@ -241,13 +241,10 @@ class FMNISTConvNet(nn.Module):
         return self.net(x)
 
 
-from cmd_opts import TrainingArgsParser  # parse_command_line
-
-
 def main():
     # setup command line parser
     # args = parse_command_line()
-    parser = TrainingArgsParser()
+    parser = t3.TrainingArgsParser()
     parser.add_argument(
         "--use_cnn",
         dest="use_cnn",

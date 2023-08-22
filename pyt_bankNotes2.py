@@ -36,7 +36,7 @@ from torchmetrics.classification import BinaryAccuracy, BinaryF1Score, BinaryAUR
 # My helper functions for training/evaluating etc.
 import torch_training_toolkit as t3
 
-SEED = t3.seed_all()
+SEED = t3.seed_all(123)
 
 logger = logging.getLogger(__name__)
 
@@ -91,13 +91,12 @@ class Net(nn.Module):
         return self.net(x)
 
 
-from cmd_opts import parse_command_line
-
 MODEL_SAVE_PATH = os.path.join(os.getcwd(), "model_states", "bank_notes_model.pyt")
 
 
 def main():
-    args = parse_command_line()
+    parser = t3.TrainingArgsParser()
+    args = parser.parse_args()
 
     # load the dataset
     dataset = BankNotesDataset(DATA_FILE_PATH)
@@ -149,7 +148,7 @@ def main():
 
     if args.pred:
         model = Net(4)
-        print("Running predictionson test dataset...")
+        print("Running predictions on test dataset...")
         model = t3.load_model(model, MODEL_SAVE_PATH)
         # preds, actuals = t3.predict_module(model, test_dataset, device = DEVICE)
         preds, actuals = trainer.predict(model, test_dataset)

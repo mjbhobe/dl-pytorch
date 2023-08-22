@@ -11,19 +11,17 @@
 """
 import warnings
 
-warnings.filterwarnings('ignore')
+warnings.filterwarnings("ignore")
 
 import sys
 
 if sys.version_info < (2,):
-    raise Exception(
-        "torch_training_toolkit does not support Python 1. Please use a Python 3+ interpreter!"
-    )
+    raise Exception("torch_training_toolkit does not support Python 1. Please use a Python 3+ interpreter!")
 import logging
 
 version_info = (1, 0, 0, "dev0")
 
-__version__ = '.'.join(map(str, version_info))
+__version__ = ".".join(map(str, version_info))
 __installer_version__ = __version__
 __title__ = "Torch Training Toolkit (t3)"
 __author__ = "Manish Bhobé"
@@ -44,5 +42,7 @@ from .dataset_utils import split_dataset
 from .training import Trainer, load_model, save_model
 from .metrics_history import MetricsHistory
 from .early_stopping import EarlyStopping
+from .cl_args import TrainingArgsParser
 
 _logger = get_logger(__name__)
+_logger.info(f"torch_training_toolkit {__version__}. Written by {__author__} for {__organization__}.")
