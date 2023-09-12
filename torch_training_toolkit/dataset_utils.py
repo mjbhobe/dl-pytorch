@@ -8,7 +8,7 @@ warnings.filterwarnings('ignore')
 import torch
 
 
-def split_dataset(dataset: torch.utils.data.Dataset, split_perc: float = 0.20):
+def split_dataset(dataset: torch.utils.data.Dataset, split_perc: float = 0.20, seed = 41):
     """ randomly splits a dataset into 2 based on split percentage (split_perc)
         @params:
             - dataset (torch.utils.data.Dataset): the dataset to split
@@ -27,8 +27,9 @@ def split_dataset(dataset: torch.utils.data.Dataset, split_perc: float = 0.20):
         num_recs = len(dataset)
         train_count = int((1.0 - split_perc) * num_recs)
         test_count = num_recs - train_count
+        gen= torch.Generator().manual_seed(seed)
         train_dataset, test_dataset = \
-            torch.utils.data.random_split(dataset, [train_count, test_count])
+            torch.utils.data.random_split(dataset, [train_count, test_count], generator=gen)
         return train_dataset, test_dataset
     else:
         return dataset, None

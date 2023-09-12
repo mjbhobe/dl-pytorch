@@ -37,7 +37,7 @@ sns.set(style="whitegrid", font_scale=1.1, palette="muted")
 # Pytorch imports
 import torch
 import torch.nn as nn
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset
 from torchmetrics.classification import MulticlassAccuracy
 import torchsummary
 
@@ -55,7 +55,7 @@ print(f"Training model on {DEVICE}")
 MODEL_SAVE_PATH = os.path.join(os.getcwd(), "model_states", "fizzbuzz.pyt")
 
 
-def get_data(input_size=10, limit=100_000):
+def get_data(limit=100_000):
     def binary_encoder(input_size):
         def wrapper(num):
             ret = [int(i) for i in '{0:b}'.format(num)]
@@ -64,6 +64,7 @@ def get_data(input_size=10, limit=100_000):
         return wrapper
 
     x, y = [], []
+    input_size = len([int(i) for i in '{0:b}'.format(limit)])
     encoder = binary_encoder(input_size)
     for i in range(limit):
         x.append(encoder(i))
@@ -76,7 +77,7 @@ def get_data(input_size=10, limit=100_000):
             y.append([0, 0, 1, 0])
         else:
             y.append([0, 0, 0, 1])
-    return x, y
+    return np.array(x), np.arrat(y)
 
 
 class Net(nn.Module):
@@ -85,10 +86,10 @@ class Net(nn.Module):
         self.net = nn.Sequential(
             nn.Linear(inp, hidden),
             nn.ReLU(),
-            nn.Linear(hidden, 2 * hidden),
-            nn.ReLU(),
-            nn.Linear(2 * hidden, hidden),
-            nn.ReLU(),
+            # nn.Linear(hidden, 2 * hidden),
+            # nn.ReLU(),
+            # nn.Linear(2 * hidden, hidden),
+            # nn.ReLU(),
             nn.Linear(hidden, out),
             nn.Sigmoid()
         )
@@ -126,7 +127,8 @@ class FizzBuzzDataset(Dataset):
         return self.end - self.start
 
 
-MAX_NUM = 100_000_000
+MAX_NUM = 100_000
+NUM_CLASSES = 4
 
 
 def main():
@@ -134,33 +136,10 @@ def main():
     args = parser.parse_args()
 
     dataset = FizzBuzzDataset(MAX_NUM)
-    train_dataset, test_dataset = t3.split_dataset(dataset, split_perc=args.test_split)
-    train_dataset, eval_dataset  = t3.split_dataset(train_dataset, split_perc=args.val_split)
+    train_dataset, test_dataset = t3.split_dataset(dataset, split_perc=args.test_split, seed=SEED,)
+    train_dataset, eval_dataset  = t3.split_dataset(train_dataset, split_perc=args.val_split, seed=SEED,)
     print(f"train_dataset: {len(train_dataset)} recs - eval_dataset: {len(eval_dataset)} recs - "
           f"test_dataset: {len(test_dataset)} recs")
-    # print(len(train_dataset[0][0]), len(train_dataset[0][1]))
-    # testloader = torch.utils.data.DataLoader(test_dataset, batch_size=16, shuffle=True)
-    # data_iter = iter(testloader)
-    # x_batch, y_batch = next(data_iter)  # fetch first batch of 64 images & labels
-    # print(x_batch, y_batch)
-    # print(f"x_batch.shape: {x_batch.shape} - y_batch.shape: {y_batch.shape}")
-    # sys.exit(-1)
-
-    # X, y = get_data()
-    # print(f"x[:5] = {X[:5]}")
-    # print(f"y[:5] = {y[:5]}")
-    # print(f"Generated {len(X)} data records & labels")
-
-    # # split into train/eval/test sets
-    # X_train, X_eval, y_train, y_eval = \
-    #     train_test_split(X, y, test_size=args.val_split, random_state=SEED)
-    # X_eval, X_test, y_eval, y_test = \
-    #     train_test_split(X_eval, y_eval, test_size=args.test_split, random_state=SEED)
-    #
-    # train_dataset = torch.utils.data.TensorDataset(X_train, y_train)
-    # eval_dataset = torch.utils.data.TensorDataset(X_eval, y_eval)
-    # test_dataset = torch.utils.data.TensorDataset(X_test, y_test)
-    #
 
     # create our module
     loss_fn = nn.CrossEntropyLoss()
@@ -175,14 +154,14 @@ def main():
         batch_size=args.batch_size,
     )
 
-    def create_model(max_num: int = MAX_NUM) -> nn.Module:
+    def model(max_num: int = MAX_NUM, hidden_nodes = 124, out_nodes = NUM_CLASSES) -> nn.Module:
         inp_nodes = len([int(i) for i in '{0:b}'.format(max_num)])
-        net = Net(inp_nodes, 128, 4)
+        net = Net(inp_nodes, hidden_nodes, out_nodes)
         return net
 
     if args.train:
-        net = create_model()
-        optimizer = torch.optim.Adam(net.parameters(), lr=args.lr)
+        net = model()
+        optimizer = torch.optim.RMSprop(net.parameters(), lr=args.lr)
         # add L1 regularization & a learning scheduler
         from torch.optim.lr_scheduler import StepLR
         scheduler = StepLR(optimizer, step_size=args.epochs // 5, gamma=0.1, verbose=True)
@@ -199,7 +178,7 @@ def main():
         del net
 
     if args.eval:
-        net = create_model()
+        net = model()
         net = t3.load_model(net, MODEL_SAVE_PATH)
         print("Evaluating model performance...")
         metrics = trainer.evaluate(net, train_dataset)
@@ -217,7 +196,7 @@ def main():
         del net
 
     if args.pred:
-        net = create_model()
+        net = model()
         net = t3.load_model(net, MODEL_SAVE_PATH)
         print("Running predictions...")
         preds, actuals = trainer.predict(net, test_dataset)

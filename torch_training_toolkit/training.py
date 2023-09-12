@@ -45,7 +45,7 @@ def cross_train_module(
     lr_scheduler: Union[LRSchedulerType, ReduceLROnPlateauType] = None,
     early_stopping: EarlyStopping = None,
     shuffle: bool = True,
-    num_workers: int = 0,
+    num_workers: int = 4,
     verbose: bool = True,
 ) -> MetricsHistory:
     """
@@ -86,6 +86,8 @@ def cross_train_module(
     if (validation_split > 0.0) and (validation_dataset is None):
         # NOTE: validation_dataset supersedes validation_split!!
         # Use validation_split only if validation_dataset is None
+        # if both are specified (i.e. validation_split > 0.0 and validation_dataset is not None)
+        # then validation_split value will be ignored!
         train_dataset, val_dataset = split_dataset(train_dataset, validation_split)
 
     if val_dataset is not None:
@@ -498,7 +500,7 @@ class Trainer:
         batch_size: int = 64,
         reporting_interval: int = 1,
         shuffle: bool = True,
-        num_workers: int = 0,
+        num_workers: int = 4,
     ):
         """constructs a Trainer object to be used for cross-training, evaluation of and
         getting predictions from an nn.Module instance.
