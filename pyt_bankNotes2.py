@@ -41,8 +41,12 @@ SEED = t3.seed_all(123)
 logger = logging.getLogger(__name__)
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-DATA_FILE_PATH = pathlib.Path(__file__).parent / "csv_files" / "data_banknote_authentication.txt"
-assert os.path.exists(DATA_FILE_PATH), f"FATAL: {DATA_FILE_PATH} - data file does not exist!"
+DATA_FILE_PATH = (
+    pathlib.Path(__file__).parent / "csv_files" / "data_banknote_authentication.txt"
+)
+assert os.path.exists(
+    DATA_FILE_PATH
+), f"FATAL: {DATA_FILE_PATH} - data file does not exist!"
 
 logger.info(f"Training model on {DEVICE}")
 logger.info(f"Using data file {DATA_FILE_PATH}")
@@ -57,8 +61,6 @@ class BankNotesDataset(torch.utils.data.Dataset):
 
     def __init__(self, data_file_path):
         all_data = np.loadtxt(data_file_path, delimiter=",", dtype=np.float32)
-        # self.X = torch.FloatTensor(all_data[:, 0:4])
-        # self.y = torch.FloatTensor(all_data[:, 4]).reshape(-1, 1)
         self.X = torch.tensor(all_data[:, 0:4], dtype=torch.float32)
         self.y = torch.tensor(all_data[:, 4], dtype=torch.float32).reshape(-1, 1)
 
@@ -103,7 +105,9 @@ def main():
     print(f"Loaded {len(dataset)} records", flush=True)
     # set aside 10% as test dataset
     train_dataset, test_dataset = t3.split_dataset(dataset, split_perc=0.1)
-    print(f"train_dataset: {len(train_dataset)} recs, test_dataset: {len(test_dataset)} recs")
+    print(
+        f"train_dataset: {len(train_dataset)} recs, test_dataset: {len(test_dataset)} recs"
+    )
 
     # loss function to use during cross-training & model evaluation
     loss_fn = torch.nn.BCELoss()
