@@ -46,7 +46,7 @@ class MetricsHistory:
         metric_names = ["loss"]
         if self.metrics_map is not None:
             metric_names.extend([key for key in self.metrics_map.keys()])
-        return metric_names
+        return list(set(metric_names))  # eliminate any duplicates
 
     def __createMetricsHistory(self):
         """Internal function: creates a map to store metrics history"""

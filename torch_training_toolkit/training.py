@@ -379,7 +379,8 @@ def predict_module(
             dataset = torch.utils.data.TensorDataset(X, y)
 
         loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=False)
-        preds, actuals = [], []
+        #preds, actuals = [], []
+        preds, actuals = [], [] #np.array([]), np.array([])
 
         for X, y in loader:
             X = X.to(device)
@@ -388,9 +389,14 @@ def predict_module(
                 model.eval()
                 batch_preds = list(model(X).to("cpu").numpy())
                 batch_actuals = list(y.to("cpu").numpy())
+                # batch_preds = model(X).to("cpu").numpy()
+                # batch_actuals = y.to("cpu").numpy()
                 preds.extend(batch_preds)
                 actuals.extend(batch_actuals)
-        return (np.array(preds), np.array(actuals))
+                # preds = np.append(preds, batch_preds)
+                # actuals = np.append(actuals, batch_actuals)
+        # return (np.array(preds), np.array(actuals))
+        return (preds, actuals)
     finally:
         model = model.to("cpu")
 

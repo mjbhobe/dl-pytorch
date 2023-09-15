@@ -58,13 +58,13 @@ MODEL_SAVE_PATH = os.path.join(os.getcwd(), "model_states", "fizzbuzz.pyt")
 def get_data(limit=100_000):
     def binary_encoder(input_size):
         def wrapper(num):
-            ret = [int(i) for i in '{0:b}'.format(num)]
+            ret = [int(i) for i in "{0:b}".format(num)]
             return [0] * (input_size - len(ret)) + ret
 
         return wrapper
 
     x, y = [], []
-    input_size = len([int(i) for i in '{0:b}'.format(limit)])
+    input_size = len([int(i) for i in "{0:b}".format(limit)])
     encoder = binary_encoder(input_size)
     for i in range(limit):
         x.append(encoder(i))
@@ -91,7 +91,7 @@ class Net(nn.Module):
             # nn.Linear(2 * hidden, hidden),
             # nn.ReLU(),
             nn.Linear(hidden, out),
-            nn.Sigmoid()
+            nn.Sigmoid(),
         )
 
     def forward(self, inputs):
@@ -104,10 +104,10 @@ class FizzBuzzDataset(Dataset):
 
     def __init__(self, max_num):
         self.end = max_num
-        self.input_size = len([int(i) for i in '{0:b}'.format(max_num)])
+        self.input_size = len([int(i) for i in "{0:b}".format(max_num)])
 
     def encoder(self, num):
-        ret = [int(i) for i in '{0:b}'.format(num)]
+        ret = [int(i) for i in "{0:b}".format(num)]
         return [0] * (self.input_size - len(ret)) + ret
 
     def __getitem__(self, idx):
@@ -128,7 +128,6 @@ class FizzBuzzDataset(Dataset):
 
 
 MAX_NUM = 100_000
-NUM_CLASSES = 4
 
 
 def main():
@@ -136,16 +135,16 @@ def main():
     args = parser.parse_args()
 
     dataset = FizzBuzzDataset(MAX_NUM)
-    train_dataset, test_dataset = t3.split_dataset(dataset, split_perc=args.test_split, seed=SEED,)
-    train_dataset, eval_dataset  = t3.split_dataset(train_dataset, split_perc=args.val_split, seed=SEED,)
-    print(f"train_dataset: {len(train_dataset)} recs - eval_dataset: {len(eval_dataset)} recs - "
-          f"test_dataset: {len(test_dataset)} recs")
+    train_dataset, test_dataset = t3.split_dataset(dataset, split_perc=args.test_split)
+    train_dataset, eval_dataset = t3.split_dataset(train_dataset, split_perc=args.val_split)
+    print(
+        f"train_dataset: {len(train_dataset)} recs - eval_dataset: {len(eval_dataset)} recs - "
+        f"test_dataset: {len(test_dataset)} recs"
+    )
 
     # create our module
     loss_fn = nn.CrossEntropyLoss()
-    metrics_map = {
-        "acc": MulticlassAccuracy(4)
-    }
+    metrics_map = {"acc": MulticlassAccuracy(4)}
     trainer = t3.Trainer(
         loss_fn=loss_fn,
         device=DEVICE,
@@ -154,16 +153,17 @@ def main():
         batch_size=args.batch_size,
     )
 
-    def model(max_num: int = MAX_NUM, hidden_nodes = 124, out_nodes = NUM_CLASSES) -> nn.Module:
-        inp_nodes = len([int(i) for i in '{0:b}'.format(max_num)])
-        net = Net(inp_nodes, hidden_nodes, out_nodes)
+    def create_model(max_num: int = MAX_NUM) -> nn.Module:
+        inp_nodes = len([int(i) for i in "{0:b}".format(max_num)])
+        net = Net(inp_nodes, 128, 4)
         return net
 
     if args.train:
-        net = model()
+        net = create_model()
         optimizer = torch.optim.RMSprop(net.parameters(), lr=args.lr)
         # add L1 regularization & a learning scheduler
         from torch.optim.lr_scheduler import StepLR
+
         scheduler = StepLR(optimizer, step_size=args.epochs // 5, gamma=0.1, verbose=True)
 
         hist = trainer.fit(
@@ -178,25 +178,19 @@ def main():
         del net
 
     if args.eval:
-        net = model()
+        net = create_model()
         net = t3.load_model(net, MODEL_SAVE_PATH)
         print("Evaluating model performance...")
         metrics = trainer.evaluate(net, train_dataset)
-        print(
-            f" - Training -> loss: {metrics['loss']:.4f} - acc: {metrics['acc']:.4f}"
-        )
+        print(f" - Training -> loss: {metrics['loss']:.4f} - acc: {metrics['acc']:.4f}")
         metrics = trainer.evaluate(net, eval_dataset)
-        print(
-            f" - Cross-val -> loss: {metrics['loss']:.4f} - acc: {metrics['acc']:.4f}"
-        )
+        print(f" - Cross-val -> loss: {metrics['loss']:.4f} - acc: {metrics['acc']:.4f}")
         metrics = trainer.evaluate(net, test_dataset)
-        print(
-            f" - Testing -> loss: {metrics['loss']:.4f} - acc: {metrics['acc']:.4f}"
-        )
+        print(f" - Testing -> loss: {metrics['loss']:.4f} - acc: {metrics['acc']:.4f}")
         del net
 
     if args.pred:
-        net = model()
+        net = create_model()
         net = t3.load_model(net, MODEL_SAVE_PATH)
         print("Running predictions...")
         preds, actuals = trainer.predict(net, test_dataset)
@@ -214,9 +208,9 @@ if __name__ == "__main__":
 # ---------------------------------------------------
 # Model Performance:
 #   Epochs: 100, Batch-size: 64, LR: 0.01 (with step)
-# Training dataset  ->  loss: 1.2067 - acc: 0.6998
-# Cross-val dataset ->  loss: 1.2044 - acc: 0.7013
-# Testing dataset   ->   loss: 1.2077 - acc: 0.6991
+# Training dataset  ->  loss: 1.2067 - acc: 0.7091
+# Cross-val dataset ->  loss: 1.2044 - acc: 0.7117
+# Testing dataset   ->   loss: 1.2077 - acc: 0.7155
 #
 # Conclusion:
 #   Model is not overfitting, but we are not getting
