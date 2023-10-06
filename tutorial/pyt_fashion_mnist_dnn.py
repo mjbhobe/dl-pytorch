@@ -32,7 +32,7 @@ import seaborn as sns
 
 # tweaks for libraries
 np.set_printoptions(precision=4, linewidth=1024, suppress=True)
-plt.style.use("seaborn")
+plt.style.use("seaborn-v0_8")
 sns.set(style="darkgrid", context="notebook", font_scale=1.20)
 
 # Pytorch imports
@@ -110,7 +110,7 @@ def display_sample(
     import matplotlib.pyplot as plt
     import seaborn as sns
 
-    plt.style.use("seaborn")
+    # plt.style.use("seaborn")
 
     num_rows, num_cols = grid_shape
     assert sample_images.shape[0] == num_rows * num_cols

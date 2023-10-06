@@ -3,6 +3,28 @@
     Note: the code has been copied from https://github.com/Bjarten/early-stopping-pytorch/blob/master/pytorchtools.py
     Author of this class: Bjarte Mehus Sunde
     Thank you Bjarte!!
+
+    MIT License
+
+    Copyright (c) 2018 Bjarte Mehus Sunde
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
 """
 import warnings
 
@@ -23,10 +45,10 @@ MetricsMapType = Dict[str, torchmetrics.Metric]
 
 class EarlyStopping:
     """
-       Early stops the training if monitored metric (usually validation loss) doesn't improve
-       after a given patience (or no of epochs).
-       Thanks to Bjarte Mehus Sunde for the base class - I have made slight modifications
-       (@see: https://github.com/Bjarten/early-stopping-pytorch/blob/master/pytorchtools.py)
+    Early stops the training if monitored metric (usually validation loss) doesn't improve
+    after a given patience (or no of epochs).
+    Thanks to Bjarte Mehus Sunde for the base class - I have made slight modifications
+    (@see: https://github.com/Bjarten/early-stopping-pytorch/blob/master/pytorchtools.py)
     """
 
     def __init__(
@@ -43,22 +65,22 @@ class EarlyStopping:
         trace_func = print
     ):
         """
-            Args:
-                model (torch.nn.Module): the model you are training
-                metrics_map (MetricsMapType): the metrics you are tracking during training
-                monitor (str): which metric should be monitored (NOTE: this should be tracked in metrics_map)
-                              (default: 'val_loss')
-                min_delta (float): Minimum change in the monitored quantity to qualify as an improvement.
-                              (default: 0)
-                patience (int): How many epochs to wait until after last validation loss improvement.
-                              (default: 5)
-                mode (str): one of {'min','max'} (default='min') In 'min' mode, training will stop when the quantity
-                    monitored has stopped decreasing; in 'max' mode it will stop when the quantity monitored has
-                    stopped increasing;
-                verbose (bool): If True, prints a message for each validation loss improvement. (default: False)
-                save_best_weights (bool): Save state with best weights so far (default: False)
-                checkpoint_file_path (string, optional): directory to which the checkpoint file must be saved
-                (optional, defaults to current directory)
+        Args:
+            model (torch.nn.Module): the model you are training
+            metrics_map (MetricsMapType): the metrics you are tracking during training
+            monitor (str): which metric should be monitored (NOTE: this should be tracked in metrics_map)
+                            (default: 'val_loss')
+            min_delta (float): Minimum change in the monitored quantity to qualify as an improvement.
+                            (default: 0)
+            patience (int): How many epochs to wait until after last validation loss improvement.
+                            (default: 5)
+            mode (str): one of {'min','max'} (default='min') In 'min' mode, training will stop when the quantity
+                monitored has stopped decreasing; in 'max' mode it will stop when the quantity monitored has
+                stopped increasing;
+            verbose (bool): If True, prints a message for each validation loss improvement. (default: False)
+            save_best_weights (bool): Save state with best weights so far (default: False)
+            checkpoint_file_path (string, optional): directory to which the checkpoint file must be saved
+            (optional, defaults to current directory)
         """
         self.model_name = model.__class__.__name__
         hist = MetricsHistory(metrics_map, using_val_dataset)

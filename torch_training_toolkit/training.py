@@ -2,8 +2,6 @@
 """ training.py - core functions to help with cross-training, evaluation & testing of Pytorch models"""
 import warnings
 
-import torch.utils.data
-
 warnings.filterwarnings("ignore")
 
 import sys
@@ -19,6 +17,7 @@ from .early_stopping import *
 
 # custom data types
 from typing import Union, Dict, Tuple
+import torch.utils.data
 import torchmetrics
 
 # LossFxnType = Callable[[torch.tensor, torch.tensor], torch.tensor]
@@ -580,7 +579,7 @@ class Trainer:
         self.batch_size = batch_size
         self.reporting_interval = reporting_interval
         self.shuffle = shuffle
-        self.num_workers = num_workers
+        self.num_workers = num_workers  
 
     def fit(
         self,
