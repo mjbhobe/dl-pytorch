@@ -7,7 +7,9 @@ warnings.filterwarnings("ignore")
 import sys
 
 if sys.version_info < (2,):
-    raise Exception("torch_training_toolkit does not support Python 2.x. Please use a Python 3+ interpreter!")
+    raise Exception(
+        "torch_training_toolkit does not support Python 2.x. Please use a Python 3+ interpreter!"
+    )
 
 
 from .metrics_history import *
@@ -30,12 +32,16 @@ MetricsValType = Dict[str, float]
 
 def cross_train_module(
     model: nn.Module,
-    dataset: Union[NumpyArrayTuple, torch.utils.data.Dataset],
+    dataset: Union[
+        NumpyArrayTuple, torch.utils.data.Dataset, torch.utils.data.DataLoader
+    ],
     loss_fxn,
     optimizer: torch.optim.Optimizer,
     device: torch.device,
     validation_split: float = 0.0,
-    validation_dataset: Union[NumpyArrayTuple, torch.utils.data.Dataset] = None,
+    validation_dataset: Union[
+        NumpyArrayTuple, torch.utils.data.Dataset, torch.utils.data.DataLoader
+    ] = None,
     metrics_map: MetricsMapType = None,
     epochs: int = 5,
     batch_size: int = 64,
@@ -54,7 +60,9 @@ def cross_train_module(
     This function is used internally by the Trainer class - see Trainer.fit(...)
     """
     # validate parameters passed into function
-    assert 0.0 <= validation_split < 1.0, "cross_train_module: 'validation_split' must be a float between (0.0, 1.0]"
+    assert (
+        0.0 <= validation_split < 1.0
+    ), "cross_train_module: 'validation_split' must be a float between (0.0, 1.0]"
     if loss_fxn is None:
         raise ValueError("cross_train_module: 'loss_fxn' cannot be None")
     if optimizer is None:
@@ -69,7 +77,9 @@ def cross_train_module(
         # train dataset was a tuple of np.ndarrays - convert to Dataset
         torch_X_train = torch.from_numpy(train_dataset[0]).type(torch.FloatTensor)
         torch_y_train = torch.from_numpy(train_dataset[1]).type(
-            torch.LongTensor if train_dataset[1].dtype in [np.int, np.long] else torch.FloatTensor
+            torch.LongTensor
+            if train_dataset[1].dtype in [np.int, np.long]
+            else torch.FloatTensor
         )
         train_dataset = torch.utils.data.TensorDataset(torch_X_train, torch_y_train)
 
@@ -77,12 +87,19 @@ def cross_train_module(
         # cross-val dataset was a tuple of np.ndarrays - convert to Dataset
         torch_X_val = torch.from_numpy(val_dataset[0]).type(torch.FloatTensor)
         torch_y_val = torch.from_numpy(val_dataset[1]).type(
-            torch.LongTensor if val_dataset[1].dtype in [np.int, np.long] else torch.FloatTensor
+            torch.LongTensor
+            if val_dataset[1].dtype in [np.int, np.long]
+            else torch.FloatTensor
         )
         val_dataset = torch.utils.data.TensorDataset(torch_X_val, torch_y_val)
 
     # split the dataset if validation_split > 0.0
-    if (validation_split > 0.0) and (validation_dataset is None):
+    # NOTE: validation_dataset must be an instance of torch.util.data.Dataset, not DataLoader
+    if (
+        (validation_split > 0.0)
+        and isinstance(validation_dataset, torch.utils.data.Dataset)
+        and (validation_dataset is None)
+    ):
         # NOTE: validation_dataset supersedes validation_split!!
         # Use validation_split only if validation_dataset is None
         # if both are specified (i.e. validation_split > 0.0 and validation_dataset is not None)
@@ -96,7 +113,9 @@ def cross_train_module(
             flush=True,
         )
     else:
-        print(f"Training on '{device}' with {len(train_dataset)} records...", flush=True)
+        print(
+            f"Training on '{device}' with {len(train_dataset)} records...", flush=True
+        )
 
     if reporting_interval != 1:
         print(f"NOTE: progress will be reported every {reporting_interval} epoch!")
@@ -120,8 +139,15 @@ def cross_train_module(
             # reset metrics
             history.clear_batch_metrics()
             # loop over records in training dataset (use DataLoader)
-            train_dataloader = torch.utils.data.DataLoader(
-                train_dataset, batch_size=train_batch_size, shuffle=shuffle, num_workers=num_workers
+            train_dataloader = (
+                torch.utils.data.DataLoader(
+                    train_dataset,
+                    batch_size=train_batch_size,
+                    shuffle=shuffle,
+                    num_workers=num_workers,
+                )
+                if isinstance(train_dataset, torch.utils.data.Dataset)
+                else train_dataset
             )
             num_batches, samples = 0, 0
 
@@ -148,7 +174,9 @@ def cross_train_module(
 
                 # compute batch metric(s)
                 preds = preds.to(device)
-                history.calculate_batch_metrics(preds.to("cpu"), y.to("cpu"), loss_tensor.item(), val_metrics=False)
+                history.calculate_batch_metrics(
+                    preds.to("cpu"), y.to("cpu"), loss_tensor.item(), val_metrics=False
+                )
 
                 num_batches += 1
                 samples += len(X)
@@ -156,7 +184,9 @@ def cross_train_module(
                 if (reporting_interval == 1) and verbose:
                     # display progress with batch metrics - will display line like this:
                     # Epoch (  3/100): (  45/1024) -> loss: 3.456 - acc: 0.275
-                    metricsStr = history.get_metrics_str(batch_metrics=True, include_val_metrics=False)
+                    metricsStr = history.get_metrics_str(
+                        batch_metrics=True, include_val_metrics=False
+                    )
                     print(
                         "\rEpoch (%*d/%*d): (%*d/%*d) -> %s"
                         % (
@@ -177,8 +207,14 @@ def cross_train_module(
                 # all train batches are over - display average train metrics
                 history.calculate_epoch_metrics(val_metrics=False)
                 if val_dataset is None:
-                    if (epoch == 0) or ((epoch + 1) % reporting_interval == 0) or ((epoch + 1) == epochs):
-                        metricsStr = history.get_metrics_str(batch_metrics=False, include_val_metrics=False)
+                    if (
+                        (epoch == 0)
+                        or ((epoch + 1) % reporting_interval == 0)
+                        or ((epoch + 1) == epochs)
+                    ):
+                        metricsStr = history.get_metrics_str(
+                            batch_metrics=False, include_val_metrics=False
+                        )
                         print(
                             "\rEpoch (%*d/%*d): (%*d/%*d) -> %s"
                             % (
@@ -198,8 +234,14 @@ def cross_train_module(
                 else:
                     # we have a validation dataset
                     # same print as above except for trailing ... and end=''
-                    if (epoch == 0) or ((epoch + 1) % reporting_interval == 0) or ((epoch + 1) == epochs):
-                        metricsStr = history.get_metrics_str(batch_metrics=False, include_val_metrics=False)
+                    if (
+                        (epoch == 0)
+                        or ((epoch + 1) % reporting_interval == 0)
+                        or ((epoch + 1) == epochs)
+                    ):
+                        metricsStr = history.get_metrics_str(
+                            batch_metrics=False, include_val_metrics=False
+                        )
                         print(
                             "\rEpoch (%*d/%*d): (%*d/%*d) -> %s..."
                             % (
@@ -217,15 +259,21 @@ def cross_train_module(
                             flush=True,
                         )
 
-                    val_batch_size = batch_size if batch_size != -1 else len(val_dataset)
+                    val_batch_size = (
+                        batch_size if batch_size != -1 else len(val_dataset)
+                    )
                     model.eval()
                     with torch.no_grad():
                         # val_dataloader = None if val_dataset is None else \
-                        val_dataloader = torch.utils.data.DataLoader(
-                            val_dataset,
-                            batch_size=val_batch_size,
-                            shuffle=shuffle,
-                            num_workers=num_workers,
+                        val_dataloader = (
+                            torch.utils.data.DataLoader(
+                                val_dataset,
+                                batch_size=val_batch_size,
+                                shuffle=shuffle,
+                                num_workers=num_workers,
+                            )
+                            if isinstance(val_dataset, torch.utils.data.Dataset)
+                            else val_dataset
                         )
                         num_val_batches = 0
 
@@ -245,8 +293,14 @@ def cross_train_module(
                             # loop over val_dataset completed - compute val average metrics
                             history.calculate_epoch_metrics(val_metrics=True)
                             # display final metrics
-                            if (epoch == 0) or ((epoch + 1) % reporting_interval == 0) or ((epoch + 1) == epochs):
-                                metricsStr = history.get_metrics_str(batch_metrics=False, include_val_metrics=True)
+                            if (
+                                (epoch == 0)
+                                or ((epoch + 1) % reporting_interval == 0)
+                                or ((epoch + 1) == epochs)
+                            ):
+                                metricsStr = history.get_metrics_str(
+                                    batch_metrics=False, include_val_metrics=True
+                                )
                                 print(
                                     "\rEpoch (%*d/%*d): (%*d/%*d) -> %s"
                                     % (
@@ -266,7 +320,9 @@ def cross_train_module(
             if (early_stopping is not None) and (val_dataset is not None):
                 # early stooping test only if validation dataset is used
                 monitored_metric = early_stopping.monitored_metric()
-                last_metric_val = history.metrics_history[monitored_metric]["epoch_vals"][-1]
+                last_metric_val = history.metrics_history[monitored_metric][
+                    "epoch_vals"
+                ][-1]
                 early_stopping(model, last_metric_val, epoch)
                 if early_stopping.early_stop:
                     # load last state
@@ -294,7 +350,9 @@ def cross_train_module(
 
 def evaluate_module(
     model: nn.Module,
-    dataset: Union[NumpyArrayTuple, torch.utils.data.Dataset],
+    dataset: Union[
+        NumpyArrayTuple, torch.utils.data.Dataset, torch.utils.data.DataLoader
+    ],
     loss_fn,
     device: torch.device,
     metrics_map: MetricsMapType = None,
@@ -302,7 +360,8 @@ def evaluate_module(
     verbose: bool = True,
 ) -> MetricsValType:
     """evaluate module performance.
-    Internal function used by Trainer.evaluate() - please see Trainer class for details"""
+    Internal function used by Trainer.evaluate() - please see Trainer class for details
+    """
     try:
         model = model.to(device)
 
@@ -310,11 +369,17 @@ def evaluate_module(
         if isinstance(dataset, tuple):
             X = torch.from_numpy(dataset[0]).type(torch.FloatTensor)
             y = torch.from_numpy(dataset[1]).type(
-                torch.LongTensor if dataset[1].dtype in [np.int, np.long] else torch.FloatTensor
+                torch.LongTensor
+                if dataset[1].dtype in [np.int, np.long]
+                else torch.FloatTensor
             )
             dataset = torch.utils.data.TensorDataset(X, y)
 
-        loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=False)
+        loader = (
+            torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=False)
+            if isinstance(dataset, torch.utils.data.Dataset)
+            else dataset
+        )
 
         tot_samples, samples, num_batches = len(dataset), 0, 0
         len_tot_samples = len(str(tot_samples))
@@ -332,14 +397,24 @@ def evaluate_module(
                 preds = model(X)
                 # compute batch loss
                 batch_loss = loss_fn(preds, y).item()
-                history.calculate_batch_metrics(preds.to("cpu"), y.to("cpu"), batch_loss, val_metrics=False)
+                history.calculate_batch_metrics(
+                    preds.to("cpu"), y.to("cpu"), batch_loss, val_metrics=False
+                )
                 samples += len(y)
                 num_batches += 1
                 if verbose:
-                    metricsStr = history.get_metrics_str(batch_metrics=True, include_val_metrics=False)
+                    metricsStr = history.get_metrics_str(
+                        batch_metrics=True, include_val_metrics=False
+                    )
                     print(
                         "\rEvaluating (%*d/%*d) -> %s"
-                        % (len_tot_samples, samples, len_tot_samples, tot_samples, metricsStr),
+                        % (
+                            len_tot_samples,
+                            samples,
+                            len_tot_samples,
+                            tot_samples,
+                            metricsStr,
+                        ),
                         end="",
                         flush=True,
                     )
@@ -347,10 +422,18 @@ def evaluate_module(
                 # iteration over batch completed
                 # calculate average metrics across all batches
                 history.calculate_epoch_metrics(val_metrics=False)
-                metricsStr = history.get_metrics_str(batch_metrics=False, include_val_metrics=False)
+                metricsStr = history.get_metrics_str(
+                    batch_metrics=False, include_val_metrics=False
+                )
                 print(
                     "\rEvaluating (%*d/%*d) -> %s"
-                    % (len_tot_samples, samples, len_tot_samples, tot_samples, metricsStr),
+                    % (
+                        len_tot_samples,
+                        samples,
+                        len_tot_samples,
+                        tot_samples,
+                        metricsStr,
+                    ),
                     flush=True,
                 )
         return history.get_metric_vals(history.tracked_metrics())
@@ -360,12 +443,15 @@ def evaluate_module(
 
 def predict_module(
     model: nn.Module,
-    dataset: Union[NumpyArrayTuple, torch.utils.data.Dataset],
+    dataset: Union[
+        NumpyArrayTuple, torch.utils.data.Dataset, torch.utils.data.DataLoader
+    ],
     device: torch.device,
     batch_size: int = 64,
 ) -> NumpyArrayTuple:
     """make predictions from array or dataset
-    Internal function used by Trainer.predict() - please see Trainer class for details"""
+    Internal function used by Trainer.predict() - please see Trainer class for details
+    """
     try:
         model = model.to(device)
 
@@ -373,13 +459,19 @@ def predict_module(
         if isinstance(dataset, tuple):
             X = torch.from_numpy(dataset[0]).type(torch.FloatTensor)
             y = torch.from_numpy(dataset[1]).type(
-                torch.LongTensor if dataset[1].dtype in [np.int, np.long] else torch.FloatTensor
+                torch.LongTensor
+                if dataset[1].dtype in [np.int, np.long]
+                else torch.FloatTensor
             )
             dataset = torch.utils.data.TensorDataset(X, y)
 
-        loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=False)
-        #preds, actuals = [], []
-        preds, actuals = [], [] #np.array([]), np.array([])
+        loader = (
+            torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=False)
+            if isinstance(dataset, torch.utils.data.Dataset)
+            else dataset
+        )
+        # preds, actuals = [], []
+        preds, actuals = [], []  # np.array([]), np.array([])
 
         for X, y in loader:
             X = X.to(device)
@@ -416,7 +508,9 @@ def predict_array(
         NOTE: to convert to classes use np.max(...,axis=1) after this call.
     """
     try:
-        assert isinstance(model, nn.Module), "predict() works with instances of nn.Module only!"
+        assert isinstance(
+            model, nn.Module
+        ), "predict() works with instances of nn.Module only!"
         assert (isinstance(data, np.ndarray)) or (
             isinstance(data, torch.Tensor)
         ), "data must be an instance of Numpy ndarray or torch.tensor"
@@ -470,7 +564,9 @@ def save_model(model: nn.Module, model_save_path: str, verbose: bool = True):
         print(f"Pytorch model saved to {model_save_path}")
 
 
-def load_model(model: nn.Module, model_state_dict_path: str, verbose: bool = True) -> nn.Module:
+def load_model(
+    model: nn.Module, model_state_dict_path: str, verbose: bool = True
+) -> nn.Module:
     """loads model's state dict from file on disk
     @params:
         - model: instance of model derived from nn.Module
@@ -484,7 +580,9 @@ def load_model(model: nn.Module, model_state_dict_path: str, verbose: bool = Tru
     # convert model_state_dict_path to absolute path
     model_save_path = pathlib.Path(model_state_dict_path).absolute()
     if not os.path.exists(model_save_path):
-        raise IOError(f"ERROR: can't load model from {model_state_dict_path} - file does not exist!")
+        raise IOError(
+            f"ERROR: can't load model from {model_state_dict_path} - file does not exist!"
+        )
 
     # load state dict from path
     state_dict = torch.load(model_save_path)
@@ -579,14 +677,18 @@ class Trainer:
         self.batch_size = batch_size
         self.reporting_interval = reporting_interval
         self.shuffle = shuffle
-        self.num_workers = num_workers  
+        self.num_workers = num_workers
 
     def fit(
         self,
         model: nn.Module,
         optimizer: torch.optim.Optimizer,
-        train_dataset: Union[NumpyArrayTuple, torch.utils.data.Dataset],
-        validation_dataset: Union[NumpyArrayTuple, torch.utils.data.Dataset] = None,
+        train_dataset: Union[
+            NumpyArrayTuple, torch.utils.data.Dataset, torch.utils.data.DataLoader
+        ],
+        validation_dataset: Union[
+            NumpyArrayTuple, torch.utils.data.Dataset, torch.utils.data.DataLoader
+        ] = None,
         validation_split: float = 0.0,
         l1_reg=None,
         lr_scheduler: Union[LRSchedulerType, ReduceLROnPlateauType] = None,
@@ -640,8 +742,12 @@ class Trainer:
                     # call, then all the "val_XXX" keys & values will be missing.
         """
         assert model is not None, "FATAL ERROR: Trainer.fit() -> 'model' cannot be None"
-        assert optimizer is not None, "FATAL ERROR: Trainer.fit() -> 'optimizer' cannot be None"
-        assert train_dataset is not None, "FATAL ERROR: Trainer.fit() -> 'train_dataset' cannot be None"
+        assert (
+            optimizer is not None
+        ), "FATAL ERROR: Trainer.fit() -> 'optimizer' cannot be None"
+        assert (
+            train_dataset is not None
+        ), "FATAL ERROR: Trainer.fit() -> 'train_dataset' cannot be None"
         # if lr_scheduler is not None:
         #     # NOTE:  ReduceLROnPlateau is NOT derived from _LRScheduler, but from object, which
         #     # is odd as all other schedulers derive from _LRScheduler
@@ -674,7 +780,9 @@ class Trainer:
     def evaluate(
         self,
         model: nn.Module,
-        dataset: Union[NumpyArrayTuple, torch.utils.data.Dataset],
+        dataset: Union[
+            NumpyArrayTuple, torch.utils.data.Dataset, torch.utils.data.DataLoader
+        ],
         verbose: bool = True,
     ) -> dict:
         """
@@ -701,7 +809,13 @@ class Trainer:
     def predict(
         self,
         model: nn.Module,
-        dataset: Union[np.ndarray, torch.Tensor, NumpyArrayTuple, torch.utils.data.Dataset],
+        dataset: Union[
+            np.ndarray,
+            torch.Tensor,
+            NumpyArrayTuple,
+            torch.utils.data.Dataset,
+            torch.utils.data.DataLoader,
+        ],
     ) -> Union[np.ndarray, NumpyArrayTuple]:
         if isinstance(dataset, np.ndarray) or isinstance(dataset, torch.Tensor):
             return predict_array(model, dataset, self.device, self.batch_size)
