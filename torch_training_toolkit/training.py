@@ -486,8 +486,8 @@ def predict_module(
                 actuals.extend(batch_actuals)
                 # preds = np.append(preds, batch_preds)
                 # actuals = np.append(actuals, batch_actuals)
-        # return (np.array(preds), np.array(actuals))
-        return (preds, actuals)
+        return (np.array(preds), np.array(actuals))
+        # return (preds, actuals)
     finally:
         model = model.to("cpu")
 

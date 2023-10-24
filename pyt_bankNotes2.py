@@ -22,7 +22,7 @@ import seaborn as sns
 
 # tweaks for libraries
 np.set_printoptions(precision=6, linewidth=1024, suppress=True)
-plt.style.use("seaborn")
+plt.style.use("seaborn-v0_8")
 sns.set(style="whitegrid", font_scale=1.1, palette="muted")
 
 # Pytorch imports
