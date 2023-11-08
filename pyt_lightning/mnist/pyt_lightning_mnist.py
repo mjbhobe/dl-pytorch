@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-pyt_lightning_mnist.py: multiclass classification of MNIST dataset using an ANN with Pytorch Lightning
+pyt_lightning_mnist.py: multiclass classification of MNIST dataset using an ANN
+with Pytorch Lightning
 
 @author: Manish Bhobe
 My experiments with Python, Machine Learning & Deep Learning.
-This code is meant for education purposes only & is not intended for commercial/production use!
+This code is meant for education purposes only & is not intended for
+commercial/production use!
 Use at your own risk!! I am not responsible if your CPU or GPU gets fried :D
 """
 import sys
@@ -27,7 +29,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 # tweaks for libraries
-plt.style.use("seaborn")
+plt.style.use("seaborn-v0_8")
 sns.set(style="whitegrid", font_scale=1.1, palette="muted")
 
 # Pytorch imports
@@ -43,8 +45,8 @@ import torchsummary
 from cl_options import parse_command_line
 from utils import save_model, load_model, predict_module, predict_array
 
-print("Using Pytorch version: ", torch.__version__)
-print("Using Pytorch Lightning version: ", pl.__version__)
+# print("Using Pytorch version: ", torch.__version__)
+# print("Using Pytorch Lightning version: ", pl.__version__)
 
 SEED = pl.seed_everything()
 
@@ -54,8 +56,8 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 DATA_FILE_PATH = pathlib.Path(__file__).parent / "data"
 # assert os.path.exists(DATA_FILE_PATH), f"FATAL: {DATA_FILE_PATH} - data file does not exist!"
 
-logger.info(f"Training model on {DEVICE}")
-logger.info(f"Using data file {DATA_FILE_PATH}")
+# logger.info(f"Training model on {DEVICE}")
+# logger.info(f"Using data file {DATA_FILE_PATH}")
 
 
 def get_datasets():
@@ -99,7 +101,7 @@ def display_sample(
     import matplotlib.pyplot as plt
     import seaborn as sns
 
-    plt.style.use("seaborn")
+    plt.style.use("seaborn-v0_8")
 
     num_rows, num_cols = grid_shape
     assert sample_images.shape[0] == num_rows * num_cols
@@ -141,7 +143,9 @@ def display_sample(
                     # but show the prediction in the title
                     title = ax[r, c].set_title("No: %d" % sample_labels[image_index])
                 else:
-                    pred_matches_actual = sample_labels[image_index] == sample_predictions[image_index]
+                    pred_matches_actual = (
+                        sample_labels[image_index] == sample_predictions[image_index]
+                    )
                     if pred_matches_actual:
                         # show title from prediction or actual in green font
                         title = "%s" % sample_predictions[image_index]
@@ -178,7 +182,9 @@ class MNISTModelBase(pl.LightningModule):
 
         self.net = None
         self.loss_fn = nn.CrossEntropyLoss()
-        self.acc = torchmetrics.classification.MulticlassAccuracy(num_classes=self.num_classes)
+        self.acc = torchmetrics.classification.MulticlassAccuracy(
+            num_classes=self.num_classes
+        )
 
     def forward(self, x):
         return self.net(x)
@@ -284,7 +290,7 @@ def main():
 
     if args.pred:
         model = MNISTModelANN(NUM_CLASSES, args.lr)
-        print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
+        # print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
         model = load_model(model, MODEL_STATE_PATH)
         print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
 
