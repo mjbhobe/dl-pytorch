@@ -52,6 +52,7 @@ def cross_train_module(
     shuffle: bool = True,
     num_workers: int = 4,
     verbose: bool = True,
+    seed=41,
 ) -> MetricsHistory:
     """
     Cross-trains model (derived from nn.Module) across epochs using specified loss function,
@@ -59,6 +60,7 @@ def cross_train_module(
 
     This function is used internally by the Trainer class - see Trainer.fit(...)
     """
+    torch.manual_seed(seed)
     # validate parameters passed into function
     assert (
         0.0 <= validation_split < 1.0
@@ -358,10 +360,12 @@ def evaluate_module(
     metrics_map: MetricsMapType = None,
     batch_size: int = 64,
     verbose: bool = True,
+    seed=41,
 ) -> MetricsValType:
     """evaluate module performance.
     Internal function used by Trainer.evaluate() - please see Trainer class for details
     """
+    torch.manual_seed(seed)
     try:
         model = model.to(device)
 
@@ -448,10 +452,12 @@ def predict_module(
     ],
     device: torch.device,
     batch_size: int = 64,
+    seed=41,
 ) -> NumpyArrayTuple:
     """make predictions from array or dataset
     Internal function used by Trainer.predict() - please see Trainer class for details
     """
+    torch.manual_seed(seed)
     try:
         model = model.to(device)
 
@@ -473,13 +479,15 @@ def predict_module(
         # preds, actuals = [], []
         preds, actuals = [], []  # np.array([]), np.array([])
 
-        for X, y in loader:
-            X = X.to(device)
-            y = y.to(device)
-            with torch.no_grad():
-                model.eval()
-                batch_preds = list(model(X).to("cpu").numpy())
-                batch_actuals = list(y.to("cpu").numpy())
+        model.eval()
+        with torch.no_grad():
+            for X, y in loader:
+                X = X.to(device)
+                y = y.to(device)
+                batch_preds = list(model(X).ravel().numpy())
+                batch_actuals = list(y.ravel().numpy())
+                # batch_preds = list(model(X).to("cpu").numpy())
+                # batch_actuals = list(y.to("cpu").numpy())
                 # batch_preds = model(X).to("cpu").numpy()
                 # batch_actuals = y.to("cpu").numpy()
                 preds.extend(batch_preds)
@@ -694,6 +702,7 @@ class Trainer:
         lr_scheduler: Union[LRSchedulerType, ReduceLROnPlateauType] = None,
         early_stopping: EarlyStopping = None,
         verbose: bool = True,
+        seed=41,
     ) -> MetricsHistory:
         """
         fits (i.e cross-trains) the model using provided training data (and optionally
@@ -774,6 +783,7 @@ class Trainer:
             shuffle=self.shuffle,
             num_workers=self.num_workers,
             verbose=verbose,
+            seed=seed,
         )
         return history
 

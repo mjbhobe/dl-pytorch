@@ -30,9 +30,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+
 # tweaks for libraries
 np.set_printoptions(precision=4, linewidth=1024, suppress=True)
-plt.style.use("seaborn")
+plt.style.use("seaborn-v0_8")
 sns.set(style="darkgrid", context="notebook", font_scale=1.20)
 
 # Pytorch imports
@@ -92,7 +93,9 @@ def load_data(args):
 
     # lets split the test dataset into val_dataset & test_dataset -> 8000:2000 records
     # val_dataset, test_dataset = torch.utils.data.random_split(test_dataset, [8000, 2000])
-    val_dataset, test_dataset = t3.split_dataset(test_dataset, split_perc=args.test_split)
+    val_dataset, test_dataset = t3.split_dataset(
+        test_dataset, split_perc=args.test_split
+    )
     print("No of cross-val records: %d" % len(val_dataset))
     print("No of test records: %d" % len(test_dataset))
 
@@ -131,10 +134,24 @@ def display_sample(
 
     with sns.axes_style("whitegrid"):
         sns.set_context("notebook", font_scale=0.98)
-        sns.set_style({"font.sans-serif": ["SF UI Text", "Calibri", "Arial", "DejaVu Sans", "sans"]})
+        sns.set_style(
+            {
+                "font.sans-serif": [
+                    "SF UI Text",
+                    "Calibri",
+                    "Arial",
+                    "DejaVu Sans",
+                    "sans",
+                ]
+            }
+        )
 
         f, ax = plt.subplots(
-            num_rows, num_cols, figsize=(14, 10), gridspec_kw={"wspace": 0.05, "hspace": 0.35}, squeeze=True
+            num_rows,
+            num_cols,
+            figsize=(14, 10),
+            gridspec_kw={"wspace": 0.05, "hspace": 0.35},
+            squeeze=True,
         )  # 0.03, 0.25
         # fig = ax[0].get_figure()
         f.tight_layout()
@@ -148,13 +165,21 @@ def display_sample(
                 sample_images[image_index] = (sample_images[image_index] * 0.5) / 0.5
 
                 # show selected image
-                ax[r, c].imshow(sample_images[image_index].squeeze(), cmap="Greys", interpolation="nearest")
+                ax[r, c].imshow(
+                    sample_images[image_index].squeeze(),
+                    cmap="Greys",
+                    interpolation="nearest",
+                )
 
                 if sample_predictions is None:
                     # show the text label as image title
-                    title = ax[r, c].set_title(f"{FASHION_LABELS[sample_labels[image_index]]}")
+                    title = ax[r, c].set_title(
+                        f"{FASHION_LABELS[sample_labels[image_index]]}"
+                    )
                 else:
-                    pred_matches_actual = sample_labels[image_index] == sample_predictions[image_index]
+                    pred_matches_actual = (
+                        sample_labels[image_index] == sample_predictions[image_index]
+                    )
                     # show prediction from model as image title
                     title = "%s" % FASHION_LABELS[sample_predictions[image_index]]
                     if pred_matches_actual:
@@ -266,10 +291,17 @@ def main():
     if args.show_sample:
         # display sample from test dataset
         print("Displaying sample from train dataset...")
-        testloader = torch.utils.data.DataLoader(test_dataset, batch_size=64, shuffle=True)
+        testloader = torch.utils.data.DataLoader(
+            test_dataset, batch_size=64, shuffle=True
+        )
         data_iter = iter(testloader)
         images, labels = next(data_iter)  # fetch first batch of 64 images & labels
-        display_sample(images.cpu().numpy(), labels.cpu().numpy(), grid_shape=(8, 8), plot_title="Sample Images")
+        display_sample(
+            images.cpu().numpy(),
+            labels.cpu().numpy(),
+            grid_shape=(8, 8),
+            plot_title="Sample Images",
+        )
 
     if args.train:
         print(f'Using {"CNN" if args.use_cnn else "ANN"} model...')
@@ -322,7 +354,9 @@ def main():
 
         # display sample from test dataset
         print("Displaying sample predictions...")
-        testloader = torch.utils.data.DataLoader(test_dataset, batch_size=64, shuffle=True)
+        testloader = torch.utils.data.DataLoader(
+            test_dataset, batch_size=64, shuffle=True
+        )
         data_iter = iter(testloader)
         images, labels = next(data_iter)
         preds = np.argmax(trainer.predict(model, images.cpu().numpy()), axis=1)

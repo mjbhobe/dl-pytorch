@@ -16,7 +16,9 @@ warnings.filterwarnings("ignore")
 import sys
 
 if sys.version_info < (2,):
-    raise Exception("torch_training_toolkit does not support Python 1. Please use a Python 3+ interpreter!")
+    raise Exception(
+        "torch_training_toolkit does not support Python 1. Please use a Python 3+ interpreter!"
+    )
 import logging
 
 version_info = (1, 0, 0, "dev0")
@@ -28,10 +30,10 @@ __author__ = "Manish Bhobé"
 # Nämostuté -> means "May our Minds Meet"
 __organization__ = "Nämostuté Ltd."
 __org_domain__ = "namostute.pytorch.in"
-__license__ = __doc__
+__license__ = "MIT Licence (for personal or commercial use)"
 __project_url__ = "https://github.com/mjbhobe/dl_pytorch"
 
-T3_FAV_SEED = 41
+__FAV_SEED = 41
 
 import torch
 
@@ -44,5 +46,17 @@ from .metrics_history import MetricsHistory
 from .early_stopping import EarlyStopping
 from .cl_args import TrainingArgsParser
 
-_logger = get_logger(__name__)
-_logger.info(f"torch_training_toolkit {__version__}. Written by {__author__} for {__organization__}.")
+
+def about():
+    about_info = (
+        f"{__title__} by {__author__}. Library to make training Pytorch models easier.\n"
+        f"Released by {__organization__} with {__license__}.\n"
+        f"Use at your own risk. {__author__} (or {__organization__}) are not liable for any damages from use of this software!"
+    )
+    return about_info
+
+
+# _logger = get_logger(__name__)
+# _logger.info(
+#     f"torch_training_toolkit {__version__}. Written by {__author__} for {__organization__}."
+# )
