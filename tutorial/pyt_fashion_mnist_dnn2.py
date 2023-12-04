@@ -52,7 +52,7 @@ import torch_training_toolkit as t3
 seed = 123
 t3.seed_all(seed)
 
-logger = logging.getLogger(__name__)
+logger = t3.get_logger(pathlib.Path(__file__).stem)
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 DATA_PATH = pathlib.Path(__file__).parent.parent / "data"
@@ -137,7 +137,7 @@ def display_sample(
         sns.set_style(
             {
                 "font.sans-serif": [
-                    "SF UI Text",
+                    "SF Pro Display",
                     "Calibri",
                     "Arial",
                     "DejaVu Sans",

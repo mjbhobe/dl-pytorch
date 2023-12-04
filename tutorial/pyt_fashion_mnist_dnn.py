@@ -50,7 +50,7 @@ import torch_training_toolkit as t3
 seed = 123
 t3.seed_all(seed)
 
-logger = logging.getLogger(__name__)
+logger = t3.get_logger(pathlib.Path(__file__).stem)
 
 # define a device to train on
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -92,7 +92,9 @@ def load_data(args):
 
     # lets split the test dataset into val_dataset & test_dataset -> 8000:2000 records
     # val_dataset, test_dataset = torch.utils.data.random_split(test_dataset, [8000, 2000])
-    val_dataset, test_dataset = t3.split_dataset(test_dataset, split_perc=args.test_split)
+    val_dataset, test_dataset = t3.split_dataset(
+        test_dataset, split_perc=args.test_split
+    )
     print("No of cross-val records: %d" % len(val_dataset))
     print("No of test records: %d" % len(test_dataset))
 
@@ -159,7 +161,9 @@ def display_sample(
                 image_index = r * num_cols + c
                 ax[r, c].axis("off")
                 # de-normalize image
-                sample_images[image_index] = (sample_images[image_index] * IMAGES_STD) + IMAGES_MEAN
+                sample_images[image_index] = (
+                    sample_images[image_index] * IMAGES_STD
+                ) + IMAGES_MEAN
 
                 # show selected image
                 ax[r, c].imshow(
@@ -170,9 +174,13 @@ def display_sample(
 
                 if sample_predictions is None:
                     # show the text label as image title
-                    title = ax[r, c].set_title(f"{FASHION_LABELS[sample_labels[image_index]]}")
+                    title = ax[r, c].set_title(
+                        f"{FASHION_LABELS[sample_labels[image_index]]}"
+                    )
                 else:
-                    pred_matches_actual = sample_labels[image_index] == sample_predictions[image_index]
+                    pred_matches_actual = (
+                        sample_labels[image_index] == sample_predictions[image_index]
+                    )
                     # show prediction from model as image title
                     title = "%s" % FASHION_LABELS[sample_predictions[image_index]]
                     if pred_matches_actual:
@@ -273,7 +281,9 @@ def main():
     if args.show_sample:
         # display sample from test dataset
         print("Displaying sample from train dataset...")
-        testloader = torch.utils.data.DataLoader(test_dataset, batch_size=args.batch_size, shuffle=True)
+        testloader = torch.utils.data.DataLoader(
+            test_dataset, batch_size=args.batch_size, shuffle=True
+        )
         data_iter = iter(testloader)
         images, labels = next(data_iter)  # fetch first batch of 64 images & labels
         display_sample(
@@ -326,14 +336,16 @@ def main():
         print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
 
         y_pred, y_true = trainer.predict(model, test_dataset)
-        y_pred = np.argmax(y_pred, axis=1)
+        # y_pred = np.argmax(y_pred, axis=1)
         print("Sample labels (50): ", y_true[:50])
         print("Sample predictions: ", y_true[:50])
         print("We got %d/%d incorrect!" % ((y_pred != y_true).sum(), len(y_true)))
 
         # display sample from test dataset
         print("Displaying sample predictions...")
-        testloader = torch.utils.data.DataLoader(test_dataset, batch_size=64, shuffle=True)
+        testloader = torch.utils.data.DataLoader(
+            test_dataset, batch_size=64, shuffle=True
+        )
         data_iter = iter(testloader)
         images, labels = next(data_iter)
         preds = np.argmax(trainer.predict(model, images.cpu().numpy()), axis=1)

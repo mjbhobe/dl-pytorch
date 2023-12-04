@@ -484,7 +484,8 @@ def predict_module(
             for X, y in loader:
                 X = X.to(device)
                 y = y.to(device)
-                batch_preds = list(model(X).ravel().numpy())
+                # batch_preds = list(model(X).ravel().numpy())
+                batch_preds = list(np.argmax(model(X).numpy(), axis=1))
                 batch_actuals = list(y.ravel().numpy())
                 # batch_preds = list(model(X).to("cpu").numpy())
                 # batch_actuals = list(y.to("cpu").numpy())
