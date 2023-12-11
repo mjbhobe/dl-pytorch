@@ -52,7 +52,7 @@ import torch_training_toolkit as t3
 seed = 123
 t3.seed_all(seed)
 
-logger = t3.get_logger(pathlib.Path(__file__).stem)
+logger = t3.get_logger(pathlib.Path(__file__), level=logging.INFO)
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 DATA_PATH = pathlib.Path(__file__).parent.parent / "data"
@@ -317,27 +317,45 @@ def main():
             optimizer,
             train_dataset,
             validation_dataset=val_dataset,
+            seed=seed,
+            logger=logger,
         )
         # display the tracked metrics
         hist.plot_metrics("Model Performance")
+        # save model state
+        t3.save_model(model, MODEL_SAVE_PATH)
+        del model
+
+    if args.eval:
+        # load model state from .pt file
+        model = FMNISTConvNet() if args.use_cnn else FMNISTNet()
+        model = t3.load_model(model, MODEL_SAVE_PATH)
+        print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
 
         # evaluate model performance on train/eval & test datasets
         print("Evaluating model performance...")
+        logger.debug("Evaluating model performance...")
         metrics = trainer.evaluate(model, train_dataset)
         print(
+            f"  Training dataset  -> loss: {metrics['loss']:.4f} - acc: {metrics['acc']:.4f} - f1: {metrics['f1']:.4f}"
+        )
+        logger.debug(
             f"  Training dataset  -> loss: {metrics['loss']:.4f} - acc: {metrics['acc']:.4f} - f1: {metrics['f1']:.4f}"
         )
         metrics = trainer.evaluate(model, val_dataset)
         print(
             f"  Cross-val dataset -> loss: {metrics['loss']:.4f} - acc: {metrics['acc']:.4f} - f1: {metrics['f1']:.4f}"
         )
+        logger.debug(
+            f"  Cross-val dataset -> loss: {metrics['loss']:.4f} - acc: {metrics['acc']:.4f} - f1: {metrics['f1']:.4f}"
+        )
         metrics = trainer.evaluate(model, test_dataset)
         print(
             f"  Testing dataset   -> loss: {metrics['loss']:.4f} - acc: {metrics['acc']:.4f} - f1: {metrics['f1']:.4f}"
         )
-
-        # save model state
-        t3.save_model(model, MODEL_SAVE_PATH)
+        logger.debug(
+            f"  Testing dataset   -> loss: {metrics['loss']:.4f} - acc: {metrics['acc']:.4f} - f1: {metrics['f1']:.4f}"
+        )
         del model
 
     if args.pred:
@@ -346,7 +364,7 @@ def main():
         model = t3.load_model(model, MODEL_SAVE_PATH)
         print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
 
-        y_pred, y_true = trainer.predict(model, test_dataset)
+        y_pred, y_true = trainer.predict(model, test_dataset, logger=logger)
         y_pred = np.argmax(y_pred, axis=1)
         print("Sample labels (50): ", y_true[:50])
         print("Sample predictions: ", y_true[:50])
