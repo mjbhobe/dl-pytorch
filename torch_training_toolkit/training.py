@@ -21,6 +21,7 @@ from .early_stopping import *
 from typing import Union, Dict, Tuple
 import torch.utils.data
 import torchmetrics
+import logging
 
 # LossFxnType = Callable[[torch.tensor, torch.tensor], torch.tensor]
 LRSchedulerType = torch.optim.lr_scheduler._LRScheduler
@@ -52,6 +53,7 @@ def cross_train_module(
     shuffle: bool = True,
     num_workers: int = 4,
     verbose: bool = True,
+    logger: logging.Logger = None,
     seed=41,
 ) -> MetricsHistory:
     """
@@ -61,13 +63,63 @@ def cross_train_module(
     This function is used internally by the Trainer class - see Trainer.fit(...)
     """
     torch.manual_seed(seed)
+
+    if logger is not None:
+        logger.debug(f"Entering cross_train_module() function")
+        # display info on training parameters
+        train_params = "Training Parameters:\n"
+        train_params += f"   - will train on {device} for {epochs} epochs and batch_size of {batch_size}."
+        train_params += "\n" if early_stopping is None else " Early stopping applied!\n"
+        train_params += (
+            f"   - progress will be reported every {reporting_interval} epochs.\n"
+        )
+        train_params += (
+            f"   - train dataset type: {type(dataset)} with {len(dataset)} records.\n"
+        )
+        if validation_split > 0.0:
+            train_params += f"   - using validation_split = {validation_split}."
+            train_params += (
+                "\n"
+                if validation_dataset is None
+                else " NOTE: validation_dataset will be ignored!\n"
+            )
+        elif validation_dataset is not None:
+            train_params += f"   - validation dataset type: {type(validation_dataset)} with {len(validation_dataset)} records.\n"
+        else:
+            train_parms += f"   - NOTE: validation_dataset NOT provided!\n"
+        train_params += (
+            f"   - using {type(loss_fxn)} loss and {type(optimizer)} optimizer.\n"
+        )
+        train_params += f"   - Additional metrics tracked: {str(metrics_map)}.\n"
+        if l1_reg is not None:
+            train_params += f"   - using L1 regularization: {l1_reg}.\n"
+        if lr_scheduler is not None:
+            train_params += (
+                f"   - using learning rate scheduler: {type(lr_scheduler)}.\n"
+            )
+        logger.debug(train_params)
+
     # validate parameters passed into function
-    assert (
-        0.0 <= validation_split < 1.0
-    ), "cross_train_module: 'validation_split' must be a float between (0.0, 1.0]"
+    if not (0.0 <= validation_split < 1.0):
+        if logger is not None:
+            logger.fatal(
+                f"Exception -> ValueError(\"cross_train_module: 'validation_split' must be a float between (0.0, 1.0]\")"
+            )
+        raise ValueError(
+            "cross_train_module: 'validation_split' must be a float between (0.0, 1.0]"
+        )
+
     if loss_fxn is None:
+        if logger is not None:
+            logger.fatal(
+                "Exception -> ValueError(\"cross_train_module: 'loss_fxn' cannot be None\")"
+            )
         raise ValueError("cross_train_module: 'loss_fxn' cannot be None")
     if optimizer is None:
+        if logger is not None:
+            logger.fatal(
+                "Exception -> ValueError(\"cross_train_module: 'optimizer' cannot be None\")"
+            )
         raise ValueError("cross_train_module: 'optimizer' cannot be None")
 
     reporting_interval = 1 if reporting_interval < 1 else reporting_interval
@@ -76,6 +128,17 @@ def cross_train_module(
     train_dataset, val_dataset = dataset, validation_dataset
 
     if isinstance(train_dataset, tuple):
+        # check that we have a tuple of numpy ndarrays
+        if not (type(train_dataset[0], np.ndarray)) and (
+            type(train_dataset[1], np.ndarray)
+        ):
+            if logger is not None:
+                logger.fatal(
+                    f'Exception -> ValueError("dataset passed in as tuple must have np.ndarray elements only!")'
+                )
+            raise ValueError(
+                f"FATAL: dataset passed in as tuple must have np.ndarray elements only!"
+            )
         # train dataset was a tuple of np.ndarrays - convert to Dataset
         torch_X_train = torch.from_numpy(train_dataset[0]).type(torch.FloatTensor)
         torch_y_train = torch.from_numpy(train_dataset[1]).type(
@@ -84,8 +147,23 @@ def cross_train_module(
             else torch.FloatTensor
         )
         train_dataset = torch.utils.data.TensorDataset(torch_X_train, torch_y_train)
+        if logger is not None:
+            logger.debug(
+                "Detected training dataset as instance of tuples of np.ndarrays. Converted to TensorDatasets"
+            )
 
     if (val_dataset is not None) and isinstance(val_dataset, tuple):
+        # check that we have a tuple of numpy ndarrays
+        if not (type(val_dataset[0], np.ndarray)) and (
+            type(val_dataset[1], np.ndarray)
+        ):
+            if logger is not None:
+                logger.fatal(
+                    f'Exception -> ValueError("validation dataset passed in as tuple must have np.ndarray elements only!")'
+                )
+            raise ValueError(
+                f"FATAL: validation dataset passed in as tuple must have np.ndarray elements only!"
+            )
         # cross-val dataset was a tuple of np.ndarrays - convert to Dataset
         torch_X_val = torch.from_numpy(val_dataset[0]).type(torch.FloatTensor)
         torch_y_val = torch.from_numpy(val_dataset[1]).type(
@@ -94,6 +172,10 @@ def cross_train_module(
             else torch.FloatTensor
         )
         val_dataset = torch.utils.data.TensorDataset(torch_X_val, torch_y_val)
+        if logger is not None:
+            logger.debug(
+                "Detected validation dataset as instance of tuples of np.ndarrays. Converted to TensorDatasets"
+            )
 
     # split the dataset if validation_split > 0.0
     # NOTE: validation_dataset must be an instance of torch.util.data.Dataset, not DataLoader
@@ -107,6 +189,10 @@ def cross_train_module(
         # if both are specified (i.e. validation_split > 0.0 and validation_dataset is not None)
         # then validation_split value will be ignored!
         train_dataset, val_dataset = split_dataset(train_dataset, validation_split)
+        if logger is not None:
+            logger.debug(
+                f"NOTE: using validation_split (= {validation_split}) to split training dataset. Will ignore validation_dataset parameter!"
+            )
 
     if val_dataset is not None:
         print(
@@ -123,8 +209,8 @@ def cross_train_module(
         print(f"NOTE: progress will be reported every {reporting_interval} epoch!")
 
     l1_penalty = None if l1_reg is None else torch.nn.L1Loss()
-    if l1_reg is not None:
-        print(f"Adding L1 regularization with lambda = {l1_reg}")
+    if (l1_reg is not None) and (logger is not None):
+        logger.debug(f"Adding L1 regularization with lambda = {l1_reg}")
 
     history = None
 
@@ -142,6 +228,7 @@ def cross_train_module(
             history.clear_batch_metrics()
             # loop over records in training dataset (use DataLoader)
             train_dataloader = (
+                # convert dataset to dataloader
                 torch.utils.data.DataLoader(
                     train_dataset,
                     batch_size=train_batch_size,
@@ -149,6 +236,7 @@ def cross_train_module(
                     num_workers=num_workers,
                 )
                 if isinstance(train_dataset, torch.utils.data.Dataset)
+                # or use dataloader as-is
                 else train_dataset
             )
             num_batches, samples = 0, 0
@@ -162,7 +250,7 @@ def cross_train_module(
                 preds = model(X)
                 # calculate loss
                 loss_tensor = loss_fxn(preds, y)
-                # add L1 if mentioned - L2 Regularization is handled by optimizer!
+                # add L1 loss, if specified - L2 Regularization is handled by optimizer!
                 if l1_reg is not None:
                     # reg_loss = 0.0
                     reg_loss = sum([l1_penalty(param) for param in model.parameters()])
@@ -185,7 +273,7 @@ def cross_train_module(
 
                 if (reporting_interval == 1) and verbose:
                     # display progress with batch metrics - will display line like this:
-                    # Epoch (  3/100): (  45/1024) -> loss: 3.456 - acc: 0.275
+                    # Epoch (  3/100): (  45/1024) -> loss: 3.456 [- acc: 0.275...]
                     metricsStr = history.get_metrics_str(
                         batch_metrics=True, include_val_metrics=False
                     )
@@ -217,21 +305,20 @@ def cross_train_module(
                         metricsStr = history.get_metrics_str(
                             batch_metrics=False, include_val_metrics=False
                         )
-                        print(
-                            "\rEpoch (%*d/%*d): (%*d/%*d) -> %s"
-                            % (
-                                len_num_epochs,
-                                epoch + 1,
-                                len_num_epochs,
-                                epochs,
-                                len_tot_samples,
-                                samples,
-                                len_tot_samples,
-                                tot_samples,
-                                metricsStr,
-                            ),
-                            flush=True,
+                        prog_str = "\rEpoch (%*d/%*d): (%*d/%*d) -> %s" % (
+                            len_num_epochs,
+                            epoch + 1,
+                            len_num_epochs,
+                            epochs,
+                            len_tot_samples,
+                            samples,
+                            len_tot_samples,
+                            tot_samples,
+                            metricsStr,
                         )
+                        print(prog_str, flush=True)
+                        if logger is not None:
+                            logger.debug(prog_str)
                         # training ends here as there is no cross-validation dataset
                 else:
                     # we have a validation dataset
@@ -303,21 +390,20 @@ def cross_train_module(
                                 metricsStr = history.get_metrics_str(
                                     batch_metrics=False, include_val_metrics=True
                                 )
-                                print(
-                                    "\rEpoch (%*d/%*d): (%*d/%*d) -> %s"
-                                    % (
-                                        len_num_epochs,
-                                        epoch + 1,
-                                        len_num_epochs,
-                                        epochs,
-                                        len_tot_samples,
-                                        samples,
-                                        len_tot_samples,
-                                        tot_samples,
-                                        metricsStr,
-                                    ),
-                                    flush=True,
+                                prog_str = "\rEpoch (%*d/%*d): (%*d/%*d) -> %s" % (
+                                    len_num_epochs,
+                                    epoch + 1,
+                                    len_num_epochs,
+                                    epochs,
+                                    len_tot_samples,
+                                    samples,
+                                    len_tot_samples,
+                                    tot_samples,
+                                    metricsStr,
                                 )
+                                print(prog_str, flush=True)
+                                if logger is not None:
+                                    logger.debug(prog_str)
 
             if (early_stopping is not None) and (val_dataset is not None):
                 # early stooping test only if validation dataset is used
@@ -330,6 +416,8 @@ def cross_train_module(
                     # load last state
                     model.load_state_dict(torch.load(early_stopping.checkpoint_path()))
                     model.eval()
+                    if logger is not None:
+                        logger.debug("Early stopping the training loop.")
                     break
 
             # step the learning rate scheduler at end of epoch
@@ -360,6 +448,7 @@ def evaluate_module(
     metrics_map: MetricsMapType = None,
     batch_size: int = 64,
     verbose: bool = True,
+    logger: logging.Logger = None,
     seed=41,
 ) -> MetricsValType:
     """evaluate module performance.
@@ -429,7 +518,7 @@ def evaluate_module(
                 metricsStr = history.get_metrics_str(
                     batch_metrics=False, include_val_metrics=False
                 )
-                print(
+                prog_str = (
                     "\rEvaluating (%*d/%*d) -> %s"
                     % (
                         len_tot_samples,
@@ -438,8 +527,8 @@ def evaluate_module(
                         tot_samples,
                         metricsStr,
                     ),
-                    flush=True,
                 )
+                print(prog_str, flush=True)
         return history.get_metric_vals(history.tracked_metrics())
     finally:
         model = model.to("cpu")
@@ -452,6 +541,7 @@ def predict_module(
     ],
     device: torch.device,
     batch_size: int = 64,
+    logger: logging.Logger = None,
     seed=41,
 ) -> NumpyArrayTuple:
     """make predictions from array or dataset
@@ -495,6 +585,10 @@ def predict_module(
                 actuals.extend(batch_actuals)
                 # preds = np.append(preds, batch_preds)
                 # actuals = np.append(actuals, batch_actuals)
+        if logger is not None:
+            logger.debug("Preditions: ")
+            logger.debug(f"  - Actuals     : {np.array(actuals)}")
+            logger.debug(f"  - Predictions : {np.array(preds)}")
         return (np.array(preds), np.array(actuals))
         # return (preds, actuals)
     finally:
@@ -667,6 +761,7 @@ class Trainer:
              If True, it is shuffled else not. It is a good practice to always shuffle
              data between epochs. This setting should be left to the default value,
              unless you have a valid reason NOT to shuffle data (training and cross-validation)
+         - num_workers: number of workers
         """
         if loss_fn is None:
             raise ValueError("FATAL ERROR: Trainer() -> 'loss_fn' cannot be None")
@@ -703,6 +798,7 @@ class Trainer:
         lr_scheduler: Union[LRSchedulerType, ReduceLROnPlateauType] = None,
         early_stopping: EarlyStopping = None,
         verbose: bool = True,
+        logger: logging.Logger = None,
         seed=41,
     ) -> MetricsHistory:
         """
@@ -785,6 +881,7 @@ class Trainer:
             num_workers=self.num_workers,
             verbose=verbose,
             seed=seed,
+            logger=logger,
         )
         return history
 
@@ -795,6 +892,7 @@ class Trainer:
             NumpyArrayTuple, torch.utils.data.Dataset, torch.utils.data.DataLoader
         ],
         verbose: bool = True,
+        logger: logging.Logger = None,
     ) -> dict:
         """
         evaluates mode performance on a dataset. The model is put into an evaluation
@@ -815,6 +913,7 @@ class Trainer:
             metrics_map=self.metrics_map,
             batch_size=self.batch_size,
             verbose=verbose,
+            logger=logger,
         )
 
     def predict(
@@ -827,8 +926,11 @@ class Trainer:
             torch.utils.data.Dataset,
             torch.utils.data.DataLoader,
         ],
+        logger: logging.Logger = None,
     ) -> Union[np.ndarray, NumpyArrayTuple]:
         if isinstance(dataset, np.ndarray) or isinstance(dataset, torch.Tensor):
             return predict_array(model, dataset, self.device, self.batch_size)
         else:
-            return predict_module(model, dataset, self.device, self.batch_size)
+            return predict_module(
+                model, dataset, self.device, self.batch_size, logger=logger
+            )
