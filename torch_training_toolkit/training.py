@@ -541,6 +541,7 @@ def predict_module(
     ],
     device: torch.device,
     batch_size: int = 64,
+    for_regression: bool = False,
     logger: logging.Logger = None,
     seed=41,
 ) -> NumpyArrayTuple:
@@ -575,7 +576,10 @@ def predict_module(
                 X = X.to(device)
                 y = y.to(device)
                 # batch_preds = list(model(X).ravel().numpy())
-                batch_preds = list(np.argmax(model(X).numpy(), axis=1))
+                if for_regression:
+                    batch_preds = list(model(X).numpy().ravel())
+                else:
+                    batch_preds = list(np.argmax(model(X).numpy(), axis=1))
                 batch_actuals = list(y.ravel().numpy())
                 # batch_preds = list(model(X).to("cpu").numpy())
                 # batch_actuals = list(y.to("cpu").numpy())
@@ -926,11 +930,17 @@ class Trainer:
             torch.utils.data.Dataset,
             torch.utils.data.DataLoader,
         ],
+        for_regression=False,
         logger: logging.Logger = None,
     ) -> Union[np.ndarray, NumpyArrayTuple]:
         if isinstance(dataset, np.ndarray) or isinstance(dataset, torch.Tensor):
             return predict_array(model, dataset, self.device, self.batch_size)
         else:
             return predict_module(
-                model, dataset, self.device, self.batch_size, logger=logger
+                model,
+                dataset,
+                self.device,
+                self.batch_size,
+                for_regression=for_regression,
+                logger=logger,
             )
