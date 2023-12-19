@@ -84,10 +84,10 @@ class RegressionModel(nn.Module):
         self.net = nn.Sequential(
             nn.Linear(input_dim, hidden_dim),
             nn.ReLU(),
-            # nn.Linear(hidden_dim, hidden_dim),
-            # nn.ReLU(),
-            # nn.Linear(hidden_dim, hidden_dim),
-            # nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
             nn.Linear(hidden_dim, output_dim),
         )
 
@@ -110,9 +110,9 @@ def main():
         f"X_val.shape = {X_val.shape} - y_val.shape = {y_val.shape} - "
         f"X_test.shape = {X_test.shape} - y_test.shape = {y_test.shape}"
     )
-    train_dataset = MyDataset(X_train, y_train)
-    eval_dataset = MyDataset(X_val, y_val)
-    test_dataset = MyDataset(X_test, y_test)
+    # train_dataset = MyDataset(X_train, y_train)
+    # eval_dataset = MyDataset(X_val, y_val)
+    # test_dataset = MyDataset(X_test, y_test)
 
     loss_fn = nn.MSELoss()
     metrics_map = {
@@ -138,8 +138,8 @@ def main():
         hist = trainer.fit(
             model,
             optimizer,
-            train_dataset,
-            validation_dataset=eval_dataset,
+            (X_train, y_train),  # train_dataset,
+            validation_dataset=(X_val, y_val),  # eval_dataset,
             seed=SEED,
         )
         # display tracked metrics
@@ -153,11 +153,11 @@ def main():
         model = t3.load_model(model, MODEL_SAVE_PATH)
         model = model.to(DEVICE)
 
-        metrics = trainer.evaluate(model, train_dataset)
+        metrics = trainer.evaluate(model, (X_train, y_train))  # train_dataset)
         print(f"  Training dataset  -> loss: {metrics['loss']:.4f}")
-        metrics = trainer.evaluate(model, eval_dataset)
+        metrics = trainer.evaluate(model, (X_val, y_val))  # eval_dataset)
         print(f"  Cross-val dataset -> loss: {metrics['loss']:.4f}")
-        metrics = trainer.evaluate(model, test_dataset)
+        metrics = trainer.evaluate(model, (X_test, y_test))  # test_dataset)
         print(f"  Test dataset -> loss: {metrics['loss']:.4f}")
         del model
 
@@ -165,7 +165,9 @@ def main():
         model = RegressionModel(INPUT_DIM, HIDDEN_DIM, OUTPUT_DIM)
         model = t3.load_model(model, MODEL_SAVE_PATH)
         model = model.to(DEVICE)
-        y_pred, y_true = trainer.predict(model, test_dataset, True)
+        y_pred, y_true = trainer.predict(
+            model, (X_test, y_test), True
+        )  # test_dataset, True)
         print(f"Sample labels(50): {y_true[:50]}")
         print(f"Sample predictions(50): {y_pred[:50]}")
         # display metrics

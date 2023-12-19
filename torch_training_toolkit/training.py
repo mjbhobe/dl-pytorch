@@ -129,8 +129,8 @@ def cross_train_module(
 
     if isinstance(train_dataset, tuple):
         # check that we have a tuple of numpy ndarrays
-        if not (type(train_dataset[0], np.ndarray)) and (
-            type(train_dataset[1], np.ndarray)
+        if not (isinstance(train_dataset[0], np.ndarray)) and (
+            isinstance(train_dataset[1], np.ndarray)
         ):
             if logger is not None:
                 logger.fatal(
@@ -143,7 +143,7 @@ def cross_train_module(
         torch_X_train = torch.from_numpy(train_dataset[0]).type(torch.FloatTensor)
         torch_y_train = torch.from_numpy(train_dataset[1]).type(
             torch.LongTensor
-            if train_dataset[1].dtype in [np.int, np.long]
+            if train_dataset[1].dtype in [int, np.int32, np.int64]  # , np.long]
             else torch.FloatTensor
         )
         train_dataset = torch.utils.data.TensorDataset(torch_X_train, torch_y_train)
@@ -154,8 +154,8 @@ def cross_train_module(
 
     if (val_dataset is not None) and isinstance(val_dataset, tuple):
         # check that we have a tuple of numpy ndarrays
-        if not (type(val_dataset[0], np.ndarray)) and (
-            type(val_dataset[1], np.ndarray)
+        if not (isinstance(val_dataset[0], np.ndarray)) and (
+            isinstance(val_dataset[1], np.ndarray)
         ):
             if logger is not None:
                 logger.fatal(
@@ -168,7 +168,7 @@ def cross_train_module(
         torch_X_val = torch.from_numpy(val_dataset[0]).type(torch.FloatTensor)
         torch_y_val = torch.from_numpy(val_dataset[1]).type(
             torch.LongTensor
-            if val_dataset[1].dtype in [np.int, np.long]
+            if val_dataset[1].dtype in [int, np.int32, np.int64]  # , np.long]
             else torch.FloatTensor
         )
         val_dataset = torch.utils.data.TensorDataset(torch_X_val, torch_y_val)
@@ -463,7 +463,7 @@ def evaluate_module(
             X = torch.from_numpy(dataset[0]).type(torch.FloatTensor)
             y = torch.from_numpy(dataset[1]).type(
                 torch.LongTensor
-                if dataset[1].dtype in [np.int, np.long]
+                if dataset[1].dtype in [int, np.int32, np.int64]  # , np.long]
                 else torch.FloatTensor
             )
             dataset = torch.utils.data.TensorDataset(X, y)
@@ -557,7 +557,7 @@ def predict_module(
             X = torch.from_numpy(dataset[0]).type(torch.FloatTensor)
             y = torch.from_numpy(dataset[1]).type(
                 torch.LongTensor
-                if dataset[1].dtype in [np.int, np.long]
+                if dataset[1].dtype in [int, np.int32, np.int64]  # , np.long]
                 else torch.FloatTensor
             )
             dataset = torch.utils.data.TensorDataset(X, y)
