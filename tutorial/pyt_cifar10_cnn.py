@@ -43,8 +43,7 @@ from torchvision import datasets, transforms
 import torch_training_toolkit as t3
 
 # to ensure that you get consistent results across runs & machines
-seed = 123
-t3.seed_all(seed)
+seed = t3.seed_all(41)
 
 logger = t3.get_logger(pathlib.Path(__file__), level=logging.INFO)
 

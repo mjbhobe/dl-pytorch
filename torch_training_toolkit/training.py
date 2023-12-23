@@ -86,7 +86,7 @@ def cross_train_module(
         elif validation_dataset is not None:
             train_params += f"   - validation dataset type: {type(validation_dataset)} with {len(validation_dataset)} records.\n"
         else:
-            train_parms += f"   - NOTE: validation_dataset NOT provided!\n"
+            train_params += f"   - NOTE: validation_dataset NOT provided!\n"
         train_params += (
             f"   - using {type(loss_fxn)} loss and {type(optimizer)} optimizer.\n"
         )
@@ -196,13 +196,13 @@ def cross_train_module(
 
     if val_dataset is not None:
         print(
-            f"Cross training on '{device}' with {len(train_dataset)} training and "
-            + f"{len(val_dataset)} cross-validation records...",
+            f"Cross training on '{device}' with {len(train_dataset):,} training and "
+            + f"{len(val_dataset):,} cross-validation records...",
             flush=True,
         )
     else:
         print(
-            f"Training on '{device}' with {len(train_dataset)} records...", flush=True
+            f"Training on '{device}' with {len(train_dataset):,} records...", flush=True
         )
 
     if reporting_interval != 1:
