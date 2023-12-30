@@ -541,7 +541,7 @@ def predict_module(
     ],
     device: torch.device,
     batch_size: int = 64,
-    for_regression: bool = False,
+    # for_regression: bool = False,
     logger: logging.Logger = None,
     seed=41,
 ) -> NumpyArrayTuple:
@@ -576,15 +576,23 @@ def predict_module(
                 X = X.to(device)
                 y = y.to(device)
                 # batch_preds = list(model(X).ravel().numpy())
-                if for_regression:
-                    batch_preds = list(model(X).numpy().ravel())
-                else:
-                    batch_preds = list(np.argmax(model(X).numpy(), axis=1))
-                batch_actuals = list(y.ravel().numpy())
+
+                # NOTE: the np.argmax(...) for classification
+                # should be done by caller
+                batch_preds = list(model(X).numpy())
+                batch_actuals = list(y.cpu())
+
+                # if for_regression:
+                #     batch_preds = list(model(X).numpy().ravel())
+                # else:
+                #     batch_preds = list(np.argmax(model(X).numpy(), axis=1))
+                # batch_actuals = list(y.ravel().numpy())
+
                 # batch_preds = list(model(X).to("cpu").numpy())
                 # batch_actuals = list(y.to("cpu").numpy())
                 # batch_preds = model(X).to("cpu").numpy()
                 # batch_actuals = y.to("cpu").numpy()
+
                 preds.extend(batch_preds)
                 actuals.extend(batch_actuals)
                 # preds = np.append(preds, batch_preds)
@@ -930,7 +938,7 @@ class Trainer:
             torch.utils.data.Dataset,
             torch.utils.data.DataLoader,
         ],
-        for_regression=False,
+        # for_regression=False,
         logger: logging.Logger = None,
     ) -> Union[np.ndarray, NumpyArrayTuple]:
         if isinstance(dataset, np.ndarray) or isinstance(dataset, torch.Tensor):
@@ -941,6 +949,6 @@ class Trainer:
                 dataset,
                 self.device,
                 self.batch_size,
-                for_regression=for_regression,
+                # for_regression=for_regression,
                 logger=logger,
             )
