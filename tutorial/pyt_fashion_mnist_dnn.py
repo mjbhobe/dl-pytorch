@@ -348,7 +348,7 @@ def main():
         print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
 
         y_pred, y_true = trainer.predict(model, test_dataset, logger=logger)
-        # y_pred = np.argmax(y_pred, axis=1)
+        y_pred = np.argmax(y_pred, axis=1)
         print("Sample labels (50): ", y_true[:50])
         print("Sample predictions: ", y_true[:50])
         print("We got %d/%d incorrect!" % ((y_pred != y_true).sum(), len(y_true)))

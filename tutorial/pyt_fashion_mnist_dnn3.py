@@ -110,7 +110,7 @@ def display_sample(
     import matplotlib.pyplot as plt
     import seaborn as sns
 
-    plt.style.use("seaborn")
+    plt.style.use("seaborn-v0_8")
 
     num_rows, num_cols = grid_shape
     assert sample_images.shape[0] == num_rows * num_cols

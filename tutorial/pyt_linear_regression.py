@@ -165,11 +165,9 @@ def main():
         model = RegressionModel(INPUT_DIM, HIDDEN_DIM, OUTPUT_DIM)
         model = t3.load_model(model, MODEL_SAVE_PATH)
         model = model.to(DEVICE)
-        y_pred, y_true = trainer.predict(
-            model, (X_test, y_test), True
-        )  # test_dataset, True)
-        print(f"Sample labels(50): {y_true[:50]}")
-        print(f"Sample predictions(50): {y_pred[:50]}")
+        y_pred, y_true = trainer.predict(model, (X_test, y_test))
+        print(f"Sample labels(50): {y_true.ravel()[:50]}")
+        print(f"Sample predictions(50): {y_pred.ravel()[:50]}")
         # display metrics
         mae = mean_absolute_error(y_true, y_pred)
         mse = mean_squared_error(y_true, y_pred)
