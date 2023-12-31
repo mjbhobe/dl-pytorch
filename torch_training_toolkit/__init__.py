@@ -49,8 +49,8 @@ from .cl_args import TrainingArgsParser
 
 def about():
     about_info = (
-        f"{__title__} by {__author__}. Library to make training Pytorch models easier.\n"
-        f"Released by {__organization__} with {__license__}.\n"
+        f"\n{__title__}: a library to make training, evaluating & predicting of Pytorch models easier.\n"
+        f"Created by {__author__}, and released by {__organization__} with {__license__}.\n"
         f"Use at your own risk. {__author__} (or {__organization__}) are not liable for any damages from use of this software!"
     )
     return about_info

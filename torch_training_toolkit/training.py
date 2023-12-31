@@ -408,6 +408,11 @@ def cross_train_module(
             if (early_stopping is not None) and (val_dataset is not None):
                 # early stooping test only if validation dataset is used
                 monitored_metric = early_stopping.monitored_metric()
+                if monitored_metric not in history.metrics_history.keys():
+                    raise ValueError(
+                        f"FATAL ERROR: EarlyStopping tracks {monitored_metric}, which is NOT tracked during training!\n"
+                        f"Either add this metric to metrics_map or check metric tracked by EarlyStopping"
+                    )
                 last_metric_val = history.metrics_history[monitored_metric][
                     "epoch_vals"
                 ][-1]
