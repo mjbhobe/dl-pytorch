@@ -63,6 +63,7 @@ class EarlyStopping:
         verbose=False,
         restore_best_weights=True,
         trace_func=print,
+        track_after_epoch=0,
     ):
         """
         Args:
@@ -108,6 +109,7 @@ class EarlyStopping:
         self.counter = 0
         self.best_epoch = 0
         self.trace_func = trace_func
+        self.track_after_epoch = track_after_epoch
 
         now_str = datetime.now().strftime("%Y%m%d%H%M%S")
         checkpoint_dir = pathlib.Path(os.getcwd()) / "checkpoints"
@@ -126,7 +128,10 @@ class EarlyStopping:
         self.early_stop = False
 
     def __call__(self, model: torch.nn.Module, metric_val: float, epoch: int):
-        # self.is_wrapped = isinstance(model, PytkModuleWrapper)
+        # respect track_after_epoch setting
+        if epoch < self.track_after_epoch:
+            return
+
         if self.monitor_op(metric_val - self.min_delta, self.best_score):
             if self.restore_best_weights:
                 # save model state for restore later

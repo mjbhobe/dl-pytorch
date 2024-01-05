@@ -584,7 +584,7 @@ def predict_module(
 
                 # NOTE: the np.argmax(...) for classification
                 # should be done by caller
-                batch_preds = list(model(X).numpy())
+                batch_preds = list(model(X).cpu().numpy())
                 batch_actuals = list(y.cpu())
 
                 # if for_regression:
@@ -651,29 +651,44 @@ def predict_array(
         model = model.cpu()
 
 
-def save_model(model: nn.Module, model_save_path: str, verbose: bool = True):
-    """saves Pytorch state (state_dict) to disk
-    @params:
-        - model: instance of model derived from nn.Module
-        - model_save_path: absolute or relative path where model's state-dict should be saved
-          (NOTE:
-             - the model_save_path file is overwritten at destination without warning
-             - if `model_save_path` is just a file name, then model saved to current dir
-             - if `model_save_path` contains directory that does not exist, the function attempts to create
-               the directories
-          )
+def save_model(
+    model: nn.Module,
+    model_save_path: str,
+    verbose: bool = True,
+):
+    """saves the state of the module (state_dict) to disk in model_save_path location
+
+    Parameters
+    ----------
+    model: nn.Module
+        instance of nn.Module whose state needs to be saved
+    model_save_path: str
+        absolute or relative path where model's state-dict should be saved
+        **NOTE:** the model_save_path file is overwritten at destination without warning
+            - if `model_save_path` is just a file name, then model saved to current dir
+            - if `model_save_path` is a valid path, model's state_dict is saved to that path
+              Alternatively, if the path does not exist, this function trys to create all intermedate
+              directories to the full path before saving the model state_dict.
+    verbose: bool (optional, default=True)
+        displays a message showing path of file where state_dict is saved (True) or does not (False)
+
+    Exceptions:
+    OSError: is raised when function is unable to save state for any reason.
     """
     save_dir, _ = os.path.split(model_save_path)
+    # create all folders leading upto path where applicable
+    os.makedirs(save_dir, exist_ok=True)
 
-    if not os.path.exists(save_dir):
-        # create directory from file_path, if it does not exist
-        # e.g. if model_save_path = '/home/user_name/pytorch/model_states/model.pyt' and the
-        # directory '/home/user_name/pytorch/model_states' does not exist, it is created
-        try:
-            os.mkdir(save_dir)
-        except OSError as err:
-            print(f"Unable to create folder/directory {save_dir} to save model!")
-            raise err
+    # if not os.path.exists(save_dir):
+    #     # create directory from file_path, if it does not exist
+    #     # e.g. if model_save_path = '/home/user_name/pytorch/model_states/model.pyt' and the
+    #     # directory '/home/user_name/pytorch/model_states' does not exist, we will attempt to create it
+    #     try:
+    #         # os.mkdirs(save_dir)
+    #         os.makedirs(save_dir)
+    #     except OSError as err:
+    #         print(f"Unable to create folder/directory {save_dir} to save model!")
+    #         raise err
 
     # now save the model to file_path
     # NOTE: a good practice is to move the model to cpu before saving the state dict
@@ -685,16 +700,31 @@ def save_model(model: nn.Module, model_save_path: str, verbose: bool = True):
 
 
 def load_model(
-    model: nn.Module, model_state_dict_path: str, verbose: bool = True
+    model: nn.Module,
+    model_state_dict_path: str,
+    verbose: bool = True,
 ) -> nn.Module:
     """loads model's state dict from file on disk
-    @params:
-        - model: instance of model derived from nn.Module
-        - model_state_dict_path: complete/relative path from where model's state dict
-          should be loaded. This should be a valid path (i.e. should exist),
-          else an IOError is raised.
-    @returns:
-        - an nn.Module with state dict (weights & structure) loaded from disk
+
+    Parameters
+    ----------
+    model: nn.Module
+        instance of model derived from nn.Module
+    model_state_dict_path: str
+        the complete/relative path from where model's state dict should be loaded.
+        This should be a valid path (i.e. should exist), else an IOError is raised.
+
+    Returns
+    -------
+        an nn.Module with state dict (weights & structure) loaded from disk
+
+    Example of use:
+        model_save_path = "/valid/path/to/model.pth"
+        model = MyModel(...)    # an instance of your model
+        model = load_model(model, model_save_path)
+
+        # use model
+        model.predict(....)
     """
 
     # convert model_state_dict_path to absolute path
@@ -714,48 +744,83 @@ def load_model(
 
 
 class Trainer:
+    """
+    class that manages the training, evaluation of Pytorch models & generate predictions
+
+    Attributes
+    ----------
+    loss_fn : torch.nn.modules.loss._Loss
+        the loss function to use during training (e.g. MSELoss(), CrossEntropyLoss())
+    device  : torch.device
+        the device to train the model on (e.g. torch.device("cuda"))
+    metrics_map : map {str:torchmetrics.Metric} (optiona, default=None)
+        a map of str mapped to a torchmetrics.Metric. These metrics will
+        be tracked across each epoch of training
+    epochs : int (optional, default=5)
+        the number of epochs to train model on
+    batch_size : int (optional, default=64)
+        the size of batch to use during training
+    reporting_interval : int (optional, default=1)
+        the training progress reprting interval - progress is reported at end
+        of each 'reporting_interval' epoch (e.g. if reporting_interval=10), progress
+        will be reported on the first epoch and every 10th epoch thereafter.
+
+    Methods
+    -------
+    fit(...) -> MetricsHistory
+        cross-trains the model across epochs (i.e. the training & cross-validation loop)
+    evaluate(...)
+        evaluates model's performance on data
+    predict(...)
+        generates predictions on data
+    """
+
     def __init__(
         self,
-        loss_fn,
+        loss_fn: torch.nn.modules.loss._Loss,
         device: torch.device,
         metrics_map: MetricsMapType = None,
         epochs: int = 5,
         batch_size: int = 64,
         reporting_interval: int = 1,
-        shuffle: bool = True,
-        num_workers: int = 4,
     ):
         """constructs a Trainer object to be used for cross-training, evaluation of and
         getting predictions from an nn.Module instance.
-        @params:
-         - loss_fn: loss function to be used during training & evaluation (pass an instance
-             of one of PyTorch's loss functions (e.g. nn.BCELoss(), nn.CrossEntropyLoss())
-         - device (type torch.device): the device on which training/evaluation etc.
-             should happen (e.g., torch.device("cuda") for GPU or torch.device("cpu"))
-         - metrics_map (optional, default None): declares the metrics ** IN ADDITION TO ** loss
-             that should be tracked across epochs as the model trains/evaluates. The `loss` metric
-             will always be tracked even if no additional metrics are specified. Metrics are tracked
-             across epochs for the training set and, if specified, the validation set too. It is derived
-             from the loss function (`loss_fn` parameter above), so should not be specified in `matrics_map`.
-             A `metrics_map` is of type `Dict[str, torchmetric.Metric]`. You can define several
-             metrics to be monitored during the training/validation process. Each metric has a user-defined
-             abbreviation (the `str` part of the Dict) and an associated torchmetric.Metric _formula_
-             to calculate the metric
-             Example of `metrics_map`(s):
-                # measures accuracy (abbreviated 'acc' [user can choose any abbreviation here!])
+
+        Parameters
+        ----------
+        loss_fn: torch.nn.modules.loss._Loss
+            The loss function to be used during training & evaluation (pass an instance
+            of one of PyTorch's loss functions (e.g. nn.BCELoss(), nn.CrossEntropyLoss() etc.)
+        device: type torch.device
+            The device on which training/evaluation etc. should happen (e.g., torch.device("cuda")
+            for GPU or torch.device("cpu") for CPU). The model & data are automatically moved to
+            device during the training process - the developer is NOT required to do so explicitly.
+        metrics_map: dict {str : torchmetrics.Metric} (optional, default None)
+            Optionally specifies the metrics ** IN ADDITION TO ** the loss metric that should be
+            tracked across epochs during the cross-training loop. The `loss` metric will **ALWAYS**
+            be tracked and you should not specify it in the metrics map - the training loop will use
+            the loss function specified in the constructor to calculate the loss metric. Metrics are
+            tracked across epochs for the training set and, if specified, the validation set.
+
+            The `metrics_map` is of type `Dict[str, torchmetric.Metric]`. You can define several
+            metrics to be monitored during the training/validation process. Each metric has a user-defined
+            abbreviation (the `str` part of the Dict) and an associated torchmetric.Metric _formula_
+            to calculate the metric.
+
+            Examples of `metrics_map`(s):
+               Example 1:
                 metric_map = {
-                    # here "acc" is user-defined name (can be any name you choose that makes sense to you)
-                    # the formula on the right of : specifies how you calculate the value of this metric
-                    # Here we use `torchmetrics`, but you can point it to any method you define.
                     "acc": torchmetrics.classification.BinaryAccuracy()
                 }
-                # you can track multiple metrics also
-                # this one trackes 3 metrics - accuracy (acc),
+                Here 'acc' is the user chosen abbreviation for the `torchmetrics.classification.BinaryAccuracy()`
+               Example 2:
                 metrics_map = {
                     "acc": torchmetrics.classification.BinaryAccuracy(),
                     "f1": torchmetrics.classification.BinaryF1Score(),
                     "roc_auc": torchmetrics.classification.BinaryAUROC(thresholds = None)
                 }
+               Example 2:
                 # you can also use your own function to calculate the metric
                 def my_metric_calc(logits, labels):
                     metric = ....
@@ -764,16 +829,18 @@ class Trainer:
                     "my_metric" : my_metric_calc(),
                     "acc": torchmetrics.classification.BinaryAccuracy(),
                 }
-         - epochs (int, default 5) - number of epochs for which the module should train
-         - batch_size (int, default 64) - size of batch used during training. Specify a
-           negative value if you want to use the _entire_ dataset as the batch (not a good
-           practice, unless your dataset itself is very small)
-         - reporting_interval (int, default 1) - interval (i.e. number of epochs) after
-             which progress must be reported when training. By default, training progress
-             is reported/printes after each epoch. Set this value to change the interval
-             for example, if reporting_interval = 5, progress will be reported on the
-             first, then every fifth thereafter and the last epoch (example: if epochs=22,
-             then progress will be reported on 1, 5, 10, 15, 20 and 22 epoch).
+        epochs: int  (optional, default 5)
+            Number of epochs for which the module should train (must be a +ve int)
+        batch_size: int (optional,default 64)
+            Size of batch used during training. Specify a negative value if you want to
+            use the _entire_ dataset as the batch (not a good practice, unless your dataset
+            itself is very small)
+        reporting_interval: int (optional, default 1)
+            The interval (i.e. number of epochs) after which progress will be reported when training.
+            By default, training progress is reported/printed after each epoch. Set this value to
+            change the interval for example, if reporting_interval = 5, progress will be reported on
+            the first, then every fifth epoch thereafter, and the last epoch (example: if epochs=22,
+            and reporting_interval=5, then progress will be reported on 1, 5, 10, 15, 20 and 22 epoch).
          - shuffle (bool, default=True) - should the data be shuffled during training?
              If True, it is shuffled else not. It is a good practice to always shuffle
              data between epochs. This setting should be left to the default value,
@@ -789,7 +856,6 @@ class Trainer:
         # batch_size can be -ve
         batch_size = -1 if batch_size < 0 else batch_size
         reporting_interval = 1 if reporting_interval < 1 else reporting_interval
-        assert num_workers >= 0, "FATAL ERROR: Trainer() -> 'num_workers' must be >= 0"
 
         self.loss_fn = loss_fn
         self.device = device
@@ -797,8 +863,8 @@ class Trainer:
         self.epochs = epochs
         self.batch_size = batch_size
         self.reporting_interval = reporting_interval
-        self.shuffle = shuffle
-        self.num_workers = num_workers
+        # self.shuffle = shuffle
+        # self.num_workers = num_workers
 
     def fit(
         self,
@@ -811,49 +877,90 @@ class Trainer:
             NumpyArrayTuple, torch.utils.data.Dataset, torch.utils.data.DataLoader
         ] = None,
         validation_split: float = 0.0,
-        l1_reg=None,
+        l1_reg: float = None,
         lr_scheduler: Union[LRSchedulerType, ReduceLROnPlateauType] = None,
         early_stopping: EarlyStopping = None,
         verbose: bool = True,
         logger: logging.Logger = None,
+        shuffle: bool = True,
+        num_workers: int = 4,
         seed=41,
     ) -> MetricsHistory:
         """
         fits (i.e cross-trains) the model using provided training data (and optionally
         cross-validation data).
-        @params:
-          - model (type nn.Module, required) - an instance of the model (derived from nn.Module) to
-              be trained.
-          - optimizer (type torch.optim.Optimizer, required) - the optimizer used to adjust the weights
-              during training. Use an instance of any optimizer from torch.optim package
-          - train_dataset (a Numpy `ndarray tuple` OR `torch.utils.data.Dataset`, required) - the data
-              or dataset to be used for training. It can be a tuple of Numpy arrays (e.g., (X_train, y_train)
-              or an instance of torch.utils.data.Dataset class.
-              It is easier to use the tuple of Numpy arrays paradigm when you are loading structured tabular
-              data - most common scikit datasets would fall into this category (e.g. Iris, Wisconsin etc.)
-              For more complex data types, such as images, audio or text, you would use the Dataset alternative.
-           - validation_dataset (optional, default = None) [type a Numpy `ndarray tuple` OR `torch.utils.data.Dataset`
-              class]. Optionally defined the validation data/dataset to be used. Similar to train_dataset
-           - validation_split (float, default=0.2) - used when you have just training data, but want to internally
-              split into train & cross-validation datasets. Specify a percentage (between 0.0 and 1.0) of train
-              dataset that would be set aside for cross-validation.
-              For example, if validation_split = 0.2, then 20% of train dataset will be set aside for cross-validation.
-              NOTE: if both `validation_dataset` and `validation_split` are specified, the former is used and latter
-              is IGNORED.
-          @returns:
-            - MetricsHistory object, which is basically a dict of metric names (the same value in the key of the
-              `metrics_map` parameter to the Trainer object) and their epoch-wise mean values.
-              Example:
-                 # suppose you created a Trainer object like this
-                    metrics_map = {
-                        "acc": torchmetrics.classification.BinaryAccuracy(),
-                        "f1": torchmetrics.classification.BinaryF1Score(),
-                    }
-                    trainer = Trainer(..., metrics_map=metrics_map)
-                    module = nn.Module(...)  # your model
-                    metrics = trainer.fit(...train_dataset=train_dataset, validation_dataset=val_dataset,...)
-                    # now the metrics will be something like
-                    metrics = {
+
+        Parameters
+        ----------
+        model:  torch.nn.Module
+            An instance of the model (derived from nn.Module) being trained.
+        optimizer: torch.optim.Optimizer
+            An instance of the optimizer used to adjust the weights during training.
+            Use anyone of the optimizers defined in the torch.optim package, such as torch.optim.Adam
+        train_dataset: `tuple(np.ndarray,np.ndarray)` OR `torch.utils.data.Dataset` or `torch.utils.data.Dataset`
+            The training data to be used for training the model. This could be anyone of:
+                - a tuple of Numpy arrays (e.g., (X_train, y_train))
+                - an instance of torch.utils.data.Dataset class.
+                - an instance of torch.utils.data.Dataloader class.
+            It is easier to use the tuple of Numpy arrays when you are loading structured tabular data, the
+            most common scikit datasets would fall into this category (e.g. Iris, Wisconsin etc.)
+            For more complex data types, such as images, audio or text, you could use the Dataset or Dataloader
+        validation_dataset: `tuple(np.ndarray,np.ndarray)` OR `torch.utils.data.Dataset` or `torch.utils.data.Dataset`
+            (optional, default = None)
+            The evaluation dataset to be used during cross-training. As with train_dataset, this could be one
+            of `np.ndarray tuple` or `torch.utils.data.Dataset` or `torch.utils.data.DataLoader` class.
+            **NOTE:** Be sure to use the same type for both train_dataset and validation_dataset
+        validation_split: float (optional, default=0.2)
+            Used as an alternative to validation_dataset, and when you want to randomly split a certain
+            percentage of the train_dataset as your validation dataset.
+            Should be specified a percentage (as a float >= 0.0 and < 1.0)
+            For example, if validation_split = 0.2, then 20% of train dataset will be set aside
+            for cross-validation.
+        l1_reg: float (optional, default=None)
+            The amount of L1 regularization to be applied to the weights during back-propogation
+        lr_scheduler: torch.optim.lr_scheduler type or torch.optim.lr_scheduler.ReduceLROnPlateau
+            (optional, default = None)
+            The learning rate scheduler to be applied during training. Use either an ReduceLROnPlateau
+            instance or any one of the LR schedulers defined by Pytorch (StepLR, ExponentialLR etc.)
+        early_stopping: EarlyStopping (optional, default=None)
+            Use to early stop training (before all epochs are done) if one of the metrics tracked is not
+            improving for a set of X epochs. This should be an instance of EarlyStopping class defined
+            as part of this toolkit.
+        verbose: bool (optional, default=True)
+            Specify if the training progress across training data is to be reported at end of each batch
+            (True) or end of epoch (False).
+        logger: logging,.Logger (optional, default=None)
+            An instance of the logging.Logger class to be used to log progress as the model trains.
+            **NOTE:** the torch training tooklit provides a `get_logger()` function with some default
+            console & file logging configurations, which you can use, if needed.
+        shuffle: bool (optional, default=True)
+            To specify if the training (and validation data, if specified) should be shuffled before
+            each epoch (True) or not (False). It is a good practice to shuffle the datasets, unless you
+            are working with time-series datasets (or any other datasets) where data must be fed to the
+            nn.Module in the sequence in which it is read.
+        num_workers: int (optiona, default=4)
+            The numbers of workers to be used when shuffling the train & cross-validation datasets.
+        seed: int (optional, default=41)
+            The seed to be used when intializing random number operations in the training loop.
+
+        Returns
+        --------
+        An instance of MetricsHistory class defined in torch training toolkit.
+        This object logs the epoch-wise history of the loss metric and all other metrics specified
+        in the `metrics_map` parameter of the Trainer class instance.
+            Example:
+            # suppose you created a Trainer object like this
+                metrics_map = {
+                    "acc": torchmetrics.classification.BinaryAccuracy(),
+                    "f1": torchmetrics.classification.BinaryF1Score(),
+                }
+                # for brevity all other Trainer() constructor parameters are excluded
+                trainer = Trainer(..., metrics_map=metrics_map)
+                module = nn.Module(...)  # your model
+                # called fit() to kick of training passing in both training & cross-val datasets
+                metrics = trainer.fit(...train_dataset=train_dataset, validation_dataset=val_dataset,...)
+                # at the end of fit() call,, the return value would be like this
+                    metrics_log = {
                         "loss" : [...],     # list of floats, len = # epochs, each value = average "loss" per epoch
                         "val_loss" : [...], # the corresponding "loss" valued for validation dataset
                         "acc" :  [...],     # list of floats, len = # epochs, each value = average "acc" per epoch
@@ -861,9 +968,11 @@ class Trainer:
                         "f1: : [...],
                         "val_f1" : [...],
                     }
-                    # NOTE: if validation_dataset (or validation_split) is not specified during the trainer.fit(...)
-                    # call, then all the "val_XXX" keys & values will be missing.
+                # NOTE: if validation_dataset (or validation_split) is not specified during the trainer.fit(...)
+                # call, then all the "val_XXX" keys & values will be missing.
         """
+
+        # check for some of the parameters & call cross_train_module(...) where all the action happens
         assert model is not None, "FATAL ERROR: Trainer.fit() -> 'model' cannot be None"
         assert (
             optimizer is not None
@@ -871,13 +980,9 @@ class Trainer:
         assert (
             train_dataset is not None
         ), "FATAL ERROR: Trainer.fit() -> 'train_dataset' cannot be None"
-        # if lr_scheduler is not None:
-        #     # NOTE:  ReduceLROnPlateau is NOT derived from _LRScheduler, but from object, which
-        #     # is odd as all other schedulers derive from _LRScheduler
-        #     assert (isinstance(lr_scheduler, torch.optim.lr_scheduler._LRScheduler) or
-        #             isinstance(lr_scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau)), \
-        #         "lr_scheduler: incorrect type. Expecting class derived from " \
-        #         "torch.optim._LRScheduler or ReduceLROnPlateau"
+        assert (
+            num_workers >= 0
+        ), "FATAL ERROR: Trainer.fit() -> 'num_workers' must be >= 0"
 
         history = cross_train_module(
             model,
@@ -894,8 +999,8 @@ class Trainer:
             reporting_interval=self.reporting_interval,
             lr_scheduler=lr_scheduler,
             early_stopping=early_stopping,
-            shuffle=self.shuffle,
-            num_workers=self.num_workers,
+            shuffle=shuffle,
+            num_workers=num_workers,
             verbose=verbose,
             seed=seed,
             logger=logger,
@@ -910,17 +1015,51 @@ class Trainer:
         ],
         verbose: bool = True,
         logger: logging.Logger = None,
-    ) -> dict:
+    ) -> MetricsValType:
         """
-        evaluates mode performance on a dataset. The model is put into an evaluation
-        stage before running throughs the rows of the dataset.
-        @params:
-           - model (type nn.Module, requred): an instance of the module being evaluated
-           - dataset (a Numpy `ndarray tuple` OR `torch.utils.data.Dataset`, required)  - the dataset
-             on which the model's performance is to be evaluated
-           - verbose (type bool, optional, default=True) - flag to display (or not) the progress as
-             the model evaluates performance
-        @returns:
+        Evaluates mode performance on a dataset. The model is put into an evaluation
+        stage before running throughs the rows of the dataset. Should be called typically
+        after training is completed.
+
+        Parameters
+        ----------
+        model:  nn.Module
+            an instance of the module being evaluated
+        dataset: (`tuple(np.ndarray,np.ndarray)` OR `torch.utils.data.Dataset` or `torch.utils.data.Dataset`
+            the dataset or dataloader on which the model should be evaluated
+        verbose: bool (optional, default=True)
+            display progress as model is evaluated (True) or not (False)
+        logger: logging.Logger (optional, default=None)
+            instance of logger class to be  used for logging
+
+        Returns
+        -------
+        MetricsValType: Dict[str, float]
+            a dictionary of loss and metrics defined in the metrics_map class + their respective iaverage
+            values across the dataset
+            Example: suppose the metrics map passed into the Trainer classe's constructor was
+                metrics_map = {
+                    "acc": torchmetrics.classification.BinaryAccuracy(),
+                    "f1": torchmetrics.classification.BinaryF1Score(),
+                }
+            then this call will return a Dict with 3 values as follows:
+                metric_value = {
+                    "loss" : <<single value for loss - a float>>,
+                    "acc" : <<single value for acc - a float>>,
+                    "f1" : <<single value for f1 - a float>>,
+                }
+            The loss metric will ALWAYS be calculated.
+            If you did not pass a metrics_map instance to the Trainer constructor, the you will
+            get a dict with just the loss value, like so
+                metric_value = {
+                    "loss" : <<single value for loss, a float >>
+                }
+
+            Each metric can then be access as follows
+                trainer = Trainer(...)
+                model = nn.Module(...)  # your model
+                ret = trainer.evaluate(model, train_dataset)
+                print(f"Loss: {ret['loss']:.3f} - {ret['acc']:.3f}")
         """
         return evaluate_module(
             model,
@@ -943,9 +1082,37 @@ class Trainer:
             torch.utils.data.Dataset,
             torch.utils.data.DataLoader,
         ],
-        # for_regression=False,
         logger: logging.Logger = None,
     ) -> Union[np.ndarray, NumpyArrayTuple]:
+        """
+        runs predictions on the model and returns prediction values
+
+        Parameters
+        ----------
+        model: nn.Module
+            the instance of your model from which to run predictions
+            (NOTE: model should be trained first & all weights should be loaded into model)
+        dataset: np.ndarray OR torch.Tensor OR (np.ndarray, np.ndarray) OR torch.utils.data.Dataset OR torch.utils.data.Dataloader
+            An instance of any one of the following on which the predictions should be run
+                - np.ndarray - a Numpy array (will be typicall used for structured datasets, such as scikit-datasets)
+                - torch.Tensor - a tensor version of the above array (if you prefer, you can pass in a 1D tensor instead)
+                - (np.ndarray, np.ndarray) - a tuple (X, y) of Numpy arrays
+                - torch.utils.data.Dataset
+                - torch.utils.data.Dataloader
+        logger: logging.Logger (optional, default=None)
+            instance of logger class to be used for logging
+
+        Returns
+        -------
+        Either a single np.ndarray (when inputs are np.ndarray or torch.Tensor). This represents the array
+        of predicted y values.
+        OR
+        A tuple of np.ndarray (np.ndarray, np.ndarray), when the inputs are a tuple of ndarrays or Dataset
+        or Dataloader instances. This represents instances of y_predicted (first element) and y_actual (2nd
+        element of tuple retuerned)
+        NOTE: shape of return values is the same as the shape of values returned from the output layer
+        of the module
+        """
         if isinstance(dataset, np.ndarray) or isinstance(dataset, torch.Tensor):
             return predict_array(model, dataset, self.device, self.batch_size)
         else:
