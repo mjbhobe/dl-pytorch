@@ -782,7 +782,7 @@ class Trainer:
         metrics_map: MetricsMapType = None,
         epochs: int = 5,
         batch_size: int = 64,
-        reporting_interval: int = 1,
+        # reporting_interval: int = 1,
     ):
         """constructs a Trainer object to be used for cross-training, evaluation of and
         getting predictions from an nn.Module instance.
@@ -835,12 +835,6 @@ class Trainer:
             Size of batch used during training. Specify a negative value if you want to
             use the _entire_ dataset as the batch (not a good practice, unless your dataset
             itself is very small)
-        reporting_interval: int (optional, default 1)
-            The interval (i.e. number of epochs) after which progress will be reported when training.
-            By default, training progress is reported/printed after each epoch. Set this value to
-            change the interval for example, if reporting_interval = 5, progress will be reported on
-            the first, then every fifth epoch thereafter, and the last epoch (example: if epochs=22,
-            and reporting_interval=5, then progress will be reported on 1, 5, 10, 15, 20 and 22 epoch).
          - shuffle (bool, default=True) - should the data be shuffled during training?
              If True, it is shuffled else not. It is a good practice to always shuffle
              data between epochs. This setting should be left to the default value,
@@ -855,14 +849,13 @@ class Trainer:
             raise ValueError("FATAL ERROR: Trainer() -> 'epochs' >= 1")
         # batch_size can be -ve
         batch_size = -1 if batch_size < 0 else batch_size
-        reporting_interval = 1 if reporting_interval < 1 else reporting_interval
 
         self.loss_fn = loss_fn
         self.device = device
         self.metrics_map = metrics_map
         self.epochs = epochs
         self.batch_size = batch_size
-        self.reporting_interval = reporting_interval
+        # self.reporting_interval = reporting_interval
         # self.shuffle = shuffle
         # self.num_workers = num_workers
 
@@ -880,6 +873,7 @@ class Trainer:
         l1_reg: float = None,
         lr_scheduler: Union[LRSchedulerType, ReduceLROnPlateauType] = None,
         early_stopping: EarlyStopping = None,
+        reporting_interval: int = 1,
         verbose: bool = True,
         logger: logging.Logger = None,
         shuffle: bool = True,
@@ -926,6 +920,12 @@ class Trainer:
             Use to early stop training (before all epochs are done) if one of the metrics tracked is not
             improving for a set of X epochs. This should be an instance of EarlyStopping class defined
             as part of this toolkit.
+        reporting_interval: int (optional, default 1)
+            The interval (i.e. number of epochs) after which progress will be reported when training.
+            By default, training progress is reported/printed after each epoch. Set this value to
+            change the interval for example, if reporting_interval = 5, progress will be reported on
+            the first, then every fifth epoch thereafter, and the last epoch (example: if epochs=22,
+            and reporting_interval=5, then progress will be reported on 1, 5, 10, 15, 20 and 22 epoch).
         verbose: bool (optional, default=True)
             Specify if the training progress across training data is to be reported at end of each batch
             (True) or end of epoch (False).
@@ -983,6 +983,7 @@ class Trainer:
         assert (
             num_workers >= 0
         ), "FATAL ERROR: Trainer.fit() -> 'num_workers' must be >= 0"
+        reporting_interval = 1 if reporting_interval < 1 else reporting_interval
 
         history = cross_train_module(
             model,
@@ -996,7 +997,7 @@ class Trainer:
             epochs=self.epochs,
             batch_size=self.batch_size,
             l1_reg=l1_reg,
-            reporting_interval=self.reporting_interval,
+            reporting_interval=reporting_interval,
             lr_scheduler=lr_scheduler,
             early_stopping=early_stopping,
             shuffle=shuffle,
