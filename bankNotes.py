@@ -11,13 +11,15 @@ import warnings
 warnings.filterwarnings("ignore")
 
 import os
+import pathlib
+import logging
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
 # tweaks for libraries
 np.set_printoptions(precision=6, linewidth=1024, suppress=True)
-plt.style.use("seaborn")
+plt.style.use("seaborn-v0_8")
 sns.set(style="whitegrid", font_scale=1.1, palette="muted")
 
 # Pytorch imports
@@ -25,7 +27,6 @@ import torch
 import torch.nn as nn
 import torchmetrics
 
-print("Using Pytorch version: ", torch.__version__)
 
 # My helper functions for training/evaluating etc.
 
@@ -43,8 +44,9 @@ DATA_FILE_PATH = os.path.join(
     "csv_files",
     "data_banknote_authentication.txt",
 )
-assert os.path.exists(DATA_FILE_PATH), f"FATAL: {DATA_FILE_PATH} - data file does not exist!"
-print(f"Using data file {DATA_FILE_PATH}")
+assert os.path.exists(
+    DATA_FILE_PATH
+), f"FATAL: {DATA_FILE_PATH} - data file does not exist!"
 
 
 # CSV dataset structure
@@ -95,6 +97,10 @@ MODEL_SAVE_PATH = os.path.join(
 
 
 def main():
+    print("Using Pytorch version: ", torch.__version__)
+    print(f"Using data file {DATA_FILE_PATH}")
+    logger = t3.get_logger(pathlib.Path(__file__), logging.DEBUG)
+
     parser = t3.TrainingArgsParser()
     args = parser.parse_args()
 
@@ -103,7 +109,9 @@ def main():
     print(f"Loaded {len(dataset)} records", flush=True)
     # set aside 10% as test dataset
     train_dataset, test_dataset = t3.split_dataset(dataset, split_perc=0.1)
-    print(f"train_dataset: {len(train_dataset)} recs, test_dataset: {len(test_dataset)} recs")
+    print(
+        f"train_dataset: {len(train_dataset)} recs, test_dataset: {len(test_dataset)} recs"
+    )
 
     # declare loss functions
     loss_fn = torch.nn.BCELoss()
@@ -131,6 +139,7 @@ def main():
             train_dataset,
             # use 20% of train_dataset as cross-validation dataset
             validation_split=0.2,
+            logger=logger,
         )
         # plot the tracked metrics
         hist.plot_metrics("Model Performance")
@@ -144,9 +153,13 @@ def main():
         model = model.to(DEVICE)
         print("Evaluating model performance...")
         metrics = trainer.evaluate(model, train_dataset)
-        print(f"  Training dataset  -> loss: {metrics['loss']:.4f} - acc: {metrics['acc']:.4f}")
+        print(
+            f"  Training dataset  -> loss: {metrics['loss']:.4f} - acc: {metrics['acc']:.4f}"
+        )
         metrics = trainer.evaluate(model, test_dataset)
-        print(f"  Testing dataset   -> loss: {metrics['loss']:.4f} - acc: {metrics['acc']:.4f}")
+        print(
+            f"  Testing dataset   -> loss: {metrics['loss']:.4f} - acc: {metrics['acc']:.4f}"
+        )
         del model
 
     if args.pred:

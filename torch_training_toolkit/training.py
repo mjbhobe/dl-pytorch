@@ -178,16 +178,20 @@ def cross_train_module(
             )
 
     # split the dataset if validation_split > 0.0
-    # NOTE: validation_dataset must be an instance of torch.util.data.Dataset, not DataLoader
+    # NOTE: train_dataset must be an instance of torch.util.data.Dataset, not DataLoader
     if (
         (validation_split > 0.0)
-        and isinstance(validation_dataset, torch.utils.data.Dataset)
+        # and isinstance(validation_dataset, torch.utils.data.Dataset)
         and (validation_dataset is None)
     ):
         # NOTE: validation_dataset supersedes validation_split!!
         # Use validation_split only if validation_dataset is None
         # if both are specified (i.e. validation_split > 0.0 and validation_dataset is not None)
         # then validation_split value will be ignored!
+        if not isinstance(train_dataset, torch.utils.data.Dataset):
+            raise ValueError(
+                f"FATAL ERROR: for validation_split > 0, expecting training data to be a Dataset not DataLoader!"
+            )
         train_dataset, val_dataset = split_dataset(train_dataset, validation_split)
         if logger is not None:
             logger.debug(
@@ -222,23 +226,51 @@ def cross_train_module(
         history = MetricsHistory(metrics_map, (val_dataset is not None))
         train_batch_size = batch_size if batch_size != -1 else len(train_dataset)
 
+        # create the train & validation dataloaders
+        train_dataloader = (
+            # convert dataset to dataloader
+            torch.utils.data.DataLoader(
+                train_dataset,
+                batch_size=train_batch_size,
+                shuffle=shuffle,
+                num_workers=num_workers,
+            )
+            if isinstance(train_dataset, torch.utils.data.Dataset)
+            # or use dataloader as-is
+            else train_dataset
+        )
+
+        # create validation dataloader only if val_dataset is present!
+        if val_dataset is not None:
+            val_batch_size = batch_size if batch_size != -1 else len(val_dataset)
+            val_dataloader = (
+                torch.utils.data.DataLoader(
+                    val_dataset,
+                    batch_size=val_batch_size,
+                    shuffle=shuffle,
+                    num_workers=num_workers,
+                )
+                if isinstance(val_dataset, torch.utils.data.Dataset)
+                else val_dataset
+            )
+
         for epoch in range(epochs):
             model.train()
             # reset metrics
             history.clear_batch_metrics()
             # loop over records in training dataset (use DataLoader)
-            train_dataloader = (
-                # convert dataset to dataloader
-                torch.utils.data.DataLoader(
-                    train_dataset,
-                    batch_size=train_batch_size,
-                    shuffle=shuffle,
-                    num_workers=num_workers,
-                )
-                if isinstance(train_dataset, torch.utils.data.Dataset)
-                # or use dataloader as-is
-                else train_dataset
-            )
+            # train_dataloader = (
+            #     # convert dataset to dataloader
+            #     torch.utils.data.DataLoader(
+            #         train_dataset,
+            #         batch_size=train_batch_size,
+            #         shuffle=shuffle,
+            #         num_workers=num_workers,
+            #     )
+            #     if isinstance(train_dataset, torch.utils.data.Dataset)
+            #     # or use dataloader as-is
+            #     else train_dataset
+            # )
             num_batches, samples = 0, 0
 
             for batch_no, (X, y) in enumerate(train_dataloader):
@@ -348,22 +380,22 @@ def cross_train_module(
                             flush=True,
                         )
 
-                    val_batch_size = (
-                        batch_size if batch_size != -1 else len(val_dataset)
-                    )
+                    # val_batch_size = (
+                    #     batch_size if batch_size != -1 else len(val_dataset)
+                    # )
                     model.eval()
                     with torch.no_grad():
                         # val_dataloader = None if val_dataset is None else \
-                        val_dataloader = (
-                            torch.utils.data.DataLoader(
-                                val_dataset,
-                                batch_size=val_batch_size,
-                                shuffle=shuffle,
-                                num_workers=num_workers,
-                            )
-                            if isinstance(val_dataset, torch.utils.data.Dataset)
-                            else val_dataset
-                        )
+                        # val_dataloader = (
+                        #     torch.utils.data.DataLoader(
+                        #         val_dataset,
+                        #         batch_size=val_batch_size,
+                        #         shuffle=shuffle,
+                        #         num_workers=num_workers,
+                        #     )
+                        #     if isinstance(val_dataset, torch.utils.data.Dataset)
+                        #     else val_dataset
+                        # )
                         num_val_batches = 0
 
                         for val_X, val_y in val_dataloader:
