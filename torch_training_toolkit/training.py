@@ -233,6 +233,12 @@ def cross_train_module(
         # a zero, which is the default value)
         # @see: https://stackoverflow.com/questions/73777647/pytorch-custom-dataset-is-super-slow
         num_workers_hack = 0 if os.name == "nt" else num_workers
+        pin_mem_hack = True if torch.cuda.is_available() else False
+        # print(
+        #     f"On {os.name} using {num_workers_hack} workers & pin_memory is {pin_mem_hack}",
+        #     flush=True,
+        # )
+        # sys.exit(-1)
 
         # create the train & validation dataloaders
         train_dataloader = (
@@ -242,7 +248,7 @@ def cross_train_module(
                 batch_size=train_batch_size,
                 shuffle=shuffle,
                 num_workers=num_workers_hack,
-                pin_memory=True,
+                pin_memory=pin_mem_hack,
             )
             if isinstance(train_dataset, torch.utils.data.Dataset)
             # or use dataloader as-is
@@ -258,7 +264,7 @@ def cross_train_module(
                     batch_size=val_batch_size,
                     shuffle=shuffle,
                     num_workers=num_workers_hack,
-                    pin_memory=True,
+                    pin_memory=pin_mem_hack,
                 )
                 if isinstance(val_dataset, torch.utils.data.Dataset)
                 else val_dataset
