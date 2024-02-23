@@ -23,7 +23,7 @@ from imblearn.over_sampling import SMOTE
 
 # tweaks for libraries
 np.set_printoptions(precision=6, linewidth=1024, suppress=True)
-plt.style.use("seaborn")
+plt.style.use("seaborn-v0_8")
 sns.set(style="whitegrid", font_scale=1.1, palette="muted")
 
 # Pytorch imports
@@ -54,7 +54,9 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # ---------------------------------------------------------------------------
 # load data, select fields & apply scaling
 # ---------------------------------------------------------------------------
-def get_data(test_split=0.20, shuffle_it=True, balance=False, sampling_strategy=0.85, debug=False):
+def get_data(
+    test_split=0.20, shuffle_it=True, balance=False, sampling_strategy=0.85, debug=False
+):
     from imblearn.over_sampling import SMOTE
 
     df = pd.read_csv(DATA_FILE)
@@ -89,16 +91,23 @@ def get_data(test_split=0.20, shuffle_it=True, balance=False, sampling_strategy=
         ros = SMOTE(sampling_strategy=sampling_strategy, random_state=SEED)
         X, y = ros.fit_resample(X, y)
         if debug:
-            print(f"Resampled -> X.shape = {X.shape}, y.shape = {y.shape}, " f"y-count = {np.bincount(y)}")
+            print(
+                f"Resampled -> X.shape = {X.shape}, y.shape = {y.shape}, "
+                f"y-count = {np.bincount(y)}"
+            )
 
     # display plot of target
-    df2 = pd.DataFrame(X, columns=["Rainfall", "Humidity3pm", "Pressure9am", "RainToday"])
+    df2 = pd.DataFrame(
+        X, columns=["Rainfall", "Humidity3pm", "Pressure9am", "RainToday"]
+    )
     df2["RainTomorrow"] = y
     sns.countplot(data=df2, x=df2.RainTomorrow)
     plt.title("RainTomorrow: after re-balancing")
     plt.show()
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_split, random_state=SEED)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=test_split, random_state=SEED
+    )
     if debug:
         print(
             f"Split data -> X_train.shape = {X_train.shape}, y_train.shape = {y_train.shape}, "
@@ -126,8 +135,17 @@ def get_data(test_split=0.20, shuffle_it=True, balance=False, sampling_strategy=
 
 
 class WeatherDataset(torch.utils.data.Dataset):
-    def __init__(self, data_file_path, shuffle_it=True, balance=True, sampling_strategy=0.85, seed=SEED):
-        assert os.path.exists(data_file_path), f"FATAL: {data_file_path} - file does not exist!"
+    def __init__(
+        self,
+        data_file_path,
+        shuffle_it=True,
+        balance=True,
+        sampling_strategy=0.85,
+        seed=SEED,
+    ):
+        assert os.path.exists(
+            data_file_path
+        ), f"FATAL: {data_file_path} - file does not exist!"
         df = pd.read_csv(data_file_path)
         if shuffle_it:
             df = shuffle(df)
@@ -181,7 +199,7 @@ class Net(nn.Module):
 # DO_EVAL = True
 # DO_PREDICTION = True
 
-import pickle, sys
+import pickle
 
 
 def main():
@@ -197,7 +215,9 @@ def main():
     print(f"Loaded {len(dataset)} records", flush=True)
     # set aside 10% as test dataset
     train_dataset, test_dataset = t3.split_dataset(dataset, split_perc=0.1)
-    print(f"train_dataset: {len(train_dataset)} recs, test_dataset: {len(test_dataset)} recs")
+    print(
+        f"train_dataset: {len(train_dataset)} recs, test_dataset: {len(test_dataset)} recs"
+    )
     metrics_map = {
         "acc": BinaryAccuracy(),
         "f1": BinaryF1Score(),
@@ -219,10 +239,12 @@ def main():
         print(model)
         optimizer = torch.optim.Adam(model.parameters(), lr=LR)
         hist = trainer.fit(model, optimizer, train_dataset, validation_split=0.2)
-        hist_pkl = os.path.join(os.path.dirname(__file__), "model_states", "history2.pkl")
+        hist_pkl = os.path.join(
+            os.path.dirname(__file__), "model_states", "history2.pkl"
+        )
         with open(hist_pkl, "wb") as f:
             pickle.dump(hist, f)
-        sys.exit(-1)
+        # sys.exit(-1)
         hist.plot_metrics(title="Model Performance", fig_size=(16, 8))
         t3.save_model(model, MODEL_SAVE_PATH)
         del model
@@ -248,14 +270,16 @@ def main():
         model = t3.load_model(model, MODEL_SAVE_PATH)
         print(model)
 
-        preds, actuals = trainer.predict_dataset(model, test_dataset)
+        preds, actuals = trainer.predict(model, test_dataset)
         preds = np.round(preds).ravel()
         actuals = actuals.ravel()
         incorrect_counts = (preds != actuals).sum()
         print(f"We got {incorrect_counts} of {len(actuals)} predictions wrong!")
         print(classification_report(actuals, preds))
         t3.plot_confusion_matrix(
-            confusion_matrix(actuals, preds), class_names=["No Rain", "Rain"], title="Rain prediction for tomorrow"
+            confusion_matrix(actuals, preds),
+            class_names=["No Rain", "Rain"],
+            title="Rain prediction for tomorrow",
         )
         del model
 

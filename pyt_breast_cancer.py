@@ -19,7 +19,7 @@ from sklearn.metrics import classification_report, confusion_matrix
 
 # tweaks for libraries
 np.set_printoptions(precision=6, linewidth=1024, suppress=True)
-plt.style.use("seaborn")
+plt.style.use("seaborn-v0_8")
 sns.set(style="darkgrid", context="notebook", font_scale=1.10)
 
 # Pytorch imports
@@ -35,7 +35,9 @@ import torch_training_toolkit as t3
 # to ensure that you get consistent results across runs & machines
 # @see: https://discuss.pytorch.org/t/reproducibility-over-different-machines/63047
 SEED = t3.seed_all(123)
-data_file_path = os.path.join(os.path.dirname(__file__), "data", "wisconsin_breast_cancer.csv")
+data_file_path = os.path.join(
+    os.path.dirname(__file__), "data", "wisconsin_breast_cancer.csv"
+)
 DEVICE = torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
 
 
@@ -105,10 +107,13 @@ def load_data(test_split=0.20):
 
     X = wis_df.drop(["diagnosis"], axis=1).values
     y = wis_df["diagnosis"].values
+    y = y.astype(np.float32)
     print(f"X.shape: {X.shape} - y.shape: {y.shape}")
 
     # split into train/test sets
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_split, random_state=SEED, stratify=y)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=test_split, random_state=SEED, stratify=y
+    )
 
     # scale data
     ss = StandardScaler()
@@ -144,7 +149,9 @@ class WBCNet(nn.Module):
 DO_TRAINING = True
 DO_EVAL = True
 DO_PREDICTION = True
-MODEL_SAVE_PATH = os.path.join(os.path.dirname(__file__), "model_states", "pyt_wbc_ann2.pyt")
+MODEL_SAVE_PATH = os.path.join(
+    os.path.dirname(__file__), "model_states", "pyt_wbc_ann2.pyt"
+)
 
 # Hyper-parameters
 NUM_FEATURES = 30
@@ -161,14 +168,24 @@ def main():
     print(X_train.shape, y_train.shape, X_test.shape, y_test.shape)
 
     loss_fn = nn.BCELoss()
-    metrics_map = {"acc": BinaryAccuracy(), "f1": BinaryF1Score(), "roc_auc": BinaryAUROC(thresholds=None)}
+    metrics_map = {
+        "acc": BinaryAccuracy(),
+        "f1": BinaryF1Score(),
+        "roc_auc": BinaryAUROC(thresholds=None),
+    }
     trainer = t3.Trainer(
-        loss_fn=loss_fn, device=DEVICE, metrics_map=metrics_map, epochs=NUM_EPOCHS, batch_size=BATCH_SIZE
+        loss_fn=loss_fn,
+        device=DEVICE,
+        metrics_map=metrics_map,
+        epochs=NUM_EPOCHS,
+        batch_size=BATCH_SIZE,
     )
 
     if DO_TRAINING:
         model = WBCNet(NUM_FEATURES, NUM_CLASSES)
-        optimizer = torch.optim.SGD(model.parameters(), lr=LEARNING_RATE, weight_decay=DECAY)
+        optimizer = torch.optim.SGD(
+            model.parameters(), lr=LEARNING_RATE, weight_decay=DECAY
+        )
         print(model)
 
         # train model
@@ -203,7 +220,7 @@ def main():
         print(model)
 
         # preds, actuals = t3.predict_module(model, test_dataset, device = DEVICE)
-        preds, actuals = trainer.predict_dataset(model, dataset=(X_test, y_test))
+        preds, actuals = trainer.predict(model, dataset=(X_test, y_test))
         preds = np.round(preds).ravel()
         actuals = actuals.ravel()
         incorrect_counts = (preds != actuals).sum()
