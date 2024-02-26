@@ -243,8 +243,8 @@ def main():
         loss_fn,
         device=DEVICE,
         metrics_map=metrics_map,
-        epochs=NUM_EPOCHS,
-        batch_size=BATCH_SIZE,
+        epochs=args.epochs,
+        batch_size=args.batch_size,
     )
 
     if args.show_sample:
@@ -266,7 +266,7 @@ def main():
         model = Cifar10ConvNet()
         print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_WIDTH, IMAGE_HEIGHT)))
         optimizer = torch.optim.Adam(
-            params=model.parameters(), lr=LEARNING_RATE, weight_decay=L2_REG
+            params=model.parameters(), lr=args.lr, weight_decay=args.l2_reg
         )
 
         # train model
