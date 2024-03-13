@@ -23,6 +23,7 @@ from typing import Union, Dict, Tuple
 import torch.utils.data
 import torchmetrics
 import logging
+from tqdm import tqdm
 
 # LossFxnType = Callable[[torch.tensor, torch.tensor], torch.tensor]
 LRSchedulerType = torch.optim.lr_scheduler._LRScheduler
@@ -625,31 +626,37 @@ def predict_module(
 
         model.eval()
         with torch.no_grad():
-            for X, y in loader:
-                X = X.to(device)
-                y = y.to(device)
-                # batch_preds = list(model(X).ravel().numpy())
+            ### adding tqdm progress bar
+            ### @see: https://adamoudad.github.io/posts/progress_bar_with_tqdm/
+            with tqdm(loader, unit="batch") as pbar:
+                for X, y in pbar:  # loader:
+                    # set text to left of progress bar
+                    pbar.set_description("Running predictions")
 
-                # NOTE: the np.argmax(...) for classification
-                # should be done by caller
-                batch_preds = list(model(X).cpu().numpy())
-                batch_actuals = list(y.cpu())
+                    X = X.to(device)
+                    y = y.to(device)
+                    # batch_preds = list(model(X).ravel().numpy())
 
-                # if for_regression:
-                #     batch_preds = list(model(X).numpy().ravel())
-                # else:
-                #     batch_preds = list(np.argmax(model(X).numpy(), axis=1))
-                # batch_actuals = list(y.ravel().numpy())
+                    # NOTE: the np.argmax(...) for classification
+                    # should be done by caller
+                    batch_preds = list(model(X).cpu().numpy())
+                    batch_actuals = list(y.cpu())
 
-                # batch_preds = list(model(X).to("cpu").numpy())
-                # batch_actuals = list(y.to("cpu").numpy())
-                # batch_preds = model(X).to("cpu").numpy()
-                # batch_actuals = y.to("cpu").numpy()
+                    # if for_regression:
+                    #     batch_preds = list(model(X).numpy().ravel())
+                    # else:
+                    #     batch_preds = list(np.argmax(model(X).numpy(), axis=1))
+                    # batch_actuals = list(y.ravel().numpy())
 
-                preds.extend(batch_preds)
-                actuals.extend(batch_actuals)
-                # preds = np.append(preds, batch_preds)
-                # actuals = np.append(actuals, batch_actuals)
+                    # batch_preds = list(model(X).to("cpu").numpy())
+                    # batch_actuals = list(y.to("cpu").numpy())
+                    # batch_preds = model(X).to("cpu").numpy()
+                    # batch_actuals = y.to("cpu").numpy()
+
+                    preds.extend(batch_preds)
+                    actuals.extend(batch_actuals)
+                    # preds = np.append(preds, batch_preds)
+                    # actuals = np.append(actuals, batch_actuals)
         if logger is not None:
             logger.debug("Preditions: ")
             logger.debug(f"  - Actuals     : {np.array(actuals)}")

@@ -24,8 +24,10 @@ import torch.nn as nn
 import pytorch_lightning as pl
 import torchmetrics
 
+import pytorch_enlightning as pel
 
-class FashionMNISTModel(pl.LightningModule):
+
+class FashionMNISTModel(pel.EnLitModule):
     def __init__(self, num_channels, num_classes, lr):
         super(FashionMNISTModel, self).__init__()
 
@@ -64,7 +66,9 @@ class FashionMNISTModel(pl.LightningModule):
         )
 
         self.loss_fn = nn.CrossEntropyLoss()
-        self.acc = torchmetrics.classification.MulticlassAccuracy(num_classes=self.num_classes)
+        self.acc = torchmetrics.classification.MulticlassAccuracy(
+            num_classes=self.num_classes
+        )
 
     def forward(self, x):
         return self.net(x)
@@ -78,20 +82,15 @@ class FashionMNISTModel(pl.LightningModule):
         logits = self.forward(inputs)
         loss = self.loss_fn(logits, labels)
         acc = self.acc(logits, labels)
-        self.log(f"{dataset_name}_loss", loss, prog_bar=True)
-        self.log(f"{dataset_name}_acc", acc, prog_bar=True)
-        return loss, acc
-
-    def training_step(self, batch, batch_idx):
-        """training step"""
-        metrics = self.process_batch(batch, batch_idx, "train")
-        return metrics[0]
-
-    def validation_step(self, batch, batch_idx):
-        """cross-validation step"""
-        metrics = self.process_batch(batch, batch_idx, "val")
-        return metrics[0]
-
-    def predict_step(self, batch, batch_idx, dataloader_idx=0):
-        """run predictions on a batch"""
-        return self.forward(batch)
+        metrics = {f"{dataset_name}_loss": loss, f"{dataset_name}_acc": acc}
+        if dataset_name == "train":
+            self.log(
+                f"{dataset_name}_loss", loss, on_step=True, on_epoch=True, prog_bar=True
+            )
+            self.log(
+                f"{dataset_name}_acc", acc, on_step=True, on_epoch=True, prog_bar=True
+            )
+        else:
+            self.log(f"{dataset_name}_loss", loss, prog_bar=True)
+            self.log(f"{dataset_name}_acc", acc, prog_bar=True)
+        return {"loss": loss, "acc": acc}

@@ -26,7 +26,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 # tweaks for libraries
-plt.style.use("seaborn")
+plt.style.use("seaborn-v0_8")
 sns.set(style="whitegrid", font_scale=1.1, palette="muted")
 
 # Pytorch imports
@@ -78,7 +78,7 @@ def display_sample(
     import matplotlib.pyplot as plt
     import seaborn as sns
 
-    plt.style.use("seaborn")
+    plt.style.use("seaborn-v0_8")
 
     num_rows, num_cols = grid_shape
     assert sample_images.shape[0] == num_rows * num_cols
@@ -99,10 +99,16 @@ def display_sample(
 
     with sns.axes_style("whitegrid"):
         sns.set_context("notebook", font_scale=1.10)
-        sns.set_style({"font.sans-serif": ["Verdana", "Arial", "Calibri", "DejaVu Sans"]})
+        sns.set_style(
+            {"font.sans-serif": ["Verdana", "Arial", "Calibri", "DejaVu Sans"]}
+        )
 
         f, ax = plt.subplots(
-            num_rows, num_cols, figsize=(14, 10), gridspec_kw={"wspace": 0.05, "hspace": 0.35}, squeeze=True
+            num_rows,
+            num_cols,
+            figsize=(14, 10),
+            gridspec_kw={"wspace": 0.05, "hspace": 0.35},
+            squeeze=True,
         )  # 0.03, 0.25
         # fig = ax[0].get_figure()
         f.tight_layout()
@@ -113,13 +119,21 @@ def display_sample(
                 image_index = r * num_cols + c
                 ax[r, c].axis("off")
                 # show selected image
-                ax[r, c].imshow(sample_images[image_index].squeeze(), cmap="Greys", interpolation="nearest")
+                ax[r, c].imshow(
+                    sample_images[image_index].squeeze(),
+                    cmap="Greys",
+                    interpolation="nearest",
+                )
 
                 if sample_predictions is None:
                     # but show the prediction in the title
-                    title = ax[r, c].set_title(f"{FASHION_LABELS[sample_labels[image_index]]}")
+                    title = ax[r, c].set_title(
+                        f"{FASHION_LABELS[sample_labels[image_index]]}"
+                    )
                 else:
-                    pred_matches_actual = sample_labels[image_index] == sample_predictions[image_index]
+                    pred_matches_actual = (
+                        sample_labels[image_index] == sample_predictions[image_index]
+                    )
                     if pred_matches_actual:
                         # show title from prediction or actual in green font
                         title = "%s" % FASHION_LABELS[sample_predictions[image_index]]

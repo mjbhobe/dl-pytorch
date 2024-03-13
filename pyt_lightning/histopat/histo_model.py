@@ -9,6 +9,7 @@ Use at your own risk!! I am not responsible if your CPU or GPU gets fried :D
 """
 import sys
 import warnings
+from typing import override
 import pathlib
 import logging
 import logging.config
@@ -24,10 +25,11 @@ import torch.nn as nn
 import pytorch_lightning as pl
 import torchmetrics
 
-from base_model import BaseLightningModule
+# from base_model import BaseLightningModule
+import pytorch_enlightning as pel
 
 
-class HistoCancerModel(BaseLightningModule):
+class HistoCancerModel(pel.EnLitModule):
     def __init__(self, num_benign, num_malignant, num_channels, num_classes, lr):
         super(HistoCancerModel, self).__init__()
 
@@ -67,42 +69,35 @@ class HistoCancerModel(BaseLightningModule):
         )
 
         class_counts = [self.num_benign, self.num_malignant]
-        weights = torch.FloatTensor(class_counts) / (self.num_benign + self.num_malignant)
+        weights = torch.FloatTensor(class_counts) / (
+            self.num_benign + self.num_malignant
+        )
         # we may have imbalanced labels, apply weights to loss fn
         self.loss_fn = nn.CrossEntropyLoss()  # (weight=weights, reduction="sum")
         # define metrics
-        self.acc = torchmetrics.classification.MulticlassAccuracy(num_classes=self.num_classes)
+        self.acc = torchmetrics.classification.MulticlassAccuracy(
+            num_classes=self.num_classes
+        )
 
-    # def forward(self, x):
-    #     return self.net(x)
-
+    @override
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.lr, weight_decay=0.0025)
         return optimizer
 
+    @override
     def process_batch(self, batch, batch_idx, dataset_name):
         inputs, labels = batch
         logits = self.forward(inputs)
         loss = self.loss_fn(logits, labels)
         acc = self.acc(logits, labels)
         if dataset_name == "train":
-            self.log(f"{dataset_name}_loss", loss, on_step=True, on_epoch=True, prog_bar=True)
-            self.log(f"{dataset_name}_acc", acc, on_step=True, on_epoch=True, prog_bar=True)
+            self.log(
+                f"{dataset_name}_loss", loss, on_step=True, on_epoch=True, prog_bar=True
+            )
+            self.log(
+                f"{dataset_name}_acc", acc, on_step=True, on_epoch=True, prog_bar=True
+            )
         else:
             self.log(f"{dataset_name}_loss", loss, prog_bar=True)
             self.log(f"{dataset_name}_acc", acc, prog_bar=True)
-        return loss, acc
-
-    # def training_step(self, batch, batch_idx):
-    #     """training step"""
-    #     metrics = self.process_batch(batch, batch_idx, "train")
-    #     return metrics[0]
-
-    # def validation_step(self, batch, batch_idx):
-    #     """cross-validation step"""
-    #     metrics = self.process_batch(batch, batch_idx, "val")
-    #     return metrics[0]
-
-    # def predict_step(self, batch, batch_idx, dataloader_idx=0):
-    #     """run predictions on a batch"""
-    #     return self.forward(batch)
+        return {"loss": loss, "acc": acc}

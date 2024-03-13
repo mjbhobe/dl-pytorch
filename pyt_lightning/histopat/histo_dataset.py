@@ -18,7 +18,7 @@ BASE_PATH = pathlib.Path(__file__).parent.parent
 sys.path.append(str(BASE_PATH))
 
 warnings.filterwarnings("ignore")
-logging.config.fileConfig(fname = BASE_PATH / "logging.config")
+logging.config.fileConfig(fname=BASE_PATH / "logging.config")
 
 import os, pathlib, shutil
 import opendatasets as od
@@ -32,8 +32,8 @@ from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import train_test_split
 
 # tweaks for libraries
-plt.style.use("seaborn")
-sns.set(style = "whitegrid", font_scale = 1.1, palette = "muted")
+plt.style.use("seaborn-v0_8")
+sns.set(style="whitegrid", font_scale=1.1, palette="muted")
 
 # Pytorch imports
 import torch
@@ -44,13 +44,15 @@ from torch.utils.data import Dataset, DataLoader
 logger = logging.getLogger(__name__)
 
 
-def get_datasets(download_path, force_download = False, force_recreate = False):
+def get_datasets(download_path, force_download=False, force_recreate=False):
     dataset_url = "https://www.kaggle.com/c/histopathologic-cancer-detection"
     # download dataset from Kaggle using opendatasets
     # NOTE: save your kaggle.json file to local folder
-    od.download(dataset_url, data_dir = download_path, force = force_download)
+    od.download(dataset_url, data_dir=download_path, force=force_download)
 
-    download_base_path = pathlib.Path(download_path) / "histopathologic-cancer-detection"
+    download_base_path = (
+        pathlib.Path(download_path) / "histopathologic-cancer-detection"
+    )
     downsample_base_path = download_base_path / "downsample"
     downsample_train_path = downsample_base_path / "train"
     downsample_eval_path = downsample_base_path / "eval"
@@ -64,35 +66,39 @@ def get_datasets(download_path, force_download = False, force_recreate = False):
         # we will downsample 25,000 images from a
         downsample_size = 25000
 
-        assert train_data_path.exists(), f"FATAL ERROR: {train_data_path} does not exist!"
+        assert (
+            train_data_path.exists()
+        ), f"FATAL ERROR: {train_data_path} does not exist!"
         assert test_data_path.exists(), f"FATAL ERROR: {test_data_path} does not exist!"
-        assert train_labels_file.exists(), f"FATAL ERROR: {train_labels_file} does not exist!"
+        assert (
+            train_labels_file.exists()
+        ), f"FATAL ERROR: {train_labels_file} does not exist!"
 
         np.random.seed(42)
         labels_df = pd.read_csv(str(train_labels_file))
         for _ in range(5):
-            labels_df.sample(frac = 1)
+            labels_df.sample(frac=1)
 
         # downsample a subset of downsample_size using stratified sampling
         # downsample_df = labels_df.sample(n=downsample_size)
         f = (downsample_size * 1.0) / len(labels_df)
-        downsample_df = labels_df.groupby("label", group_keys = False).apply(
-            lambda x: x.sample(frac = f)
+        downsample_df = labels_df.groupby("label", group_keys=False).apply(
+            lambda x: x.sample(frac=f)
         )
         # split the subset into train: 15,000, eval: 8,000 and test: 2,000
         # downsample_train_df = downsample_df.sample(n=15000)
         f = (15000 * 1.0) / len(downsample_df)
-        downsample_train_df = downsample_df.groupby("label", group_keys = False).apply(
-            lambda x: x.sample(frac = f)
+        downsample_train_df = downsample_df.groupby("label", group_keys=False).apply(
+            lambda x: x.sample(frac=f)
         )
         assert (
             len(downsample_train_df) == 15000
         ), f"FATAL: something wrong, expecting 15,000 records in train dataset, sampled {len(downsample_train_df)}"
         downsample_rest_df = downsample_df.drop(downsample_train_df.index)
         f = (8000 * 1.0) / len(downsample_rest_df)
-        downsample_eval_df = downsample_rest_df.groupby("label", group_keys = False).apply(
-            lambda x: x.sample(frac = f)
-        )
+        downsample_eval_df = downsample_rest_df.groupby(
+            "label", group_keys=False
+        ).apply(lambda x: x.sample(frac=f))
         assert (
             len(downsample_eval_df) == 8000
         ), f"FATAL: something wrong, expecting 8,000 records in eval dataset, sampled {len(downsample_eval_df)}"
@@ -108,28 +114,36 @@ def get_datasets(download_path, force_download = False, force_recreate = False):
         )
 
         if downsample_train_path.exists():
-            logger.info(f"Deleting existing training images from {downsample_train_path}...")
+            logger.info(
+                f"Deleting existing training images from {downsample_train_path}..."
+            )
             shutil.rmtree(downsample_train_path)
-        (downsample_train_path / "benign").mkdir(parents = True, exist_ok = True)
-        (downsample_train_path / "malignant").mkdir(parents = True, exist_ok = True)
+        (downsample_train_path / "benign").mkdir(parents=True, exist_ok=True)
+        (downsample_train_path / "malignant").mkdir(parents=True, exist_ok=True)
 
         if downsample_eval_path.exists():
-            logger.info(f"Deleting existing cross-val images from {downsample_eval_path}...")
+            logger.info(
+                f"Deleting existing cross-val images from {downsample_eval_path}..."
+            )
             shutil.rmtree(downsample_eval_path)
-        (downsample_eval_path / "benign").mkdir(parents = True, exist_ok = True)
-        (downsample_eval_path / "malignant").mkdir(parents = True, exist_ok = True)
+        (downsample_eval_path / "benign").mkdir(parents=True, exist_ok=True)
+        (downsample_eval_path / "malignant").mkdir(parents=True, exist_ok=True)
 
         if downsample_test_path.exists():
             logger.info(f"Deleting existing test images from {downsample_test_path}...")
             shutil.rmtree(downsample_test_path)
-        (downsample_test_path / "benign").mkdir(parents = True, exist_ok = True)
-        (downsample_test_path / "malignant").mkdir(parents = True, exist_ok = True)
+        (downsample_test_path / "benign").mkdir(parents=True, exist_ok=True)
+        (downsample_test_path / "malignant").mkdir(parents=True, exist_ok=True)
 
         # recreate the train, eval & test sets
         outcomes = ["benign", "malignant"]
         datasets = ["train", "eval", "test"]
         dataframes = [downsample_train_df, downsample_eval_df, downsample_test_df]
-        folder_paths = [downsample_train_path, downsample_eval_path, downsample_test_path]
+        folder_paths = [
+            downsample_train_path,
+            downsample_eval_path,
+            downsample_test_path,
+        ]
 
         from tqdm import trange
         from time import sleep
@@ -137,12 +151,14 @@ def get_datasets(download_path, force_download = False, force_recreate = False):
         for dataset, df, folder_path in zip(datasets, dataframes, folder_paths):
             # iterate over the dataframe & copy files
             logger.info(f"Creating {dataset} images")
-            t = trange(len(df), desc = f"Creating {dataset} images", leave = True)
+            t = trange(len(df), desc=f"Creating {dataset} images", leave=True)
             # for i in range(len(df)):
             for i in t:
                 image_file_name, outcome = df.iloc[i, 0], outcomes[df.iloc[i, 1]]
                 image_source_path = train_data_path / (image_file_name + ".tif")
-                assert image_source_path.exists(), f"FATAL: Source image {image_source_path} does not exist!"
+                assert (
+                    image_source_path.exists()
+                ), f"FATAL: Source image {image_source_path} does not exist!"
                 image_target_path = folder_path / outcome / (image_file_name + ".tif")
                 t.set_postfix({"Copying": f"{(image_file_name + '.tif')}"})
                 shutil.copy(image_source_path, image_target_path)
@@ -177,8 +193,8 @@ def get_datasets(download_path, force_download = False, force_recreate = False):
     train_xforms = transforms.Compose(
         [
             transforms.CenterCrop(32),
-            transforms.RandomHorizontalFlip(p = 0.5),
-            transforms.RandomVerticalFlip(p = 0.5),
+            transforms.RandomHorizontalFlip(p=0.5),
+            transforms.RandomVerticalFlip(p=0.5),
             transforms.RandomRotation(25),
             transforms.ToTensor(),
         ]
@@ -196,11 +212,13 @@ def get_datasets(download_path, force_download = False, force_recreate = False):
     train_labels_file = download_base_path / "train_labels.csv"
     labels_df = pd.read_csv(str(train_labels_file))
     num_benign, num_malignant = np.bincount(labels_df["label"])
-    logger.info(f"Label distribution -> benign: {num_benign} - malignant: {num_malignant}")
+    logger.info(
+        f"Label distribution -> benign: {num_benign} - malignant: {num_malignant}"
+    )
 
-    train_dataset = ImageFolder(str(downsample_train_path), transform = train_xforms)
-    val_dataset = ImageFolder(str(downsample_eval_path), transform = test_xforms)
-    test_dataset = ImageFolder(str(downsample_test_path), transform = test_xforms)
+    train_dataset = ImageFolder(str(downsample_train_path), transform=train_xforms)
+    val_dataset = ImageFolder(str(downsample_eval_path), transform=test_xforms)
+    test_dataset = ImageFolder(str(downsample_test_path), transform=test_xforms)
 
     return num_benign, num_malignant, train_dataset, val_dataset, test_dataset
 
@@ -208,9 +226,9 @@ def get_datasets(download_path, force_download = False, force_recreate = False):
 def display_sample(
     sample_images,
     sample_labels,
-    grid_shape = (8, 8),
-    plot_title = None,
-    sample_predictions = None,
+    grid_shape=(8, 8),
+    plot_title=None,
+    sample_predictions=None,
 ):
     # just in case these are not imported!
     import matplotlib.pyplot as plt
@@ -228,7 +246,7 @@ def display_sample(
     }
 
     with sns.axes_style("whitegrid"):
-        sns.set_context("notebook", font_scale = 0.75)
+        sns.set_context("notebook", font_scale=0.75)
         sns.set_style(
             {
                 "font.sans-serif": [
@@ -245,12 +263,12 @@ def display_sample(
         f, ax = plt.subplots(
             num_rows,
             num_cols,
-            figsize = (14, 10),
-            gridspec_kw = {"wspace": 0.05, "hspace": 0.55},
-            squeeze = True,
+            figsize=(14, 10),
+            gridspec_kw={"wspace": 0.05, "hspace": 0.55},
+            squeeze=True,
         )
         f.tight_layout()
-        f.subplots_adjust(top = 0.90)
+        f.subplots_adjust(top=0.90)
 
         for r in range(num_rows):
             for c in range(num_cols):
@@ -260,15 +278,17 @@ def display_sample(
                 sample_image = sample_images[image_index].transpose(1, 2, 0)
                 ax[r, c].imshow(
                     sample_image,
-                    cmap = "Greys",
-                    interpolation = "nearest",
+                    cmap="Greys",
+                    interpolation="nearest",
                 )
 
                 if sample_predictions is None:
                     # but show the prediction in the title
                     title = ax[r, c].set_title(f"{LABELS[sample_labels[image_index]]}")
                 else:
-                    pred_matches_actual = sample_labels[image_index] == sample_predictions[image_index]
+                    pred_matches_actual = (
+                        sample_labels[image_index] == sample_predictions[image_index]
+                    )
                     if pred_matches_actual:
                         # show title from prediction or actual in green font
                         title = "%s" % LABELS[sample_predictions[image_index]]
@@ -284,7 +304,7 @@ def display_sample(
                     # but show the prediction in the title
                     title = ax[r, c].set_title(title)
                     # if prediction is incorrect title color is red, else green
-                    plt.setp(title, color = title_color)
+                    plt.setp(title, color=title_color)
 
         if plot_title is not None:
             plt.suptitle(plot_title)

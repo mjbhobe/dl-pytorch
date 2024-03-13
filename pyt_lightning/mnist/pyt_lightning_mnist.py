@@ -12,9 +12,22 @@ Use at your own risk!! I am not responsible if your CPU or GPU gets fried :D
 """
 import sys
 import warnings
+
+# need Python >= 3.2 for pathlib
+# fmt: off
+if sys.version_info < (3, 2,):
+    import platform
+
+    raise ValueError(
+        f"{__file__} required Python version >= 3.2. You are using Python "
+        f"{platform.python_version}")
+# fmt: on
+
+
+from typing import override
 import pathlib
-import logging
 import logging.config
+
 
 BASE_PATH = pathlib.Path(__file__).parent.parent
 sys.path.append(str(BASE_PATH))
@@ -22,8 +35,6 @@ sys.path.append(str(BASE_PATH))
 warnings.filterwarnings("ignore")
 logging.config.fileConfig(fname=BASE_PATH / "logging.config")
 
-import pathlib
-from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -35,18 +46,20 @@ sns.set(style="whitegrid", font_scale=1.1, palette="muted")
 # Pytorch imports
 import torch
 import torch.nn as nn
-from torch.autograd import Variable
 from torchvision import datasets, transforms
 from torch.utils.data import Dataset, DataLoader
 import pytorch_lightning as pl
 import torchmetrics
 import torchsummary
 
-from cl_options import parse_command_line
-from utils import save_model, load_model, predict_module, predict_array
+print("Using Pytorch version: ", torch.__version__)
+print("Using Pytorch Lightning version: ", pl.__version__)
 
-# print("Using Pytorch version: ", torch.__version__)
-# print("Using Pytorch Lightning version: ", pl.__version__)
+# fmt: off
+# my utility functions to use with lightning
+import pytorch_enlightning as pel
+print(f"Pytorch En(hanced)Lightning: {pel.__version__}")
+# fmt: on
 
 SEED = pl.seed_everything()
 
@@ -55,9 +68,12 @@ logger = logging.getLogger(__name__)
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 DATA_FILE_PATH = pathlib.Path(__file__).parent / "data"
 # assert os.path.exists(DATA_FILE_PATH), f"FATAL: {DATA_FILE_PATH} - data file does not exist!"
+MODEL_STATE_NAME = "pyt_mnist_dnn.pth"
+MODEL_STATE_PATH = pathlib.Path(__file__).parent / "model_state" / MODEL_STATE_NAME
+IMAGE_HEIGHT, IMAGE_WIDTH, NUM_CHANNELS, NUM_CLASSES = 28, 28, 1, 10
 
-# logger.info(f"Training model on {DEVICE}")
-# logger.info(f"Using data file {DATA_FILE_PATH}")
+logger.info(f"Training model on {DEVICE}")
+logger.info(f"Using data file {DATA_FILE_PATH}")
 
 
 def get_datasets():
@@ -111,6 +127,7 @@ def display_sample(
         sns.set_style(
             {
                 "font.sans-serif": [
+                    "SF Pro Rounded",
                     "SF Pro Display",
                     "SF UI Text",
                     "Verdana",
@@ -169,25 +186,27 @@ def display_sample(
         plt.close()
 
 
-IMAGE_HEIGHT, IMAGE_WIDTH, NUM_CHANNELS, NUM_CLASSES = 28, 28, 1, 10
-
-
-# our model
-class MNISTModelBase(pl.LightningModule):
+class MNISTModel(pel.EnLitModule):
     def __init__(self, num_classes, lr):
-        super(MNISTModelBase, self).__init__()
+        super(MNISTModel, self).__init__()
 
         self.num_classes = num_classes
         self.lr = lr
-
-        self.net = None
         self.loss_fn = nn.CrossEntropyLoss()
         self.acc = torchmetrics.classification.MulticlassAccuracy(
             num_classes=self.num_classes
         )
 
-    def forward(self, x):
-        return self.net(x)
+        self.net = nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(IMAGE_HEIGHT * IMAGE_WIDTH * NUM_CHANNELS, 128),
+            nn.ReLU(),
+            nn.Dropout(0.1),
+            nn.Linear(128, 64),
+            nn.ReLU(),
+            nn.Dropout(0.1),
+            nn.Linear(64, self.num_classes),
+        )
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
@@ -198,45 +217,22 @@ class MNISTModelBase(pl.LightningModule):
         logits = self.forward(inputs)
         loss = self.loss_fn(logits, labels)
         acc = self.acc(logits, labels)
-        self.log(f"{dataset_name}_loss", loss, prog_bar=True)
-        self.log(f"{dataset_name}_acc", acc, prog_bar=True)
-        return loss, acc
-
-    def training_step(self, batch, batch_idx):
-        """training step"""
-        metrics = self.process_batch(batch, batch_idx, "train")
-        return metrics[0]
-
-    def validation_step(self, batch, batch_idx):
-        """cross-validation step"""
-        metrics = self.process_batch(batch, batch_idx, "val")
-        return metrics[0]
-
-    def predict_step(self, batch, batch_idx, dataloader_idx=0):
-        """run predictions on a batch"""
-        return self.forward(batch)
-
-
-class MNISTModelANN(MNISTModelBase):
-    def __init__(self, num_classes, lr):
-        super(MNISTModelANN, self).__init__(num_classes, lr)
-
-        self.net = nn.Sequential(
-            nn.Flatten(),
-            nn.Linear(IMAGE_HEIGHT * IMAGE_WIDTH * NUM_CHANNELS, 128),
-            nn.ReLU(),
-            nn.Dropout(0.1),
-            nn.Linear(128, 64),
-            nn.ReLU(),
-            nn.Dropout(0.1),
-            nn.Linear(64, NUM_CLASSES),
-        )
+        if dataset_name == "train":
+            self.log(
+                f"{dataset_name}_loss", loss, on_step=True, on_epoch=True, prog_bar=True
+            )
+            self.log(
+                f"{dataset_name}_acc", acc, on_step=True, on_epoch=True, prog_bar=True
+            )
+        else:
+            self.log(f"{dataset_name}_loss", loss, prog_bar=True)
+            self.log(f"{dataset_name}_acc", acc, prog_bar=True)
+        return {"loss": loss, "acc": acc}
 
 
 def main():
-    args = parse_command_line()
-    MODEL_STATE_NAME = "pyt_mnist_dnn.pth"
-    MODEL_STATE_PATH = pathlib.Path(__file__).parent / "model_state" / MODEL_STATE_NAME
+    parser = pel.TrainingArgsParser()
+    args = parser.parse_args()
 
     train_dataset, val_dataset, test_dataset = get_datasets()
 
@@ -274,37 +270,47 @@ def main():
         )
 
     if args.train:
-        model = MNISTModelANN(NUM_CLASSES, args.lr)
+        model = MNISTModel(NUM_CLASSES, args.lr)
         print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
 
+        metrics_history = pel.MetricsLogger()
+        progbar = pel.EnLitProgressBar(metrics_history)
         trainer = pl.Trainer(
-            max_epochs=args.epochs,
+            max_epochs=args.epochs, logger=metrics_history, callbacks=[progbar]
         )
         trainer.fit(
             model,
             train_dataloaders=train_loader,
             val_dataloaders=val_loader,
         )
-        save_model(model, MODEL_STATE_PATH)
+        metrics_history.plot_metrics("Model Performance")
+        pel.save_model(model, MODEL_STATE_PATH)
         del model
 
-    if args.pred:
-        model = MNISTModelANN(NUM_CLASSES, args.lr)
+    if args.eval:
+        model = MNISTModel(NUM_CLASSES, args.lr)
         # print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
-        model = load_model(model, MODEL_STATE_PATH)
+        model = pel.load_model(model, MODEL_STATE_PATH)
         print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
 
         # run a validation on Model
         trainer = pl.Trainer()
-        print(f"Validating on train-dateset...")
+        print(f"Validating on train-dataset...")
         trainer.validate(model, dataloaders=train_loader)
-        print(f"Validating on val-dateset...")
+        print(f"Validating on val-dataset...")
         trainer.validate(model, dataloaders=val_loader)
-        print(f"Validating on test-dateset...")
+        print(f"Validating on test-dataset...")
         trainer.validate(model, dataloaders=test_loader)
+        del model
+
+    if args.pred:
+        model = MNISTModel(NUM_CLASSES, args.lr)
+        # print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
+        model = pel.load_model(model, MODEL_STATE_PATH)
+        print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
 
         # predict from test_dataset
-        preds, actuals = predict_module(model, test_loader, DEVICE)
+        preds, actuals = pel.predict_module(model, test_loader, DEVICE)
         preds = np.argmax(preds, axis=1)
         print("Sample labels (50): ", actuals[:50])
         print("Sample predictions: ", preds[:50])
@@ -314,7 +320,7 @@ def main():
             # display sample predictions
             data_iter = iter(test_loader)
             images, labels = next(data_iter)
-            preds, actuals = predict_module(
+            preds, actuals = pel.predict_module(
                 model,
                 (images.cpu().numpy(), labels.cpu().numpy()),
                 DEVICE,

@@ -18,6 +18,8 @@ import logging.config
 # need Python >= 3.2 for pathlib
 # fmt: off
 if sys.version_info < (3, 2,):
+    import platform 
+
     raise ValueError(
         f"{__file__} required Python version >= 3.2. You are using Python "
         f"{platform.python_version}")
@@ -35,7 +37,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 # tweaks for libraries
-plt.style.use("seaborn")
+plt.style.use("seaborn-v0_8")
 sns.set(style="whitegrid", font_scale=1.1, palette="muted")
 
 # Pytorch imports
@@ -44,12 +46,14 @@ from torch.utils.data import DataLoader
 import pytorch_lightning as pl
 import torchsummary
 
-from cl_options import TrainingArgsParser
-from utils import save_model, load_model, predict_module, predict_array
-from metrics_logger import MetricsLogger
-
 print("Using Pytorch version: ", torch.__version__)
 print("Using Pytorch Lightning version: ", pl.__version__)
+
+# fmt: off
+# my utility functions to use with lightning
+import pytorch_enlightning as pel
+print(f"Pytorch En(hanced) Lightning: {pel.__version__}")
+# fmt: on
 
 SEED = pl.seed_everything()
 
@@ -69,10 +73,8 @@ from histo_model import HistoCancerModel
 
 
 def main():
-    parser = TrainingArgsParser()
+    parser = pel.TrainingArgsParser()
     args = parser.parse_args()
-    # parser.show_parsed_args(True)
-    # sys.exit(-1)
 
     num_benign, num_malignant, train_dataset, val_dataset, test_dataset = get_datasets(
         DATA_FILE_PATH,
@@ -117,55 +119,52 @@ def main():
 
     if args.train:
         model = HistoCancerModel(
-            num_benign,
-            num_malignant,
-            NUM_CHANNELS,
-            NUM_CLASSES,
-            args.lr,
+            num_benign, num_malignant, NUM_CHANNELS, NUM_CLASSES, args.lr
         )
         print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
 
-        metrics_history = MetricsLogger()
+        metrics_history = pel.MetricsLogger()
+        progbar = pel.EnLitProgressBar(metrics_history)
         trainer = pl.Trainer(
-            max_epochs=args.epochs,
-            logger=metrics_history,
+            max_epochs=args.epochs, logger=metrics_history, callbacks=[progbar]
         )
-        trainer.fit(
-            model,
-            train_dataloaders=train_loader,
-            val_dataloaders=val_loader,
-        )
+        trainer.fit(model, train_dataloaders=train_loader, val_dataloaders=val_loader)
+
         import pickle
 
         with open("metrics_hist.pkl", "wb") as pf:
             pickle.dump(metrics_history.history, pf)
-        save_model(model, MODEL_STATE_PATH)
+        pel.save_model(model, MODEL_STATE_PATH)
         metrics_history.plot_metrics(title="Model Performance - Metrics Plot")
         del model
 
     if args.eval:
-        model = HistoCancerModel(num_benign, num_malignant, NUM_CHANNELS, NUM_CLASSES, args.lr)
-        model = load_model(model, MODEL_STATE_PATH)
+        model = HistoCancerModel(
+            num_benign, num_malignant, NUM_CHANNELS, NUM_CLASSES, args.lr
+        )
+        model = pel.load_model(model, MODEL_STATE_PATH)
         print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
 
         # run a validation on Model
         trainer = pl.Trainer()
-        print(f"Validating on train-dateset...")
+        print(f"Validating on train-dataset...")
         trainer.validate(model, dataloaders=train_loader)
-        print(f"Validating on val-dateset...")
+        print(f"Validating on val-dataset...")
         trainer.validate(model, dataloaders=val_loader)
-        print(f"Validating on test-dateset...")
+        print(f"Validating on test-dataset...")
         trainer.validate(model, dataloaders=test_loader)
 
         del model
 
     if args.pred:
-        model = HistoCancerModel(num_benign, num_malignant, NUM_CHANNELS, NUM_CLASSES, args.lr)
-        model = load_model(model, MODEL_STATE_PATH)
+        model = HistoCancerModel(
+            num_benign, num_malignant, NUM_CHANNELS, NUM_CLASSES, args.lr
+        )
+        model = pel.load_model(model, MODEL_STATE_PATH)
         print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
 
         # predict from test_dataset
-        preds, actuals = predict_module(model, test_loader, DEVICE)
+        preds, actuals = pel.predict_module(model, test_loader, DEVICE)
         preds = np.argmax(preds, axis=1)
         print("Sample labels (50): ", actuals[:50])
         print("Sample predictions: ", preds[:50])
@@ -175,7 +174,7 @@ def main():
             # display sample predictions
             data_iter = iter(test_loader)
             images, labels = next(data_iter)
-            preds, actuals = predict_module(
+            preds, actuals = pel.predict_module(
                 model,
                 (images.cpu().numpy(), labels.cpu().numpy()),
                 DEVICE,

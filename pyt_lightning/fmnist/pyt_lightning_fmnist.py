@@ -11,24 +11,37 @@ Use at your own risk!! I am not responsible if your CPU or GPU gets fried :D
 """
 import sys
 import warnings
+
+# need Python >= 3.2 for pathlib
+# fmt: off
+if sys.version_info < (3, 2,):
+    import platform
+    
+    raise ValueError(
+        f"{__file__} required Python version >= 3.2. You are using Python "
+        f"{platform.python_version}")
+# fmt: on
+
+
+from typing import override
 import pathlib
 import logging
 import logging.config
+from typing import override
 
+# add "pyt_lightning" folder to sys.path
 BASE_PATH = pathlib.Path(__file__).parent.parent
 sys.path.append(str(BASE_PATH))
 
 warnings.filterwarnings("ignore")
 logging.config.fileConfig(fname=BASE_PATH / "logging.config")
 
-import pathlib
-from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
 # tweaks for libraries
-plt.style.use("seaborn")
+plt.style.use("seaborn-v0_8")
 sns.set(style="whitegrid", font_scale=1.1, palette="muted")
 
 # Pytorch imports
@@ -37,11 +50,14 @@ from torch.utils.data import DataLoader
 import pytorch_lightning as pl
 import torchsummary
 
-from cl_options import parse_command_line
-from utils import save_model, load_model, predict_module
-
 print("Using Pytorch version: ", torch.__version__)
 print("Using Pytorch Lightning version: ", pl.__version__)
+
+# fmt: off
+# my utility functions to use with lightning
+import pytorch_enlightning as pel
+print(f"Pytorch En(hanced) Lightning Flash: {pel.__version__}")
+# fmt: on
 
 SEED = pl.seed_everything()
 
@@ -61,7 +77,8 @@ from fmnist_model import FashionMNISTModel
 
 
 def main():
-    args = parse_command_line()
+    parser = pel.TrainingArgsParser()
+    args = parser.parse_args()
 
     train_dataset, val_dataset, test_dataset = get_datasets(DATA_FILE_PATH)
 
@@ -102,20 +119,23 @@ def main():
         model = FashionMNISTModel(NUM_CHANNELS, NUM_CLASSES, args.lr)
         print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
 
+        metrics_history = pel.MetricsLogger()
+        progbar = pel.EnLitProgressBar(metrics_history)
         trainer = pl.Trainer(
-            max_epochs=args.epochs,
+            max_epochs=args.epochs, logger=metrics_history, callbacks=[progbar]
         )
         trainer.fit(
             model,
             train_dataloaders=train_loader,
             val_dataloaders=val_loader,
         )
-        save_model(model, MODEL_STATE_PATH)
+        metrics_history.plot_metrics("Model Performance")
+        pel.save_model(model, MODEL_STATE_PATH)
         del model
 
-    if args.pred:
+    if args.eval:
         model = FashionMNISTModel(NUM_CHANNELS, NUM_CLASSES, args.lr)
-        model = load_model(model, MODEL_STATE_PATH)
+        model = pel.load_model(model, MODEL_STATE_PATH)
         print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
 
         # run a validation on Model
@@ -126,9 +146,14 @@ def main():
         trainer.validate(model, dataloaders=val_loader)
         print(f"Validating on test-dateset...")
         trainer.validate(model, dataloaders=test_loader)
+        del model
 
+    if args.pred:
         # predict from test_dataset
-        preds, actuals = predict_module(model, test_loader, DEVICE)
+        model = FashionMNISTModel(NUM_CHANNELS, NUM_CLASSES, args.lr)
+        model = pel.load_model(model, MODEL_STATE_PATH)
+
+        preds, actuals = pel.predict_module(model, test_loader, DEVICE)
         preds = np.argmax(preds, axis=1)
         print("Sample labels (50): ", actuals[:50])
         print("Sample predictions: ", preds[:50])
@@ -138,7 +163,7 @@ def main():
             # display sample predictions
             data_iter = iter(test_loader)
             images, labels = next(data_iter)
-            preds, actuals = predict_module(
+            preds, actuals = pel.predict_module(
                 model,
                 (images.cpu().numpy(), labels.cpu().numpy()),
                 DEVICE,
@@ -152,6 +177,7 @@ def main():
                 grid_shape=(8, 8),
                 plot_title=f"Sample Predictions ({accu*100:.2f}% accuracy for sample)",
             )
+            del model
 
 
 if __name__ == "__main__":

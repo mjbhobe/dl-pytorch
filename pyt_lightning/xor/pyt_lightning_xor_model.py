@@ -30,7 +30,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 # tweaks for libraries
-plt.style.use("seaborn")
+plt.style.use("seaborn-v0_8")
 sns.set(style="whitegrid", font_scale=1.1, palette="muted")
 
 # Pytorch imports
