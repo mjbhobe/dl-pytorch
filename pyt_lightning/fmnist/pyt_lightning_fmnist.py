@@ -9,7 +9,7 @@ My experiments with Python, Machine Learning & Deep Learning.
 This code is meant for education purposes only & is not intended for commercial/production use!
 Use at your own risk!! I am not responsible if your CPU or GPU gets fried :D
 """
-import sys
+import sys, os
 import warnings
 
 # need Python >= 3.2 for pathlib
@@ -20,14 +20,20 @@ if sys.version_info < (3, 2,):
     raise ValueError(
         f"{__file__} required Python version >= 3.2. You are using Python "
         f"{platform.python_version}")
+
+# NOTE: @override decorator available from Python 3.12 onwards
+# Using override package which provides similar functionality in previous versions
+if sys.version_info < (3, 12,):
+    from overrides import override
+else:
+    from typing import override
 # fmt: on
 
 
-from typing import override
 import pathlib
 import logging
 import logging.config
-from typing import override
+
 
 # add "pyt_lightning" folder to sys.path
 BASE_PATH = pathlib.Path(__file__).parent.parent
@@ -82,25 +88,31 @@ def main():
 
     train_dataset, val_dataset, test_dataset = get_datasets(DATA_FILE_PATH)
 
+    # NOTE: Pytorch on Windows - DataLoader with num_workers > 0 is very slow
+    # looks like a known issue
+    # @see: https://github.com/pytorch/pytorch/issues/12831
+    # This is a hack for Windows
+    NUM_WORKERS = 0 if os.name == "nt" else 4
+
     train_loader = DataLoader(
         train_dataset,
         batch_size=args.batch_size,
         shuffle=True,
-        num_workers=4,
+        num_workers=NUM_WORKERS,
     )
 
     val_loader = DataLoader(
         val_dataset,
         batch_size=args.batch_size,
         shuffle=True,
-        num_workers=4,
+        num_workers=NUM_WORKERS,
     )
 
     test_loader = DataLoader(
         test_dataset,
         batch_size=args.batch_size,
         shuffle=True,
-        num_workers=4,
+        num_workers=NUM_WORKERS,
     )
 
     if args.show_sample:
@@ -120,7 +132,7 @@ def main():
         print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
 
         metrics_history = pel.MetricsLogger()
-        progbar = pel.EnLitProgressBar(metrics_history)
+        progbar = pel.EnLitProgressBar()
         trainer = pl.Trainer(
             max_epochs=args.epochs, logger=metrics_history, callbacks=[progbar]
         )
@@ -139,7 +151,7 @@ def main():
         print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
 
         # run a validation on Model
-        trainer = pl.Trainer()
+        trainer = pl.Trainer(callbacks=[pel.EnLitProgressBar()])
         print(f"Validating on train-dateset...")
         trainer.validate(model, dataloaders=train_loader)
         print(f"Validating on val-dateset...")

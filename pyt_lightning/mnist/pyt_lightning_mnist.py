@@ -10,7 +10,7 @@ This code is meant for education purposes only & is not intended for
 commercial/production use!
 Use at your own risk!! I am not responsible if your CPU or GPU gets fried :D
 """
-import sys
+import sys, os
 import warnings
 
 # need Python >= 3.2 for pathlib
@@ -21,10 +21,16 @@ if sys.version_info < (3, 2,):
     raise ValueError(
         f"{__file__} required Python version >= 3.2. You are using Python "
         f"{platform.python_version}")
+
+# NOTE: @override decorator available from Python 3.12 onwards
+# Using override package which provides similar functionality in previous versions
+if sys.version_info < (3, 12,):
+    from overrides import override
+else:
+    from typing import override
 # fmt: on
 
 
-from typing import override
 import pathlib
 import logging.config
 
@@ -217,7 +223,7 @@ class MNISTModel(pel.EnLitModule):
         logits = self.forward(inputs)
         loss = self.loss_fn(logits, labels)
         acc = self.acc(logits, labels)
-        if dataset_name == "train":
+        if dataset_name in ["train", "val"]:
             self.log(
                 f"{dataset_name}_loss", loss, on_step=True, on_epoch=True, prog_bar=True
             )
@@ -236,25 +242,31 @@ def main():
 
     train_dataset, val_dataset, test_dataset = get_datasets()
 
+    # NOTE: Pytorch on Windows - DataLoader with num_workers > 0 is very slow
+    # looks like a known issue
+    # @see: https://github.com/pytorch/pytorch/issues/12831
+    # This is a hack for Windows
+    NUM_WORKERS = 0 if os.name == "nt" else 4
+
     train_loader = DataLoader(
         train_dataset,
         batch_size=args.batch_size,
         shuffle=True,
-        num_workers=4,
+        num_workers=NUM_WORKERS,
     )
 
     val_loader = DataLoader(
         val_dataset,
         batch_size=args.batch_size,
-        shuffle=True,
-        num_workers=4,
+        shuffle=False,
+        num_workers=NUM_WORKERS,
     )
 
     test_loader = DataLoader(
         test_dataset,
         batch_size=args.batch_size,
-        shuffle=True,
-        num_workers=4,
+        shuffle=False,
+        num_workers=NUM_WORKERS,
     )
 
     if args.show_sample:
@@ -274,7 +286,7 @@ def main():
         print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
 
         metrics_history = pel.MetricsLogger()
-        progbar = pel.EnLitProgressBar(metrics_history)
+        progbar = pel.EnLitProgressBar()
         trainer = pl.Trainer(
             max_epochs=args.epochs, logger=metrics_history, callbacks=[progbar]
         )
@@ -286,6 +298,8 @@ def main():
         metrics_history.plot_metrics("Model Performance")
         pel.save_model(model, MODEL_STATE_PATH)
         del model
+        del metrics_history
+        del progbar
 
     if args.eval:
         model = MNISTModel(NUM_CLASSES, args.lr)
@@ -294,7 +308,8 @@ def main():
         print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
 
         # run a validation on Model
-        trainer = pl.Trainer()
+        progbar = pel.EnLitProgressBar()
+        trainer = pl.Trainer(callbacks=[progbar])
         print(f"Validating on train-dataset...")
         trainer.validate(model, dataloaders=train_loader)
         print(f"Validating on val-dataset...")
@@ -302,6 +317,7 @@ def main():
         print(f"Validating on test-dataset...")
         trainer.validate(model, dataloaders=test_loader)
         del model
+        del progbar
 
     if args.pred:
         model = MNISTModel(NUM_CLASSES, args.lr)
@@ -334,6 +350,7 @@ def main():
                 grid_shape=(8, 8),
                 plot_title=f"Sample Predictions ({accu*100:.2f}% accuracy for sample)",
             )
+        del model
 
 
 if __name__ == "__main__":
