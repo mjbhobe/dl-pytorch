@@ -39,5 +39,6 @@ import pytorch_lightning as pl
 from .pel_module import EnLitModule
 from .metrics_logger import MetricsLogger
 from .pel_progbar import EnLitProgressBar
+from .dataset_utils import split_dataset
 from .utils import load_model, save_model, predict_module, predict_array
 from .cl_options import TrainingArgsParser, parse_command_line

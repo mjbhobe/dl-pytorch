@@ -32,54 +32,6 @@ from typing import Mapping, Any
 import torch
 import pytorch_lightning as pl
 
-# from .metrics_logger import MetricsLogger
-
-"""
-from pytorch_lightning.callbacks import TQDMProgressBar, Tqdm
-class EnLitProgressBar2(TQDMProgressBar):
-
-    # @see:https://stackoverflow.com/questions/54362541/how-to-change-tqdms-bar-size
-    # code to set width of tqdm progress bar (not entire width)
-    # here I am setting it to 30 chars {bar:30}
-    TRAIN_BAR_FORMAT = "{l_bar}{bar:30}{r_bar}{bar:-10b}"
-
-    def __init__(self):
-        super(EnLitProgressBar, self).__init__()
-
-    def update_progbar_metrics(
-        self,
-        progbar: Tqdm,
-        dataset_name: str,
-        outputs: torch.Tensor | Mapping[str, Any] | None,
-    ) -> None:
-        # metrics for the batch are in the outputs dict, like this
-        # outputs = {'loss':0.456, 'acc': 0.123, 'f1': 0.012}
-        dset = "val_" if dataset_name == "val" else ""
-        metrics = {
-            # display all metrics that start with val_
-            f"{dset}{k}": v.item()
-            for k, v in outputs.items()  # trainer.callback_metrics.items()
-            # if k.startswith("val_")
-        }
-        od = OrderedDict(metrics)
-        progbar.set_postfix(ordered_dict=od)
-
-    @override
-    def init_train_tqdm(self) -> Tqdm:
-        # Create our custom tqdm bar for training.
-        return Tqdm(
-            desc=self.train_description,
-            position=0,
-            disable=self.is_disabled,
-            leave=True,
-            dynamic_ncols=True,
-            file=sys.stdout,
-            smoothing=0,
-            # I have my own bar format, else same as super() params
-            bar_format=self.TRAIN_BAR_FORMAT,
-        )
-"""
-
 
 class EnLitProgressBar(pl.callbacks.ProgressBar):
     def __init__(self):
@@ -234,15 +186,6 @@ class EnLitProgressBar(pl.callbacks.ProgressBar):
     ) -> None:
         if self.test_bar:
             self.test_bar.update(1)
-            # # outputs has the metrics to use, like {"loss":0.432, "acc":0.012}
-            # metrics = {
-            #     # display all metrics that start with val_
-            #     f"val_{k}": v.item()
-            #     for k, v in outputs.items()  # trainer.callback_metrics.items()
-            #     # if k.startswith("val_")
-            # }
-            # od = OrderedDict(metrics)
-            # self.val_bar.set_postfix(ordered_dict=od)
             self.update_progbar_metrics(self.val_bar, "", outputs)
 
     def on_test_epoch_end(
