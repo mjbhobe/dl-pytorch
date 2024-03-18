@@ -81,3 +81,9 @@ class EnLitModule(pl.LightningModule):
     def predict_step(self, batch, batch_idx, dataloader_idx=0):
         """run predictions on a batch"""
         return self.forward(batch)
+
+
+if __name__ == "__main__":
+    raise RuntimeError(
+        "FATAL ERROR: this is a re-useable functions module. Cannot run it independently."
+    )

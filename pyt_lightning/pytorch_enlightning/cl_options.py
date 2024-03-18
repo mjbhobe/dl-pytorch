@@ -1,6 +1,7 @@
 """
 cmd_opts.py - parse command line options
 """
+
 import argparse
 import logging
 
@@ -71,7 +72,8 @@ class TrainingArgsParser(argparse.ArgumentParser):
             "--eval",
             dest="eval",
             action="store_true",
-            help="Flag that specifies that model should validate performance against a dataset " "(default=False)",
+            help="Flag that specifies that model should validate performance against a dataset "
+            "(default=False)",
         )
         self.set_defaults(eval=False)
 
@@ -81,7 +83,8 @@ class TrainingArgsParser(argparse.ArgumentParser):
             "--pred",
             dest="pred",
             action="store_true",
-            help="Flag that specifies that model should run predictions on test data (" "default=True)",
+            help="Flag that specifies that model should run predictions on test data ("
+            "default=True)",
         )
         self.set_defaults(pred=False)
 
@@ -96,20 +99,6 @@ class TrainingArgsParser(argparse.ArgumentParser):
             help="Flag that specefies that a sample from dataset should be shown (default=False)",
         )
         self.set_defaults(show_sample=False)
-
-        # self.add_argument(
-        #     "--use_cnn",
-        #     dest="use_cnn",
-        #     action="store_true",
-        #     help="Flag to choose CNN model over ANN",
-        # )
-        # self.add_argument(
-        #     "--no-use_cnn",
-        #     dest="use_cnn",
-        #     action="store_false",
-        #     help="Flag to choose ANN model over CNN",
-        # )
-        # self.set_defaults(use_cnn=False)
 
         # epochs
         self.add_argument(
@@ -197,7 +186,8 @@ def parse_command_line(help_banner=""):
         "--eval",
         dest="eval",
         action="store_true",
-        help="Flag that specifies that model should validate performance against a dataset (" "default=False)",
+        help="Flag that specifies that model should validate performance against a dataset ("
+        "default=False)",
     )
     parser.set_defaults(eval=False)
 
@@ -281,3 +271,9 @@ def parse_command_line(help_banner=""):
     logger.info(f"  - args.l2_reg {args.l2_reg:,.5f}")
 
     return args
+
+
+if __name__ == "__main__":
+    raise RuntimeError(
+        "FATAL ERROR: this is a re-useable functions module. Cannot run it independently."
+    )

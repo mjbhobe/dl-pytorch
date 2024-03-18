@@ -1,6 +1,7 @@
 """
 utils.py - utility functions
 """
+
 import os
 import pathlib
 import numpy as np
@@ -50,7 +51,9 @@ def save_model(model: nn.Module, model_save_path: str, verbose: bool = True):
         )
 
 
-def load_model(model: nn.Module, model_state_dict_path: str, verbose: bool = True) -> nn.Module:
+def load_model(
+    model: nn.Module, model_state_dict_path: str, verbose: bool = True
+) -> nn.Module:
     """loads model's state dict from file on disk
     @params:
         - model: instance of model derived from nn.Module
@@ -64,7 +67,9 @@ def load_model(model: nn.Module, model_state_dict_path: str, verbose: bool = Tru
     # convert model_state_dict_path to absolute path
     model_save_path = pathlib.Path(model_state_dict_path).absolute()
     if not os.path.exists(model_save_path):
-        raise IOError(f"ERROR: can't load model from {model_state_dict_path} - file does not exist!")
+        raise IOError(
+            f"ERROR: can't load model from {model_state_dict_path} - file does not exist!"
+        )
 
     # load state dict from path
     state_dict = torch.load(model_save_path)
@@ -94,7 +99,9 @@ def predict_array(
         NOTE: to convert to classes use np.max(...,axis=1) after this call.
     """
     try:
-        assert isinstance(model, nn.Module), "predict() works with instances of nn.Module only!"
+        assert isinstance(
+            model, nn.Module
+        ), "predict() works with instances of nn.Module only!"
         assert (isinstance(data, np.ndarray)) or (
             isinstance(data, torch.Tensor)
         ), "data must be an instance of Numpy ndarray or torch.tensor"
@@ -117,7 +124,9 @@ def predict_array(
 
 def predict_module(
     model: nn.Module,
-    dataset: Union[NumpyArrayTuple, torch.utils.data.Dataset, torch.utils.data.DataLoader],
+    dataset: Union[
+        NumpyArrayTuple, torch.utils.data.Dataset, torch.utils.data.DataLoader
+    ],
     device: torch.device,
     batch_size: int = 64,
     num_iters=-1,
@@ -151,12 +160,18 @@ def predict_module(
             if isinstance(dataset, tuple):
                 X = torch.from_numpy(dataset[0]).type(torch.FloatTensor)
                 y = torch.from_numpy(dataset[1]).type(
-                    torch.LongTensor if dataset[1].dtype in [np.dtype(int)] else torch.FloatTensor
+                    torch.LongTensor
+                    if dataset[1].dtype in [np.dtype(int)]
+                    else torch.FloatTensor
                 )
                 dataset = torch.utils.data.TensorDataset(X, y)
-                loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=False)
+                loader = torch.utils.data.DataLoader(
+                    dataset, batch_size=batch_size, shuffle=False
+                )
             elif isinstance(dataset, torch.utils.data.Dataset):
-                loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=False)
+                loader = torch.utils.data.DataLoader(
+                    dataset, batch_size=batch_size, shuffle=False
+                )
             elif isinstance(dataset, torch.utils.data.DataLoader):
                 loader = dataset
             else:
@@ -181,3 +196,9 @@ def predict_module(
             return (np.array(preds), np.array(actuals))
     finally:
         model = model.to("cpu")
+
+
+if __name__ == "__main__":
+    raise RuntimeError(
+        "FATAL ERROR: this is a re-useable functions module. Cannot run it independently."
+    )

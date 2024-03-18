@@ -210,3 +210,9 @@ class EnLitProgressBar(pl.callbacks.ProgressBar):
         self.val_bar = None
         self.test_bar = None
         self.enabled = False
+
+
+if __name__ == "__main__":
+    raise RuntimeError(
+        "FATAL ERROR: this is a re-useable functions module. Cannot run it independently."
+    )

@@ -1,9 +1,17 @@
 # -*- coding: utf-8 -*-
 """
 * pytorch_enlightning: Pytorch En(hanced)-Lightning Library
-*   functions and procedures to further enhance Pytorch Lightning experience
+*   functions and procedures to address some 'limitations' of the Pytorch 
+*   Lightning library. The issues addressed here are:
+*   1. You normally land up writing the same code in the training_step,
+       validation_step and test_step functions of class derived from LightningModule
+       This class provides a `process_batch` function where you can write this
+       common code.
+    2. Custom progress bars that report Keras-like metrics and display epoch-wise
+       progress. Lightning shows only one bar & previous epoch metrics are not displayed
+    3. Logging & displaying plots of metrics across epochs
 *
-* @author: Manish Bhobe
+* @author: Manish Bhobe for Nämostuté Ltd.
 * My experiments with Python, Data Science & Deep Learning
 * The code is made available for illustration purposes only.
 * Use at your own risk!!
