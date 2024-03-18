@@ -12,7 +12,6 @@ Use at your own risk!! I am not responsible if your CPU or GPU gets fried :D
 import sys
 import warnings
 import pathlib
-import logging
 import logging.config
 
 BASE_PATH = pathlib.Path(__file__).parent.parent
@@ -23,34 +22,33 @@ logging.config.fileConfig(fname=BASE_PATH / "logging.config")
 
 import os, pathlib, shutil
 import opendatasets as od
-from PIL import Image
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-from sklearn.metrics import confusion_matrix
-from sklearn.model_selection import train_test_split
 
 # tweaks for libraries
-plt.style.use("seaborn")
+plt.style.use("seaborn-v0_8")
 sns.set(style="whitegrid", font_scale=1.1, palette="muted")
 
 # Pytorch imports
-import torch
-from torchvision import datasets, transforms
+from torchvision import transforms
 from torchvision.datasets import ImageFolder
-from torch.utils.data import Dataset, DataLoader
 
 logger = logging.getLogger(__name__)
 
 
-def get_datasets(download_path, force_download=False, force_recreate=False, random_state=42):
+def get_datasets(
+    download_path, force_download=False, force_recreate=False, random_state=42
+):
     dataset_url = "https://www.kaggle.com/c/histopathologic-cancer-detection"
     # download dataset from Kaggle using opendatasets
     # NOTE: save your kaggle.json file to local folder
     od.download(dataset_url, data_dir=download_path, force=force_download)
 
-    download_base_path = pathlib.Path(download_path) / "histopathologic-cancer-detection"
+    download_base_path = (
+        pathlib.Path(download_path) / "histopathologic-cancer-detection"
+    )
     downsample_base_path = download_base_path / "downsample"
     downsample_train_path = downsample_base_path / "train"
     downsample_eval_path = downsample_base_path / "eval"
@@ -61,10 +59,14 @@ def get_datasets(download_path, force_download=False, force_recreate=False, rand
         train_data_path = download_base_path / "train"
         test_data_path = download_base_path / "test"
         train_labels_file = download_base_path / "train_labels.csv"
-        
-        assert train_data_path.exists(), f"FATAL ERROR: {train_data_path} does not exist!"
+
+        assert (
+            train_data_path.exists()
+        ), f"FATAL ERROR: {train_data_path} does not exist!"
         assert test_data_path.exists(), f"FATAL ERROR: {test_data_path} does not exist!"
-        assert train_labels_file.exists(), f"FATAL ERROR: {train_labels_file} does not exist!"
+        assert (
+            train_labels_file.exists()
+        ), f"FATAL ERROR: {train_labels_file} does not exist!"
 
         np.random.seed(random_state)
         labels_df = pd.read_csv(str(train_labels_file))
@@ -76,34 +78,42 @@ def get_datasets(download_path, force_download=False, force_recreate=False, rand
         # we'll downsample 25,000 records and use 15,000 train, 8,000 cross-val and 2,000 test
         # downsample_size, num_train, num_valid, num_test = 25000, 15000, 8000, 2000
 
-        # ** new code ** 
+        # ** new code **
         # Since we are training on Colab (no data restrictions), we'll use all records
-        downsample_size = 75000 # len(labels_df)
+        downsample_size = 75000  # len(labels_df)
         num_test = int(10 * downsample_size / 100.0)
         num_valid = int(20 * downsample_size / 100.0)
-        num_train = downsample_size - (num_valid + num_test) 
-        logger.info(f"Trying to split data into {num_train} training, {num_valid} cross-val and {num_test} testing records")
+        num_train = downsample_size - (num_valid + num_test)
+        logger.info(
+            f"Trying to split data into {num_train} training, {num_valid} cross-val and {num_test} testing records"
+        )
 
         # downsample a subset of downsample_size using stratified sampling
         # downsample_df = labels_df.sample(n=downsample_size)
         f = (downsample_size * 1.0) / len(labels_df)
-        downsample_df = labels_df.groupby("label", group_keys=False).apply(lambda x: x.sample(frac=f))
+        downsample_df = labels_df.groupby("label", group_keys=False).apply(
+            lambda x: x.sample(frac=f)
+        )
 
         # split the subset into train, cross-val & test sets using stratified sampling
         # calculate correct fraction
         f = (num_train * 1.0) / len(downsample_df)
-        downsample_train_df = downsample_df.groupby("label", group_keys=False).apply(lambda x: x.sample(frac=f))
+        downsample_train_df = downsample_df.groupby("label", group_keys=False).apply(
+            lambda x: x.sample(frac=f)
+        )
         assert (
             len(downsample_train_df) == num_train
         ), f"FATAL: something wrong, expecting {num_train} records in train dataset, sampled {len(downsample_train_df)}"
-        
+
         downsample_rest_df = downsample_df.drop(downsample_train_df.index)
         f = (num_valid * 1.0) / len(downsample_rest_df)
-        downsample_eval_df = downsample_rest_df.groupby("label", group_keys=False).apply(lambda x: x.sample(frac=f))
+        downsample_eval_df = downsample_rest_df.groupby(
+            "label", group_keys=False
+        ).apply(lambda x: x.sample(frac=f))
         assert (
             len(downsample_eval_df) == num_valid
         ), f"FATAL: something wrong, expecting {num_valid} records in eval dataset, sampled {len(downsample_eval_df)}"
- 
+
         downsample_test_df = downsample_rest_df.drop(downsample_eval_df.index)
         assert (
             len(downsample_test_df) == num_test
@@ -116,14 +126,18 @@ def get_datasets(download_path, force_download=False, force_recreate=False, rand
         )
 
         if downsample_train_path.exists():
-            logger.info(f"Deleting existing training images from {downsample_train_path}...")
+            logger.info(
+                f"Deleting existing training images from {downsample_train_path}..."
+            )
             shutil.rmtree(downsample_train_path)
         # re-create the folders
         (downsample_train_path / "benign").mkdir(parents=True, exist_ok=True)
         (downsample_train_path / "malignant").mkdir(parents=True, exist_ok=True)
 
         if downsample_eval_path.exists():
-            logger.info(f"Deleting existing cross-val images from {downsample_eval_path}...")
+            logger.info(
+                f"Deleting existing cross-val images from {downsample_eval_path}..."
+            )
             shutil.rmtree(downsample_eval_path)
         # re-create the folders
         (downsample_eval_path / "benign").mkdir(parents=True, exist_ok=True)
@@ -140,7 +154,11 @@ def get_datasets(download_path, force_download=False, force_recreate=False, rand
         outcomes = ["benign", "malignant"]
         datasets = ["train", "eval", "test"]
         dataframes = [downsample_train_df, downsample_eval_df, downsample_test_df]
-        folder_paths = [downsample_train_path, downsample_eval_path, downsample_test_path]
+        folder_paths = [
+            downsample_train_path,
+            downsample_eval_path,
+            downsample_test_path,
+        ]
 
         from tqdm import trange
         from time import sleep
@@ -153,7 +171,9 @@ def get_datasets(download_path, force_download=False, force_recreate=False, rand
             for i in t:
                 image_file_name, outcome = df.iloc[i, 0], outcomes[df.iloc[i, 1]]
                 image_source_path = train_data_path / (image_file_name + ".tif")
-                assert image_source_path.exists(), f"FATAL: Source image {image_source_path} does not exist!"
+                assert (
+                    image_source_path.exists()
+                ), f"FATAL: Source image {image_source_path} does not exist!"
                 image_target_path = folder_path / outcome / (image_file_name + ".tif")
                 t.set_postfix({"Copying": f"{(image_file_name + '.tif')}"})
                 shutil.copy(image_source_path, image_target_path)
@@ -208,7 +228,13 @@ def get_datasets(download_path, force_download=False, force_recreate=False, rand
     val_dataset = ImageFolder(str(downsample_eval_path), transform=test_xforms)
     test_dataset = ImageFolder(str(downsample_test_path), transform=test_xforms)
 
-    return benign_image_count, malignant_image_count, train_dataset, val_dataset, test_dataset
+    return (
+        benign_image_count,
+        malignant_image_count,
+        train_dataset,
+        val_dataset,
+        test_dataset,
+    )
 
 
 def display_sample(
@@ -235,18 +261,6 @@ def display_sample(
 
     with sns.axes_style("whitegrid"):
         sns.set_context("notebook", font_scale=1.0)
-        # sns.set_style(
-        #     {
-        #         "font.sans-serif": [
-        #             "SF Pro Display",
-        #             "Segoe UI",
-        #             "Calibri",
-        #             "Arial",
-        #             "DejaVu Sans",
-        #             "Sans",
-        #         ],
-        #     }
-        # )
 
         f, ax = plt.subplots(
             num_rows,
@@ -274,7 +288,9 @@ def display_sample(
                     # but show the prediction in the title
                     title = ax[r, c].set_title(f"{LABELS[sample_labels[image_index]]}")
                 else:
-                    pred_matches_actual = sample_labels[image_index] == sample_predictions[image_index]
+                    pred_matches_actual = (
+                        sample_labels[image_index] == sample_predictions[image_index]
+                    )
                     if pred_matches_actual:
                         # show title from prediction or actual in green font
                         title = "%s" % LABELS[sample_predictions[image_index]]
@@ -298,7 +314,9 @@ def display_sample(
         plt.close()
 
 
-def plot_confusion_matrix(conf_matrix, font_size=10, fig_size=(4, 4), cmap=plt.cm.Blues):
+def plot_confusion_matrix(
+    conf_matrix, font_size=10, fig_size=(4, 4), cmap=plt.cm.Blues
+):
     """graphical plot of confusion matric"""
     fig, ax = plt.subplots(figsize=fig_size)
     ax.matshow(conf_matrix, cmap=cmap, alpha=0.3)

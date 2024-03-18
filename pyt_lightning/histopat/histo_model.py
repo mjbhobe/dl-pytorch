@@ -7,22 +7,32 @@ My experiments with Python, Machine Learning & Deep Learning.
 This code is meant for education purposes only & is not intended for commercial/production use!
 Use at your own risk!! I am not responsible if your CPU or GPU gets fried :D
 """
-import sys
+import sys, os
 import warnings
-from typing import override
-import pathlib
-import logging
-import logging.config
 
 warnings.filterwarnings("ignore")
 
-import pathlib
-import numpy as np
+# need Python >= 3.2 for pathlib
+# fmt: off
+if sys.version_info < (3, 2,):
+    import platform
+
+    raise ValueError(
+        f"{__file__} required Python version >= 3.2. You are using Python "
+        f"{platform.python_version}")
+
+# NOTE: @override decorator available from Python 3.12 onwards
+# Using override package which provides similar functionality in previous versions
+if sys.version_info < (3, 12,):
+    from overrides import override
+else:
+    from typing import override
+# fmt: on
+
 
 # Pytorch imports
 import torch
 import torch.nn as nn
-import pytorch_lightning as pl
 import torchmetrics
 
 # from base_model import BaseLightningModule

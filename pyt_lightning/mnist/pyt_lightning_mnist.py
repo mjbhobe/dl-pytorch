@@ -55,6 +55,7 @@ import torch.nn as nn
 from torchvision import datasets, transforms
 from torch.utils.data import Dataset, DataLoader
 import pytorch_lightning as pl
+from pytorch_lightning.callbacks import RichProgressBar
 import torchmetrics
 import torchsummary
 
@@ -202,6 +203,9 @@ class MNISTModel(pel.EnLitModule):
         self.acc = torchmetrics.classification.MulticlassAccuracy(
             num_classes=self.num_classes
         )
+        self.f1 = torchmetrics.classification.MulticlassF1Score(
+            num_classes=self.num_classes
+        )
 
         self.net = nn.Sequential(
             nn.Flatten(),
@@ -223,6 +227,7 @@ class MNISTModel(pel.EnLitModule):
         logits = self.forward(inputs)
         loss = self.loss_fn(logits, labels)
         acc = self.acc(logits, labels)
+        f1 = self.f1(logits, labels)
         if dataset_name in ["train", "val"]:
             self.log(
                 f"{dataset_name}_loss", loss, on_step=True, on_epoch=True, prog_bar=True
@@ -230,10 +235,14 @@ class MNISTModel(pel.EnLitModule):
             self.log(
                 f"{dataset_name}_acc", acc, on_step=True, on_epoch=True, prog_bar=True
             )
+            self.log(
+                f"{dataset_name}_f1", f1, on_step=True, on_epoch=True, prog_bar=True
+            )
         else:
             self.log(f"{dataset_name}_loss", loss, prog_bar=True)
             self.log(f"{dataset_name}_acc", acc, prog_bar=True)
-        return {"loss": loss, "acc": acc}
+            self.log(f"{dataset_name}_f1", f1, prog_bar=True)
+        return {"loss": loss, "acc": acc, "f1": f1}
 
 
 def main():
@@ -282,7 +291,7 @@ def main():
         )
 
     if args.train:
-        model = MNISTModel(NUM_CLASSES, args.lr)
+        model = MNISTModel(NUM_CLASSES, args.lr).to(DEVICE)
         print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
 
         metrics_history = pel.MetricsLogger()
@@ -302,7 +311,7 @@ def main():
         del progbar
 
     if args.eval:
-        model = MNISTModel(NUM_CLASSES, args.lr)
+        model = MNISTModel(NUM_CLASSES, args.lr).to(DEVICE)
         # print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
         model = pel.load_model(model, MODEL_STATE_PATH)
         print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
@@ -320,7 +329,7 @@ def main():
         del progbar
 
     if args.pred:
-        model = MNISTModel(NUM_CLASSES, args.lr)
+        model = MNISTModel(NUM_CLASSES, args.lr).to(DEVICE)
         # print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
         model = pel.load_model(model, MODEL_STATE_PATH)
         print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))

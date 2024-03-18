@@ -128,7 +128,7 @@ def main():
         )
 
     if args.train:
-        model = FashionMNISTModel(NUM_CHANNELS, NUM_CLASSES, args.lr)
+        model = FashionMNISTModel(NUM_CHANNELS, NUM_CLASSES, args.lr).to(DEVICE)
         print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
 
         metrics_history = pel.MetricsLogger()
@@ -146,7 +146,7 @@ def main():
         del model
 
     if args.eval:
-        model = FashionMNISTModel(NUM_CHANNELS, NUM_CLASSES, args.lr)
+        model = FashionMNISTModel(NUM_CHANNELS, NUM_CLASSES, args.lr).to(DEVICE)
         model = pel.load_model(model, MODEL_STATE_PATH)
         print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
 
@@ -162,7 +162,7 @@ def main():
 
     if args.pred:
         # predict from test_dataset
-        model = FashionMNISTModel(NUM_CHANNELS, NUM_CLASSES, args.lr)
+        model = FashionMNISTModel(NUM_CHANNELS, NUM_CLASSES, args.lr).to(DEVICE)
         model = pel.load_model(model, MODEL_STATE_PATH)
 
         preds, actuals = pel.predict_module(model, test_loader, DEVICE)

@@ -9,6 +9,8 @@
 # in both notebooks and scripts
 # @see: https://discourse.jupyter.org/t/find-out-if-my-code-runs-inside-a-notebook-or-jupyter-lab/6935/6
 # (solution by hx2A)
+import sys
+
 try:
     # __IPYTHON__ is defined in notebook session only!
     __IPYTHON__
@@ -16,12 +18,67 @@ try:
 except NameError:
     from tqdm import tqdm
 
+# fmt: off
+# NOTE: @override decorator available from Python 3.12 onwards
+# Using override package which provides similar functionality in previous versions
+if sys.version_info < (3, 12,):
+    from overrides import override
+else:
+    from typing import override
+# fmt: on
+
 from collections import OrderedDict
 from typing import Mapping, Any
 import torch
 import pytorch_lightning as pl
 
-from .metrics_logger import MetricsLogger
+# from .metrics_logger import MetricsLogger
+
+"""
+from pytorch_lightning.callbacks import TQDMProgressBar, Tqdm
+class EnLitProgressBar2(TQDMProgressBar):
+
+    # @see:https://stackoverflow.com/questions/54362541/how-to-change-tqdms-bar-size
+    # code to set width of tqdm progress bar (not entire width)
+    # here I am setting it to 30 chars {bar:30}
+    TRAIN_BAR_FORMAT = "{l_bar}{bar:30}{r_bar}{bar:-10b}"
+
+    def __init__(self):
+        super(EnLitProgressBar, self).__init__()
+
+    def update_progbar_metrics(
+        self,
+        progbar: Tqdm,
+        dataset_name: str,
+        outputs: torch.Tensor | Mapping[str, Any] | None,
+    ) -> None:
+        # metrics for the batch are in the outputs dict, like this
+        # outputs = {'loss':0.456, 'acc': 0.123, 'f1': 0.012}
+        dset = "val_" if dataset_name == "val" else ""
+        metrics = {
+            # display all metrics that start with val_
+            f"{dset}{k}": v.item()
+            for k, v in outputs.items()  # trainer.callback_metrics.items()
+            # if k.startswith("val_")
+        }
+        od = OrderedDict(metrics)
+        progbar.set_postfix(ordered_dict=od)
+
+    @override
+    def init_train_tqdm(self) -> Tqdm:
+        # Create our custom tqdm bar for training.
+        return Tqdm(
+            desc=self.train_description,
+            position=0,
+            disable=self.is_disabled,
+            leave=True,
+            dynamic_ncols=True,
+            file=sys.stdout,
+            smoothing=0,
+            # I have my own bar format, else same as super() params
+            bar_format=self.TRAIN_BAR_FORMAT,
+        )
+"""
 
 
 class EnLitProgressBar(pl.callbacks.ProgressBar):
@@ -45,7 +102,7 @@ class EnLitProgressBar(pl.callbacks.ProgressBar):
             # display all metrics that start with val_
             f"{dset}{k}": v.item()
             for k, v in outputs.items()  # trainer.callback_metrics.items()
-            # if k.startswith("val_")
+            # if not k.endswith("_epoch")
         }
         od = OrderedDict(metrics)
         progbar.set_postfix(ordered_dict=od)
@@ -55,15 +112,24 @@ class EnLitProgressBar(pl.callbacks.ProgressBar):
     ) -> None:
         """create progress bar to display progress as training loop progresses"""
         if self.enabled:
+            max_len = len(str(trainer.max_epochs))
+            progbar_desc = "Epoch %*d/%*d" % (
+                max_len,
+                trainer.current_epoch + 1,
+                max_len,
+                trainer.max_epochs,
+            )
             self.bar = tqdm(
                 total=self.total_train_batches,
-                desc=f"Epoch {trainer.current_epoch+1}/{trainer.max_epochs}",
+                desc=progbar_desc,  # f"Epoch {trainer.current_epoch+1}/{trainer.max_epochs}",
                 position=0,
                 leave=True,
                 # @see:https://stackoverflow.com/questions/54362541/how-to-change-tqdms-bar-size
                 # code to set width of tqdm progress bar (not entire width)
                 # here I am setting it to 30 chars {bar:30}
                 bar_format="{l_bar}{bar:30}{r_bar}{bar:-10b}",
+                # bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_noinv_fmt}{postfix}]",
+                # bar_format="{l_bar}{bar:30}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {postfix}]{bar:-10b}",
             )
             # self.running_loss = 0.0
 
@@ -78,18 +144,6 @@ class EnLitProgressBar(pl.callbacks.ProgressBar):
         """display batch metrics at the right of the progress bar at end of each batch"""
         if self.bar:
             self.bar.update(1)
-            # trainer.callback_metrics dict has all the metrics, for example the following
-            # ['train_acc', 'train_acc_step', 'train_loss', 'train_loss_step']
-            # metrics = {
-            #     # display all metrics that start with train & end with _step
-            #     # from train_acc_step, take "acc"
-            #     k.split("_")[1]: v.item()
-            #     for k, v in trainer.callback_metrics.items()
-            #     if k.startswith("train") and k.endswith("_step")
-            #     # and not k.endswith("_epoch")
-            # }
-            # od = OrderedDict(metrics)
-            # self.bar.set_postfix(ordered_dict=od)
             self.update_progbar_metrics(self.bar, "train", outputs)
 
     def on_train_epoch_end(
@@ -101,11 +155,10 @@ class EnLitProgressBar(pl.callbacks.ProgressBar):
             metrics = {
                 k: v.item()
                 for k, v in trainer.callback_metrics.items()
-                if not k.endswith("_step")
+                if not k.endswith("_step") and not k.endswith("_epoch")
             }
             od = OrderedDict(metrics)
             self.bar.set_postfix(ordered_dict=od)
-
             self.bar.close()
             self.bar = None
 
@@ -135,15 +188,7 @@ class EnLitProgressBar(pl.callbacks.ProgressBar):
     ) -> None:
         if self.val_bar:
             self.val_bar.update(1)
-            # # outputs has the metrics to use, like {"loss":0.432, "acc":0.012}
-            # metrics = {
-            #     # display all metrics that start with val_
-            #     f"val_{k}": v.item()
-            #     for k, v in outputs.items()  # trainer.callback_metrics.items()
-            #     # if k.startswith("val_")
-            # }
-            # od = OrderedDict(metrics)
-            # self.val_bar.set_postfix(ordered_dict=od)
+            # outputs has the metrics to use, like {"loss":0.432, "acc":0.012}
             self.update_progbar_metrics(self.val_bar, "val", outputs)
 
     def on_validation_epoch_end(
@@ -156,7 +201,7 @@ class EnLitProgressBar(pl.callbacks.ProgressBar):
                 # for training metrics, drop leading 'train'
                 (k.split("_")[1] if k.startswith("train") else k): v.item()
                 for k, v in trainer.callback_metrics.items()
-                if not k.endswith("_step")
+                if not k.endswith("_step") and not k.endswith("_epoch")
             }
             od = OrderedDict(metrics)
             self.bar.set_postfix(ordered_dict=od)
@@ -174,7 +219,7 @@ class EnLitProgressBar(pl.callbacks.ProgressBar):
                 leave=False,
                 # @see:https://stackoverflow.com/questions/54362541/how-to-change-tqdms-bar-size
                 # code to set width of tqdm progress bar (not entire width)
-                # here I am setting it to 50 chars {bar:50}
+                # here I am setting it to 40 chars {bar:50}
                 bar_format="{l_bar}{bar:40}{r_bar}{bar:-10b}",
             )
 
@@ -210,7 +255,7 @@ class EnLitProgressBar(pl.callbacks.ProgressBar):
                 # for training metrics, drop leading 'train'
                 (k.split("_")[1] if k.startswith("train") else k): v.item()
                 for k, v in trainer.callback_metrics.items()
-                if not k.endswith("_step")
+                if not k.endswith("_step") and not k.endswith("_epoch")
             }
             od = OrderedDict(metrics)
             self.bar.set_postfix(ordered_dict=od)

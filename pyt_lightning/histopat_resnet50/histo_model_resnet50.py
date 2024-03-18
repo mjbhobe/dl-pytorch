@@ -7,29 +7,50 @@ My experiments with Python, Machine Learning & Deep Learning.
 This code is meant for education purposes only & is not intended for commercial/production use!
 Use at your own risk!! I am not responsible if your CPU or GPU gets fried :D
 """
-import sys
+import sys, os
 import warnings
-import pathlib
-import logging
-import logging.config
 
 warnings.filterwarnings("ignore")
 
-import pathlib
-import numpy as np
+# need Python >= 3.2 for pathlib
+# fmt: off
+if sys.version_info < (3, 2,):
+    import platform
+
+    raise ValueError(
+        f"{__file__} required Python version >= 3.2. You are using Python "
+        f"{platform.python_version}")
+
+# NOTE: @override decorator available from Python 3.12 onwards
+# Using override package which provides similar functionality in previous versions
+if sys.version_info < (3, 12,):
+    from overrides import override
+else:
+    from typing import override
+# fmt: on
+
 
 # Pytorch imports
 import torch
 import torch.nn as nn
-import pytorch_lightning as pl
 import torchmetrics
+
+# from base_model import BaseLightningModule
+import pytorch_enlightning as pel
+
 from torchvision.models import resnet50
 
-from base_model import BaseLightningModule
 
-
-class HistoCancerModelResnet50(BaseLightningModule):
-    def __init__(self, num_benign, num_malignant, num_channels, num_classes, lr, weighted_loss=False):
+class HistoCancerModelResnet50(pel.EnLitModule):
+    def __init__(
+        self,
+        num_benign,
+        num_malignant,
+        num_channels,
+        num_classes,
+        lr,
+        weighted_loss=False,
+    ):
         super(HistoCancerModelResnet50, self).__init__()
 
         self.num_benign = num_benign
@@ -60,11 +81,9 @@ class HistoCancerModelResnet50(BaseLightningModule):
             self.loss_fn = nn.CrossEntropyLoss()
 
         # define metrics
-        self.acc = torchmetrics.classification.MulticlassAccuracy(num_classes=self.num_classes)
-
-    # NOTE: implemented in BaseLightningModule
-    # def forward(self, x):
-    #     return self.net(x)
+        self.acc = torchmetrics.classification.MulticlassAccuracy(
+            num_classes=self.num_classes
+        )
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.lr, weight_decay=0.0025)
@@ -76,26 +95,13 @@ class HistoCancerModelResnet50(BaseLightningModule):
         loss = self.loss_fn(logits, labels)
         acc = self.acc(logits, labels)
         if dataset_name == "train":
-            self.log(f"{dataset_name}_loss", loss, on_step=True, on_epoch=True, prog_bar=True)
-            self.log(f"{dataset_name}_acc", acc, on_step=True, on_epoch=True, prog_bar=True)
+            self.log(
+                f"{dataset_name}_loss", loss, on_step=True, on_epoch=True, prog_bar=True
+            )
+            self.log(
+                f"{dataset_name}_acc", acc, on_step=True, on_epoch=True, prog_bar=True
+            )
         else:
             self.log(f"{dataset_name}_loss", loss, prog_bar=True)
             self.log(f"{dataset_name}_acc", acc, prog_bar=True)
-        return loss, acc
-
-    # NOTE: implemented in BaseLightningModule
-    # def training_step(self, batch, batch_idx):
-    #     """training step"""
-    #     metrics = self.process_batch(batch, batch_idx, "train")
-    #     return metrics[0]
-
-    # NOTE: implemented in BaseLightningModule
-    # def validation_step(self, batch, batch_idx):
-    #     """cross-validation step"""
-    #     metrics = self.process_batch(batch, batch_idx, "val")
-    #     return metrics[0]
-
-    # NOTE: implemented in BaseLightningModule
-    # def predict_step(self, batch, batch_idx, dataloader_idx=0):
-    #     """run predictions on a batch"""
-    #     return self.forward(batch)
+        return {"loss": loss, "acc": acc}

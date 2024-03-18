@@ -9,21 +9,30 @@ My experiments with Python, Machine Learning & Deep Learning.
 This code is meant for education purposes only & is not intended for commercial/production use!
 Use at your own risk!! I am not responsible if your CPU or GPU gets fried :D
 """
-import sys, platform
+import sys, os
 import warnings
-import pathlib
-import logging
-import logging.config
 
 # need Python >= 3.2 for pathlib
 # fmt: off
 if sys.version_info < (3, 2,):
-    import platform 
+    import platform
 
     raise ValueError(
         f"{__file__} required Python version >= 3.2. You are using Python "
         f"{platform.python_version}")
+
+# NOTE: @override decorator available from Python 3.12 onwards
+# Using override package which provides similar functionality in previous versions
+if sys.version_info < (3, 12,):
+    from overrides import override
+else:
+    from typing import override
 # fmt: on
+
+
+import pathlib
+import logging.config
+
 
 BASE_PATH = pathlib.Path(__file__).parent.parent
 sys.path.append(str(BASE_PATH))
@@ -31,7 +40,6 @@ sys.path.append(str(BASE_PATH))
 warnings.filterwarnings("ignore")
 logging.config.fileConfig(fname=BASE_PATH / "logging.config")
 
-import pathlib
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -42,8 +50,11 @@ sns.set(style="whitegrid", font_scale=1.1, palette="muted")
 
 # Pytorch imports
 import torch
-from torch.utils.data import DataLoader
+import torch.nn as nn
+from torchvision import datasets, transforms
+from torch.utils.data import Dataset, DataLoader
 import pytorch_lightning as pl
+import torchmetrics
 import torchsummary
 
 print("Using Pytorch version: ", torch.__version__)
@@ -52,7 +63,7 @@ print("Using Pytorch Lightning version: ", pl.__version__)
 # fmt: off
 # my utility functions to use with lightning
 import pytorch_enlightning as pel
-print(f"Pytorch En(hanced) Lightning: {pel.__version__}")
+print(f"Pytorch En(hanced)Lightning: {pel.__version__}")
 # fmt: on
 
 SEED = pl.seed_everything()
@@ -84,25 +95,31 @@ def main():
 
     print(f"Label counts -> num_benign: {num_benign} - num_malignant: {num_malignant}")
 
+    # NOTE: Pytorch on Windows - DataLoader with num_workers > 0 is very slow
+    # looks like a known issue
+    # @see: https://github.com/pytorch/pytorch/issues/12831
+    # This is a hack for Windows
+    NUM_WORKERS = 0 if os.name == "nt" else 4
+
     train_loader = DataLoader(
         train_dataset,
         batch_size=args.batch_size,
         shuffle=True,
-        num_workers=4,
+        num_workers=NUM_WORKERS,
     )
 
     val_loader = DataLoader(
         val_dataset,
         batch_size=args.batch_size,
         shuffle=True,
-        num_workers=4,
+        num_workers=NUM_WORKERS,
     )
 
     test_loader = DataLoader(
         test_dataset,
         batch_size=args.batch_size,
         shuffle=True,
-        num_workers=4,
+        num_workers=NUM_WORKERS,
     )
 
     if args.show_sample:
@@ -120,11 +137,11 @@ def main():
     if args.train:
         model = HistoCancerModel(
             num_benign, num_malignant, NUM_CHANNELS, NUM_CLASSES, args.lr
-        )
+        ).to(DEVICE)
         print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
 
         metrics_history = pel.MetricsLogger()
-        progbar = pel.EnLitProgressBar(metrics_history)
+        progbar = pel.EnLitProgressBar()
         trainer = pl.Trainer(
             max_epochs=args.epochs, logger=metrics_history, callbacks=[progbar]
         )
@@ -137,16 +154,18 @@ def main():
         pel.save_model(model, MODEL_STATE_PATH)
         metrics_history.plot_metrics(title="Model Performance - Metrics Plot")
         del model
+        del progbar
+        del metrics_history
 
     if args.eval:
         model = HistoCancerModel(
             num_benign, num_malignant, NUM_CHANNELS, NUM_CLASSES, args.lr
-        )
+        ).to(DEVICE)
         model = pel.load_model(model, MODEL_STATE_PATH)
         print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
 
         # run a validation on Model
-        trainer = pl.Trainer()
+        trainer = pl.Trainer(callbacks=[pel.EnLitProgressBar()])
         print(f"Validating on train-dataset...")
         trainer.validate(model, dataloaders=train_loader)
         print(f"Validating on val-dataset...")
@@ -159,7 +178,7 @@ def main():
     if args.pred:
         model = HistoCancerModel(
             num_benign, num_malignant, NUM_CHANNELS, NUM_CLASSES, args.lr
-        )
+        ).to(DEVICE)
         model = pel.load_model(model, MODEL_STATE_PATH)
         print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
 

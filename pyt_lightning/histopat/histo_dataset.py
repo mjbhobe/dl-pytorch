@@ -11,7 +11,6 @@ Use at your own risk!! I am not responsible if your CPU or GPU gets fried :D
 import sys
 import warnings
 import pathlib
-import logging
 import logging.config
 
 BASE_PATH = pathlib.Path(__file__).parent.parent
@@ -22,24 +21,18 @@ logging.config.fileConfig(fname=BASE_PATH / "logging.config")
 
 import os, pathlib, shutil
 import opendatasets as od
-from zipfile import ZipFile
-from PIL import Image
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-from sklearn.metrics import confusion_matrix
-from sklearn.model_selection import train_test_split
 
 # tweaks for libraries
 plt.style.use("seaborn-v0_8")
 sns.set(style="whitegrid", font_scale=1.1, palette="muted")
 
 # Pytorch imports
-import torch
-from torchvision import datasets, transforms
+from torchvision import transforms
 from torchvision.datasets import ImageFolder
-from torch.utils.data import Dataset, DataLoader
 
 logger = logging.getLogger(__name__)
 
