@@ -155,7 +155,7 @@ def main():
 
     # load the dataset
     dataset = BankNotesDataset(DATA_FILE_PATH)
-    print(f"Loaded {len(dataset)} records", flush=True)
+    logging.info(f"Loaded {len(dataset)} records", flush=True)
     # set aside 10% as test dataset
     train_dataset, test_dataset = pel.split_dataset(dataset, split_perc=0.1)
     train_dataset, val_dataset = pel.split_dataset(train_dataset, split_perc=0.2)
