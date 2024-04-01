@@ -218,13 +218,17 @@ class MNISTModel(pel.EnLitModule):
             nn.Linear(64, self.num_classes),
         )
 
+    @override
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
         return optimizer
 
+    @override
     def process_batch(self, batch, batch_idx, dataset_name):
         inputs, labels = batch
         logits = self.forward(inputs)
+
+        # calculate metrics
         loss = self.loss_fn(logits, labels)
         acc = self.acc(logits, labels)
         f1 = self.f1(logits, labels)
@@ -236,22 +240,9 @@ class MNISTModel(pel.EnLitModule):
         }
 
         if dataset_name in ["train", "val"]:
-            # self.log_dict({'val_loss': loss, 'val_acc': val_acc})
             self.log_dict(metrics_dict, on_step=True, on_epoch=True, prog_bar=True)
-            # self.log(
-            #     f"{dataset_name}_loss", loss, on_step=True, on_epoch=True, prog_bar=True
-            # )
-            # self.log(
-            #     f"{dataset_name}_acc", acc, on_step=True, on_epoch=True, prog_bar=True
-            # )
-            # self.log(
-            #     f"{dataset_name}_f1", f1, on_step=True, on_epoch=True, prog_bar=True
-            # )
         else:
             self.log_dict(metrics_dict, prog_bar=True)
-            # self.log(f"{dataset_name}_loss", loss, prog_bar=True)
-            # self.log(f"{dataset_name}_acc", acc, prog_bar=True)
-            # self.log(f"{dataset_name}_f1", f1, prog_bar=True)
         return {"loss": loss, "acc": acc, "f1": f1}
 
 

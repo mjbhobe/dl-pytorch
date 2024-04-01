@@ -94,14 +94,21 @@ class HistoCancerModelResnet50(pel.EnLitModule):
         logits = self.forward(inputs)
         loss = self.loss_fn(logits, labels)
         acc = self.acc(logits, labels)
+        metrics_dict = {
+            f"{dataset_name}_loss": loss,
+            f"{dataset_name}_acc": acc,
+        }
+
         if dataset_name == "train":
-            self.log(
-                f"{dataset_name}_loss", loss, on_step=True, on_epoch=True, prog_bar=True
-            )
-            self.log(
-                f"{dataset_name}_acc", acc, on_step=True, on_epoch=True, prog_bar=True
-            )
+            self.log_dict(metrics_dict, on_step=True, on_epoch=True, prog_bar=True)
+            # self.log(
+            #     f"{dataset_name}_loss", loss, on_step=True, on_epoch=True, prog_bar=True
+            # )
+            # self.log(
+            #     f"{dataset_name}_acc", acc, on_step=True, on_epoch=True, prog_bar=True
+            # )
         else:
-            self.log(f"{dataset_name}_loss", loss, prog_bar=True)
-            self.log(f"{dataset_name}_acc", acc, prog_bar=True)
+            self.log_dict(metrics_dict, prog_bar=True)
+            # self.log(f"{dataset_name}_loss", loss, prog_bar=True)
+            # self.log(f"{dataset_name}_acc", acc, prog_bar=True)
         return {"loss": loss, "acc": acc}

@@ -8,6 +8,7 @@ My experiments with Python, Machine Learning & Deep Learning.
 This code is meant for education purposes only & is not intended for commercial/production use!
 Use at your own risk!! I am not responsible if your CPU or GPU gets fried :D
 """
+import sys
 import warnings
 
 warnings.filterwarnings("ignore")
@@ -15,6 +16,15 @@ warnings.filterwarnings("ignore")
 # Pytorch imports
 from pytorch_lightning.utilities.types import STEP_OUTPUT
 import pytorch_lightning as pl
+
+# fmt: off
+# NOTE: @override decorator available from Python 3.12 onwards
+# Using override package which provides similar functionality in previous versions
+if sys.version_info < (3, 12):
+    from overrides import override
+else:
+    from typing import override
+# fmt: on
 
 
 class EnLitModule(pl.LightningModule):
@@ -40,6 +50,7 @@ class EnLitModule(pl.LightningModule):
         self.net = None
         """ you should overload this method in derived class & implement specifics"""
 
+    @override
     def forward(self, x):
         if self.net is None:
             raise RuntimeError(
@@ -49,6 +60,7 @@ class EnLitModule(pl.LightningModule):
             )
         return self.net(x)
 
+    @override
     def configure_optimizers(self):
         """you should overload this function in derived class & implement specifics"""
         raise RuntimeError(
@@ -63,21 +75,25 @@ class EnLitModule(pl.LightningModule):
             f"Did you forget to overload process_batch() in your derived class?"
         )
 
+    @override
     def training_step(self, batch, batch_idx) -> STEP_OUTPUT:
         """training step"""
         metrics = self.process_batch(batch, batch_idx, "train")
         return metrics
 
+    @override
     def validation_step(self, batch, batch_idx) -> STEP_OUTPUT:
         """cross-validation step"""
         metrics = self.process_batch(batch, batch_idx, "val")
         return metrics
 
+    @override
     def test_step(self, batch, batch_idx) -> STEP_OUTPUT:
         """cross-validation step"""
         metrics = self.process_batch(batch, batch_idx, "test")
         return metrics
 
+    @override
     def predict_step(self, batch, batch_idx, dataloader_idx=0):
         """run predictions on a batch"""
         return self.forward(batch)

@@ -8,24 +8,38 @@ My experiments with Python, Machine Learning & Deep Learning.
 This code is meant for education purposes only & is not intended for commercial/production use!
 Use at your own risk!! I am not responsible if your CPU or GPU gets fried :D
 """
-import sys
+import sys, os
 import warnings
+
+# need Python >= 3.2 for pathlib
+# fmt: off
+if sys.version_info < (3, 2,):
+    import platform
+
+    raise ValueError(
+        f"{__file__} required Python version >= 3.2. You are using Python "
+        f"{platform.python_version}")
+
+# NOTE: @override decorator available from Python 3.12 onwards
+# Using override package which provides similar functionality in previous versions
+if sys.version_info < (3, 12,):
+    from overrides import override
+else:
+    from typing import override
+# fmt: on
+
+
 import pathlib
-import logging
 import logging.config
+
 
 BASE_PATH = pathlib.Path(__file__).parent.parent
 sys.path.append(str(BASE_PATH))
 
 warnings.filterwarnings("ignore")
-# logging.config.fileConfig(fname=pathlib.Path(__file__).parent / "logging.config")
 logging.config.fileConfig(fname=BASE_PATH / "logging.config")
 
-import sys
-import os
-import pathlib
-import argparse
-from PIL import Image
+import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
@@ -35,41 +49,45 @@ sns.set(style="whitegrid", font_scale=1.1, palette="muted")
 
 # Pytorch imports
 import torch
-import torch.nn as nn
+from torch import Tensor
 from torch.autograd import Variable
-from torch.utils.data import Dataset, DataLoader
+import torch.nn as nn
+from torch.utils.data import DataLoader
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint
 
-from cmd_opts import parse_command_line
-
-
 print("Using Pytorch version: ", torch.__version__)
 print("Using Pytorch Lightning version: ", pl.__version__)
+
+# fmt: off
+# my utility functions to use with lightning
+import pytorch_enlightning as pel
+print(f"Pytorch En(hanced)Lightning: {pel.__version__}")
+# fmt: on
 
 SEED = pl.seed_everything()
 
 logger = logging.getLogger(__name__)
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-logger.info(f"Training model on {DEVICE}")
+MODEL_STATE_NAME = "pyt_xor_model.pth"
+MODEL_STATE_PATH = pathlib.Path(__file__).parent / "model_state" / MODEL_STATE_NAME
 
 
 def get_data_loader():
     # generate dataset for XoR data
     xor_inputs = [
-        Variable(torch.Tensor([0, 0])),
-        Variable(torch.Tensor([0, 1])),
-        Variable(torch.Tensor([1, 0])),
-        Variable(torch.Tensor([1, 1])),
+        Variable(Tensor([0, 0])),
+        Variable(Tensor([0, 1])),
+        Variable(Tensor([1, 0])),
+        Variable(Tensor([1, 1])),
     ]
 
     xor_labels = [
-        Variable(torch.Tensor([0])),
-        Variable(torch.Tensor([1])),
-        Variable(torch.Tensor([1])),
-        Variable(torch.Tensor([0])),
+        Variable(Tensor([0])),
+        Variable(Tensor([1])),
+        Variable(Tensor([1])),
+        Variable(Tensor([0])),
     ]
 
     xor_data = list(zip(xor_inputs, xor_labels))
@@ -78,7 +96,7 @@ def get_data_loader():
 
 
 # our model
-class XORModel(pl.LightningModule):
+class XORModel(pel.EnLitModule):
     def __init__(self):
         super(XORModel, self).__init__()
 
@@ -90,30 +108,65 @@ class XORModel(pl.LightningModule):
         )
         self.loss_fn = nn.MSELoss()
 
-    def forward(self, x):
-        return self.net(x)
-
+    @override
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=0.01)
         return optimizer
 
-    def training_step(self, batch, batch_idx):
+    @override
+    def process_batch(self, batch, batch_idx, dataset_name):
         xor_inputs, xor_labels = batch
         logits = self.forward(xor_inputs)
         loss = self.loss_fn(logits, xor_labels)
-        self.log("loss", loss, prog_bar=True)
-        return loss
+        metrics_dict = {
+            f"{dataset_name}_loss": loss,
+        }
+        self.log_dict(metrics_dict, on_step=True, on_epoch=True, prog_bar=True)
+        return {"loss": loss}
+
+    # @override
+    # def training_step(self, batch, batch_idx):
+    #     xor_inputs, xor_labels = batch
+    #     logits = self.forward(xor_inputs)
+    #     loss = self.loss_fn(logits, xor_labels)
+    #     self.log("loss", loss, prog_bar=True)
+    #     return loss
 
 
 def main():
-    args = parse_command_line()
-    model = XORModel()
-    checkpoint_callback = ModelCheckpoint()
+    parser = pel.TrainingArgsParser()
+    args = parser.parse_args()
 
-    trainer = pl.Trainer(
-        max_epochs=args.epochs,
-    )
-    trainer.fit(model, train_dataloaders=get_data_loader())
+    if args.train:
+        model = XORModel().to(DEVICE)
+        checkpoint_callback = ModelCheckpoint()
+
+        metrics_history = pel.MetricsLogger()
+        progbar = pel.EnLitProgressBar()
+        trainer = pl.Trainer(
+            max_epochs=args.epochs,
+            logger=metrics_history,
+            callbacks=[progbar, checkpoint_callback],
+        )
+
+        trainer.fit(model, train_dataloaders=get_data_loader())
+        metrics_history.plot_metrics("Model Performance")
+        pel.save_model(model, MODEL_STATE_PATH)
+        # test the accuracy
+        print(f"Test results: {trainer.test(model, dataloaders=get_data_loader())}")
+        del model
+        del metrics_history
+        del progbar
+
+    if args.pred:
+        model = XORModel().to(DEVICE)
+        model = pel.load_model(model, MODEL_STATE_PATH)
+        print(model)
+        preds, actuals = pel.predict_module(model, get_data_loader(), DEVICE)
+        preds = np.argmax(preds, axis=1)
+        print(f"Actuals: {actuals.ravel()}")
+        print(f"Preds: {actuals.ravel()}")
+        del model
 
 
 if __name__ == "__main__":
