@@ -82,6 +82,7 @@ class EnLitProgressBar(pl.callbacks.ProgressBar):
                 bar_format="{l_bar}{bar:30}{r_bar}{bar:-10b}",
                 # bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_noinv_fmt}{postfix}]",
                 # bar_format="{l_bar}{bar:30}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {postfix}]{bar:-10b}",
+                colour="089981",  # green
             )
             # self.running_loss = 0.0
 
