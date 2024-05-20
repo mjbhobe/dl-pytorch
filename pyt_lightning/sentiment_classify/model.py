@@ -25,7 +25,9 @@ import pytorch_enlightning as pel
 class ImdbModel(pel.EnLitModule):
     """our sentiment classification model"""
 
-    def __init__(self, vocab_size, out_classes, lr=1e-3, l2_reg=0.0):
+    def __init__(
+        self, vocab_size, out_classes, num_epochs, steps_per_epoch, lr=1e-3, l2_reg=0.0
+    ):
         super(ImdbModel, self).__init__()
 
         self.net = nn.Sequential(
@@ -48,6 +50,8 @@ class ImdbModel(pel.EnLitModule):
 
         self.lr = lr
         self.l2_reg = l2_reg
+        self.num_epochs = num_epochs
+        self.steps_per_epoch = steps_per_epoch
         self.loss_fn = nn.BCELoss()
         self.acc = torchmetrics.classification.BinaryAccuracy()
 
@@ -58,14 +62,21 @@ class ImdbModel(pel.EnLitModule):
         optimizer = torch.optim.Adam(
             self.parameters(), lr=self.lr, weight_decay=self.l2_reg
         )
-        return optimizer
+        scheduler = torch.optim.lr_scheduler.OneCycleLR(
+            optimizer,
+            max_lr=0.01,
+            epochs=self.num_epochs,
+            steps_per_epoch=self.steps_per_epoch,
+        )
+        scheduler_dict = {"scheduler": scheduler, "interval": "epoch"}
+        return {"optimizer": optimizer, "lr_scheduler": scheduler_dict}
 
     def process_batch(self, batch, batch_idx, dataset_name):
         inputs, labels = batch
         logits = self.forward(inputs)
         loss = self.loss_fn(logits, labels)
         acc = self.acc(logits, labels)
-        metrics = {f"{dataset_name}_loss": loss, f"{dataset_name}_acc": acc}
+        #  metrics = {f"{dataset_name}_loss": loss, f"{dataset_name}_acc": acc}
         if dataset_name == "train":
             self.log(
                 f"{dataset_name}_loss", loss, on_step=True, on_epoch=True, prog_bar=True

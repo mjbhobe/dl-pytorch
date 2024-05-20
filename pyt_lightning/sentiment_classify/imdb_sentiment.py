@@ -116,8 +116,12 @@ def main():
         num_workers=NUM_WORKERS,
     )
 
+    steps_per_epoch = len(train_dataset) // args.batch_size
+
     if args.train:
-        model = ImdbModel(VOCAB_SIZE, 1, args.lr, args.l2_reg).to(DEVICE)
+        model = ImdbModel(
+            VOCAB_SIZE, 1, args.epochs, steps_per_epoch, args.lr, args.l2_reg
+        ).to(DEVICE)
         print(model)
         metrics_history = pel.MetricsLogger()
         progbar = pel.EnLitProgressBar()
@@ -134,7 +138,9 @@ def main():
         del model
 
     if args.eval:
-        model = ImdbModel(VOCAB_SIZE, 1, args.lr, args.l2_reg).to(DEVICE)
+        model = ImdbModel(
+            VOCAB_SIZE, 1, args.epochs, steps_per_epoch, args.lr, args.l2_reg
+        ).to(DEVICE)
         model = pel.load_model(model, MODEL_STATE_PATH)
 
         # run a validation on Model
@@ -149,7 +155,9 @@ def main():
 
     if args.pred:
         # predict from test_dataset
-        model = ImdbModel(VOCAB_SIZE, 1, args.lr, args.l2_reg).to(DEVICE)
+        model = ImdbModel(
+            VOCAB_SIZE, 1, args.epochs, steps_per_epoch, args.lr, args.l2_reg
+        ).to(DEVICE)
         model = pel.load_model(model, MODEL_STATE_PATH)
 
         preds, actuals = pel.predict_module(model, test_loader, DEVICE)
