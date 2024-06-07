@@ -54,17 +54,70 @@ DATA_PATH = pathlib.Path(__file__).parent.parent / "data"
 logger.info(f"Will train model on {DEVICE}")
 logger.info(f"DATA_PATH = {DATA_PATH}")
 
+MEANS, STDS = [0.5, 0.5, 0.5], [0.5, 0.5, 0.5]
+
+
+def get_mean_and_std():
+    # train_dataset = datasets.CIFAR10(
+    #     root=DATA_PATH,
+    #     train=True,
+    #     download=True,
+    #     transform=transforms.Compose([transforms.ToTensor()]),
+    # )
+
+    # # don't need shuffling for calculating mean & std
+    # train_loader = torch.utils.data.DataLoader(
+    #     train_dataset, batch_size=128, shuffle=False
+    # )
+
+    # imgs = None
+    # for batch in train_loader:
+    #     image_batch = batch[0]
+    #     if imgs is None:
+    #         # very first batch
+    #         imgs = image_batch.cpu()
+    #     else:
+    #         imgs = torch.cat([imgs, image_batch.cpu()], dim=0)
+
+    # imgs = imgs.numpy()
+    # means = np.mean(imgs, axis=(0, 1, 2, 3))
+    # stds = np.std(imgs, axis=(0, 1, 2, 3))
+    # return means, stds
+
+    # download as Numpy arrays
+    train_dataset = datasets.CIFAR10(
+        root=DATA_PATH,
+        train=True,
+        download=True,
+    )
+    data = train_dataset.data / 255.0
+    means = data.mean(axis=(0, 1, 2))
+    stds = data.std(axis=(0, 1, 2))
+    print(f"get_mean_and_std(): means: {means} - stds: {stds}", flush=True)
+    return means, stds
+
 
 def load_data(args):
     """
     load the data using datasets API. We also split the test_dataset into
     cross-val/test datasets using 80:20 ratio
     """
-    mean, std = 0.5, 0.5
+
+    # mean, std = 0.5, 0.5
+    # transformations = transforms.Compose(
+    #     [
+    #         transforms.ToTensor(),
+    #         transforms.Normalize(mean, std),
+    #     ]
+    # )
+
+    print("Calculating means & stds across all dimensions.")
+    MEANS, STDS = get_mean_and_std()
+
     transformations = transforms.Compose(
         [
             transforms.ToTensor(),
-            transforms.Normalize(mean, std),
+            transforms.Normalize(MEANS, STDS),
         ]
     )
 
@@ -74,7 +127,6 @@ def load_data(args):
         download=True,
         transform=transformations,
     )
-
     print(f"Size of downloaded training dataset: {len(train_dataset)}")
 
     test_dataset = datasets.CIFAR10(
@@ -85,11 +137,8 @@ def load_data(args):
     )
     print(f"Size of downloaded test dataset: {len(test_dataset)}")
 
-    # lets split the test dataset into val_dataset & test_dataset -> 8000:2000 records
-    # val_dataset, test_dataset = torch.utils.data.random_split(test_dataset, [8000, 2000])
-    val_dataset, test_dataset = t3.split_dataset(
-        test_dataset, split_perc=args.test_split
-    )
+    # split the train dataset into train/cross-val datasets
+    train_dataset, val_dataset = t3.split_dataset(train_dataset, split_perc=0.2)
     print("No of cross-val records: %d" % len(val_dataset))
     print("No of test records: %d" % len(test_dataset))
 
@@ -157,7 +206,7 @@ def display_sample(
                 ax[r, c].axis("off")
                 # de-normalize image
                 image = sample_images[image_index].transpose((1, 2, 0))
-                image = (image * 0.5) / 0.5
+                image = (image * STDS) + MEANS
 
                 # show selected image
                 # @see: https://stackoverflow.com/questions/49643907/clipping-input-data-to-the-valid-range-for-imshow-with-rgb-data-0-1-for-floa
@@ -205,34 +254,46 @@ def display_sample(
 IMAGE_HEIGHT, IMAGE_WIDTH, NUM_CHANNELS, NUM_CLASSES = 32, 32, 3, 10
 
 
-# define our network using Linear layers only
+# define our network using Conv2d and Linear layers
 class Cifar10Net(nn.Module):
     """our base model (using CNNs)"""
 
     def __init__(self):
+        # fmt: off
         super(Cifar10Net, self).__init__()
         self.net = nn.Sequential(
             # NOTE: t3.Conv2d(...) is almost the same as nn.Conv2d
             # the t3 version initialises weights & biases and uses padding=1 by default
             t3.Conv2d(3, 32, 3, padding=1),
             nn.ReLU(),
+            nn.BatchNorm2d(32),
+            t3.Conv2d(32, 32, 3, padding=1),
+            nn.ReLU(),
+            nn.BatchNorm2d(32),
             nn.MaxPool2d(2),
+            nn.Dropout(p=0.2),
+
             t3.Conv2d(32, 64, 3, padding=1),
             nn.ReLU(),
+            nn.BatchNorm2d(64),
+            t3.Conv2d(64, 64, 3, padding=1),
+            nn.ReLU(),
+            nn.BatchNorm2d(64),
             nn.MaxPool2d(2),
+            nn.Dropout(p=0.3),
+            
             t3.Conv2d(64, 128, 3, padding=1),
             nn.ReLU(),
+            nn.BatchNorm2d(128),
+            t3.Conv2d(128, 128, 3, padding=1),
+            nn.ReLU(),
             nn.MaxPool2d(2),
+            nn.Dropout(p=0.4),
+            
             nn.Flatten(),
-            nn.Dropout(0.30),
-            t3.Linear(4 * 4 * 128, 1024),
-            nn.ReLU(),
-            nn.Dropout(0.30),
-            t3.Linear(1024, 512),
-            nn.ReLU(),
-            nn.Dropout(0.30),
-            t3.Linear(512, NUM_CLASSES),
+            t3.Linear(4 * 4 * 128, NUM_CLASSES),
         )
+        # fmt: on
 
     def forward(self, x):
         return self.net(x)
@@ -274,7 +335,7 @@ def main():
 
     if args.show_sample:
         # display sample from test dataset
-        print("Displaying sample from train dataset...")
+        print("Displaying sample from test dataset...")
         testloader = torch.utils.data.DataLoader(
             test_dataset, batch_size=64, shuffle=True
         )
@@ -293,7 +354,7 @@ def main():
         # display Keras like summary
         print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
         # optimizer is required only during training!
-        optimizer = torch.optim.Adam(
+        optimizer = torch.optim.RMSprop(
             model.parameters(), lr=args.lr, weight_decay=args.l2_reg
         )
         # add L1 regularization & a learning scheduler
@@ -304,7 +365,7 @@ def main():
         early_stopping = t3.EarlyStopping(
             model,
             metrics_map,
-            using_val_dataset=True,
+            # using_val_dataset=True,
             monitor="val_loss",
             patience=5,
         )
@@ -313,8 +374,8 @@ def main():
             optimizer,
             train_dataset,
             validation_dataset=val_dataset,
-            lr_scheduler=scheduler,
-            early_stopping=early_stopping,
+            # lr_scheduler=scheduler,
+            # early_stopping=early_stopping,
             logger=logger,
         )
         # display the tracked metrics
@@ -391,8 +452,8 @@ if __name__ == "__main__":
 # ---------------------------------------------------------
 # Results:
 #   CNN with epochs=25, batch-size=128, LR=0.001
-#       Training  -> acc: 89.75%
-#       Cross-val -> acc: 80.13%
-#       Testing   -> acc: 79.16%
+#       Training  -> loss: 0.2491 acc: 91.56%
+#       Cross-val -> loss: 0.4536 acc: 83.75%
+#       Testing   -> loss: 0.4723 acc: 83.44%
 # The model is overfitting & under-performing
 # --------------------------------------------------
