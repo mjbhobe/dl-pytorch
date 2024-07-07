@@ -1,0 +1,2783 @@
+<!DOCTYPE html>
+
+<html id="XF" lang="en-US" dir="LTR"
+    data-app="public"
+    data-theme="California_LightMode_Teal"
+    data-color-scheme="light"
+    data-template="xfmg_media_index"
+    data-container-key=""
+    data-content-key=""
+    data-logged-in="false"
+    data-user-id="0"
+    data-show-ads="true"
+    data-member-type="guest"
+    data-cookie-prefix="xf_"
+    data-csrf="1720315446,fa46544c0ad39e3d3c5d77db19b55338"
+    data-enable-bbcode-toggle="1"
+    data-view-mode="card"
+    data-experiment=""
+    data-viewed-experiments="[{&quot;k&quot;:&quot;fora-test&quot;,&quot;v&quot;:&quot;Variation 2&quot;}]"
+    data-business-plan=""
+    class="has-no-js template-xfmg_media_index"
+    >
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet" />
+
+        
+            
+            
+                <link rel="preload" href="https://images.platforum.cloud/prebidMaps/rvPrebidMap.js?v=1" as="script" />
+            
+            <link rel="preload" href="https://config.htplayground.com/data" as="script" />
+            <link rel="preload" href="https://config.htplayground.com/load-vs-cmp.js" as="script" />
+            <link rel="preload" href="https://config.htplayground.com/config/ifish.net" as="script" />
+            <link rel="preload" href="https://config.htplayground.com/libs" as="script" />
+        
+        
+
+        <!-- Begin LUX tag -->
+        <script>
+        LUX=function(){function n(){return Date.now?Date.now():+new Date}var r,e=n(),t=window.performance||{},a=t.timing||{navigationStart:(null===(r=window.LUX)||void 0===r?void 0:r.ns)||e};function o(){return t.now?(r=t.now(),Math.floor(r)):n()-a.navigationStart;var r}(LUX=window.LUX||{}).ac=[],LUX.addData=function(n,r){return LUX.cmd(["addData",n,r])},LUX.cmd=function(n){return LUX.ac.push(n)},LUX.getDebug=function(){return[[e,0,[]]]},LUX.init=function(){return LUX.cmd(["init"])},LUX.mark=function(){for(var n=[],r=0;r<arguments.length;r++)n[r]=arguments[r];if(t.mark)return t.mark.apply(t,n);var e=n[0],a=n[1]||{};void 0===a.startTime&&(a.startTime=o());LUX.cmd(["mark",e,a])},LUX.markLoadTime=function(){return LUX.cmd(["markLoadTime",o()])},LUX.measure=function(){for(var n=[],r=0;r<arguments.length;r++)n[r]=arguments[r];if(t.measure)return t.measure.apply(t,n);var e,a=n[0],i=n[1],u=n[2];e="object"==typeof i?n[1]:{start:i,end:u};e.duration||e.end||(e.end=o());LUX.cmd(["measure",a,e])},LUX.send=function(){return LUX.cmd(["send"])},LUX.ns=e;var i=LUX;if(window.LUX_ae=[],window.addEventListener("error",(function(n){window.LUX_ae.push(n)})),window.LUX_al=[],"function"==typeof PerformanceObserver&&"function"==typeof PerformanceLongTaskTiming){var u=new PerformanceObserver((function(n){for(var r=n.getEntries(),e=0;e<r.length;e++)window.LUX_al.push(r[e])}));try{u.observe({type:"longtask"})}catch(n){}}return i}();
+		LUX.label = 'xfmg_media_index';
+		LUX.samplerate = 0;
+		LUX.addData('loggedin', "false");
+		
+		
+		
+		window.perfMark = function(name) {
+			LUX.mark(name);
+		}
+		window.perfMeasure = function(name, mark1, mark2) {
+			LUX.measure(name, mark1, mark2);
+		}
+	    </script>
+        <script src="https://cdn.speedcurve.com/js/lux.js?id=121631494" async defer crossorigin="anonymous"></script>
+        <!-- End LUX tag -->
+
+        <!-- Lazy Loading -->
+        <script>
+		window.lazySizesConfig = {
+			expFactor: 3,
+		}
+	    </script>
+
+        <script src="/js/vendor/lazysizes/lazysizes.min.js?_v=2c5b3457" async=""></script>
+
+        
+            <script type="text/javascript" src="/js/california/dist/cmp-reader.ts.cc6a8b2192727a9bae64.js" defer></script>
+        
+
+        
+            <script type="text/javascript" src="/js/california/dist/dmtracker.ts.f64a1cd6ad595a08e3d2.js" defer></script>
+        
+
+        
+
+        
+        
+            
+    
+
+    
+    <meta name="apple-itunes-app" content="app-id=1608044805, app-argument=https://www.ifish.net/media/, affiliate-data=ct=smart_banner&pt=460367" />
+
+        
+
+        
+        
+        
+
+        <title>Gallery | IFish Fishing Forum</title>
+
+        
+
+        <meta name="robots" content="max-image-preview:large" />
+
+        
+            
+        <link rel="canonical" href="https://www.ifish.net/media/" />
+    
+        
+            <link rel="next" href="/media/page-2" />
+        
+
+        
+            
+    
+    
+    
+        <meta property="og:site_name" content="IFish Fishing Forum" />
+    
+        
+
+
+        
+        
+            
+    
+    
+    
+        <meta property="og:type" content="website" />
+    
+        
+
+
+        
+        
+            
+    
+    
+    
+        <meta property="og:title" content="Gallery" />
+        <meta property="twitter:title" content="Gallery" />
+    
+        
+
+
+        
+        
+        
+            
+    
+    
+    
+        <meta property="og:url" content="https://www.ifish.net/media/" />
+    
+        
+
+
+        
+        
+            
+    
+    
+    
+        <meta property="og:image" content="https://images.platforum.cloud/logos/ifish_net_profile.png" />
+        <meta property="twitter:image" content="https://images.platforum.cloud/logos/ifish_net_profile.png" />
+        <meta property="twitter:card" content="summary" />
+    
+        
+
+
+        
+
+
+        
+
+        <!--render social logo override if it is provided-->
+        
+
+
+        
+
+        
+            <meta name="theme-color" content="#185886" />
+        
+
+        
+
+    
+    
+
+    <!-- Favour other critical assets over preloading these
+        
+    <link rel="preload" href="/styles/fonts/fa/fa-regular-400-subset.v13.woff2" as="font" type="font/woff2" crossorigin="anonymous" />
+    
+
+    <link rel="preload" href="/styles/fonts/fa/fa-solid-900-subset.v13.woff2" as="font" type="font/woff2" crossorigin="anonymous" />
+
+
+<link rel="preload" href="/styles/fonts/fa/fa-brands-400-subset.v13.woff2" as="font" type="font/woff2" crossorigin="anonymous" />
+
+    -->
+    <link rel="stylesheet" href="/css.php?css=public%3Anormalize.css&amp;s=9&amp;h=9fd292fe" />
+<link rel="stylesheet" href="/css.php?css=public%3Acore.less&amp;s=9&amp;h=9fd292fe" />
+<link rel="stylesheet" href="/css.php?css=public%3Acalifornia_additional_header.less&amp;s=9&amp;h=9fd292fe" />
+<link rel="stylesheet" href="/css.php?css=public%3Acalifornia_gallery.less&amp;s=9&amp;h=9fd292fe" />
+<link rel="stylesheet" href="/css.php?css=public%3Adesktop_adhesion_ad.less&amp;s=9&amp;h=9fd292fe" />
+<link rel="stylesheet" href="/css.php?css=public%3Adesktop_adhesion_ad_small_screen.less&amp;s=9&amp;h=9fd292fe" />
+<link rel="stylesheet" href="/css.php?css=public%3Axfmg_media_list.less&amp;s=9&amp;h=9fd292fe" />
+<link rel="stylesheet" href="/css.php?css=public%3Aapp.less&amp;s=9&amp;h=9fd292fe" />
+<link rel="stylesheet" href="/css.php?css=public%3Aextra.less&amp;s=9&amp;h=9fd292fe" />
+
+    <script src="/js/california/dist/preamble.ts.907080ffb7051fef2dbd.js"></script>
+
+    <script>
+		(function () {
+			var docEl = document.documentElement,
+					cookiePrefix = docEl.getAttribute('data-cookie-prefix') || '',
+					app = docEl.getAttribute('data-app'),
+					loggedIn = docEl.getAttribute('data-logged-in') === 'true';
+
+			function readCookie(name) {
+				var expr = new RegExp('(^| )' + cookiePrefix + name + '=([^;]+)(;|$)'),
+						cookie = expr.exec(document.cookie);
+
+				return cookie ? decodeURIComponent(cookie[2]) : null;
+			}
+
+			if (app === 'public' && !loggedIn) {
+				// prevent page jumping from dismissed notices for guests
+				(function () {
+					var dismissedNoticeCookie = readCookie('notice_dismiss'),
+							dismissedNotices = dismissedNoticeCookie ? dismissedNoticeCookie.split(',') : [],
+							noticeId,
+							selectors = [];
+
+					for (var i = 0; i < dismissedNotices.length; i++) {
+						noticeId = parseInt(dismissedNotices[i], 10);
+						if (noticeId !== 0) {
+							selectors.push('.notice[data-notice-id="' + noticeId + '"]');
+						}
+					}
+
+					if (selectors.length) {
+						var el = document.createElement('style');
+						el.type = 'text/css';
+						el.innerHTML = selectors.join(', ') + ' { display: none !important } ';
+						document.head.appendChild(el);
+					}
+				})();
+			}
+		})();
+	</script>
+
+
+        
+            <link rel="icon" type="image/x-icon" href="https://images.platforum.cloud/icons/ifish_netx32.ico" />
+        
+        
+            <link rel="apple-touch-icon" href="https://images.platforum.cloud/logos/ifish_net_profile.png" />
+        
+        <script>
+            (function() {
+                window.dataLayer = window.dataLayer || [];
+                dataLayer.push({"analytics_profile_id":"UA-27401719-42","skimlinks_site_id":"130832X1595793","region":"US"});
+            })();
+        </script>
+        
+        
+        <!-- Google Tag Manager -->
+        <script>(function (w, d, s, l, i) {
+			w[l] = w[l] || []; w[l].push({
+				'gtm.start':
+					new Date().getTime(), event: 'gtm.js'
+			});
+			var f = d.getElementsByTagName(s)[0],
+				j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true;
+				j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f);
+			})(window, document, 'script', 'dataLayer', 'GTM-NRZJZTJ');
+		</script>
+        <!-- End Google Tag Manager -->
+        
+            <script>
+			var googletag = googletag || {};
+			googletag.cmd = googletag.cmd || [];
+		</script>
+            
+            
+            
+            
+            <script>
+  window.vsIsDesktop = window.innerWidth > 900;
+  window.vsCurrentStyle = "Teal";
+  window.vsCurrentView = "card";
+  window.vsUserId = "0";
+</script>
+
+
+    
+
+
+<script>
+    window.adConfig = {
+      gptTargeting: JSON.parse('{"make":"","model":"","vertical":"RV"}'),
+      sitename: "ifish.net",
+      isDesktop: vsIsDesktop,
+      isEU: "",
+      userId: "0",
+      userGroupTitle: "Unregistered / Unconfirmed",
+      currentStyle: window.vsCurrentStyle,
+      currentView: window.vsCurrentView,
+      userGroup: "1",
+      template: "xfmg_media_index",
+      postsOnPage: "",
+      slotsToDefine: "",
+      vsForumName: "",
+      vsForumId: "",
+      vsThreadName: "",
+      vsThreadId: "",
+      showSensitiveContent: "",
+      pageContainsNsfw: "",
+      adsToRefresh: JSON.parse('[]'),
+      isBillboardEnabled: "1",
+      isEnhancedBillboardEnabled: "1",
+      onlyForumListBillboard: "",
+      gamExperimentGroup: "",
+      
+      prebidTech: "ST",
+      adagioSite: "",
+      enableGranularThreadAds: "",
+      gptLazyLoadFetchMarginPercent: 50,
+      gptLazyLoadRenderMarginPercent: 75,
+      gptLazyLoadMobileScalingPercent: 100,
+      sidebarMiddleAd: "1",
+      sidebarMiddleAdExp: "",
+      
+      desktopAdhesion: "1",
+      desktopAdhesionCookieDuration: 0,
+      
+      
+      
+      
+      isMarketPlace: "",
+      
+      disableSRA: "",
+      desktopAdhesionSmallerScreen: "1",
+      useV3Billboard: "",
+      
+      useVanillaGPT: "",
+      useFixedAdExecOrder: "",
+      
+      
+      
+      
+    };
+  </script>
+
+    <script>
+        window.adsJSON = {"adStack":"hometalk","adConfigs":{"GPTPubID":"1030735","adStack":"hometalk","overrideBrowsiSitekey":"d_mapping","rubiconAdOnly":false,"sidebarMiddleAdDesktopExpWeight":90,"sidebarMiddleAdDesktopExperimentName":"sidebarMiddleAd9010"},"pageLevelKVTargeting":{"sitename":"ifish.net","template":"xfmg_media_index","registered":"false","make":"","model":"","vertical":"RV","short_name":"IFish","fora_theme":"Teal","folder1":"flatView","revenueExp":["folder1"]},"adUnits":[{"name":"Desktop_Adhesion","divId":"Desktop_Adhesion","adCode":"\/1030735\/ifish_net\/Desktop_Adhesion","sizes":[[728,90],[320,50]],"sizeMapping":"vsDesktopLBAdhesionMapping","kvTargeting":{"Position":["ATF","Adhesion"],"AdSlot":["Desktop_Adhesion"]},"logics":["NoBillboard"],"noHeaderBidding":false,"featureToggles":[],"platform":"Desktop","requestBid":true},{"name":"Mobile_Adhesion","divId":"Mobile_Adhesion","adCode":"\/1030735\/ifish_net\/Mobile_Adhesion","sizes":[320,50],"sizeMapping":"vsMobileLBMapping","kvTargeting":{"Position":["ATF","Adhesion"],"AdSlot":["Mobile_Adhesion"]},"logics":[],"noHeaderBidding":false,"featureToggles":[],"platform":"Mobile","requestBid":true}],"sizeMappings":{"vsDesktopBBMapping":{"[900, 10]":"[300, 250]","[0, 0]":"[]"},"vsDesktop300x120Mapping":{"[900, 10]":"[[300, 95], [300, 250]]","[0, 0]":"[]"},"vsDesktopMultiBBMapping":{"[900, 10]":"[[300, 250], [300, 600]]","[0, 0]":"[]"},"vsDesktopBillboardMapping":{"[1024, 10]":"[970, 250]","[0, 0]":"[]"},"vsMutiSizeBillboardMapping":{"[1024, 10]":"[[970, 250], [728, 90]]","[0, 0]":"[]"},"vsDesktopLBAdhesionMapping":{"[1425, 10]":"[728, 90]","[900, 10]":"[320, 50]","[0, 0]":"[]"},"vsDesktopInContentMapping":{"[1110, 10]":"[[728, 90], \"fluid\"]","[900, 10]":"[\"fluid\"]","[0, 0]":"[]"},"vsDesktopInThreadMapping":{"[1110, 10]":"[[728, 90], \"fluid\"]","[900, 10]":"[\"fluid\"]","[0, 0]":"[]"},"vsMobileInThreadMapping":{"[900, 10]":"[]","[0, 0]":"[[300, 250], [280, 250],  \"fluid\"]"},"vsMobileBBMapping":{"[900, 10]":"[]","[0, 0]":"[[300, 250], [280, 250]]"},"vsMobileLBMapping":{"[900, 10]":"[]","[0, 0]":"[320, 50]"},"vsMobile300x120Mapping":{"[900, 10]":"[]","[0, 0]":"[300, 95]"}},"prebidOverrides":[]};
+        
+    </script>
+    
+        <script src="https://images.platforum.cloud/prebidMaps/rvPrebidMap.js?v=1" async onload="window.dispatchEvent(new Event('prebidMapLoaded'));"></script>
+    
+    
+        
+    <script>
+            if (adsJSON.pageLevelKVTargeting.revenueExp && !adsJSON.pageLevelKVTargeting.revenueExp.includes('folder4')) {
+                if (Array.isArray(adsJSON.pageLevelKVTargeting.revenueExp)) {
+                    adsJSON.pageLevelKVTargeting.revenueExp.push('folder4');
+                } else {
+                    adsJSON.pageLevelKVTargeting.revenueExp = [adsJSON.pageLevelKVTargeting.revenueExp, 'folder4'];
+                }
+            } else {
+                adsJSON.pageLevelKVTargeting.revenueExp = ['folder4'];
+            }
+            if (adsJSON.pageLevelKVTargeting.folder4 && !adsJSON.pageLevelKVTargeting.folder4.includes("cachePrebidMap_on")) {
+                if (Array.isArray(adsJSON.pageLevelKVTargeting.folder4)) {
+                    adsJSON.pageLevelKVTargeting.folder4.push("cachePrebidMap_on");
+                } else {
+                    adsJSON.pageLevelKVTargeting.folder4 = [adsJSON.pageLevelKVTargeting.folder4, "cachePrebidMap_on"];
+                }
+            } else {
+                adsJSON.pageLevelKVTargeting.folder4 = "cachePrebidMap_on";
+            }
+    </script>
+
+    
+    
+    <script>window.waitingForOptiyield = true;</script><script async src="https://config.htplayground.com/test-scripts/optiyield" /></script>
+
+
+<script src="//c.amazon-adsystem.com/aax2/apstag.js" async=""></script>
+<script src="//securepubads.g.doubleclick.net/tag/js/gpt.js" async=""></script>
+<script>!function(a9,a,p,s,t,A,g){if(a[a9])return;function q(c,r){a[a9]._Q.push([c,r])}a[a9]={unLoaded:1,init:function(){q("i",arguments)},fetchBids:function(){q("f",arguments)},setDisplayBids:function(){},targetingKeys:function(){return[]},dpa:function(){q("di",arguments)},rpa:function(){q("ri",arguments)},upa:function(){q("ui",arguments)},_Q:[]};}("apstag",window);</script>
+
+    <!-- clear any amazon cookie any time user is a guest and previously had these cookies -->
+    <script>
+        function vsReadCookie(name) {
+            let nameEQ = name + "=";
+            let ca = document.cookie.split(";");
+            let cValue = null;
+
+            ca.forEach((entry) => {
+            while (entry.charAt(0) === " ") {
+                entry = entry.substring(1, entry.length);
+
+                if (entry.indexOf(nameEQ) === 0) {
+                cValue = entry.substring(nameEQ.length, entry.length);
+                return;
+                }
+            }
+            });
+            return cValue;
+        }
+        if (vsReadCookie("AMZN-Token") !== 'null') {
+            document.cookie = "AMZN-Token" + "=;expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/";
+        }
+        if (vsReadCookie("experiment_amazonID") !== 'null') {
+            document.cookie = "experiment_amazonID" + "=;expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/";
+        }
+    </script>
+
+<script async="async" src="https://config.htplayground.com/data"></script>
+<script async="async" src="https://config.htplayground.com/load-vs-cmp.js"></script>
+<script async="async" src="https://config.htplayground.com/config/ifish.net"></script>
+<script async="async" src="https://config.htplayground.com/libs"></script>
+
+    
+    
+    
+
+
+
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+
+        
+
+        
+            
+        
+
+        
+
+        
+
+        
+
+        <link rel="stylesheet" href="/styles/default/flag-icon-css/css/flag-icon.min.css" />
+    </head>
+    <body data-template="xfmg_media_index">
+        <input type="hidden" name="nested_view_mode" id="nested_view_mode" value="nested" />
+        <!-- Google Tag Manager (noscript) -->
+        <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-NRZJZTJ" height="0" width="0"
+                class="shrouded" aria-hidden="true" title="Google Tag Manager"></iframe></noscript>
+        <!-- End Google Tag Manager (noscript) -->
+        
+
+
+
+        <div class="p-pageWrapper" id="top">
+            
+
+            
+            <section id="header-banner" class="header-banner--hidden-mobile">
+                <a href="https://www.ifish.net" aria-label="Header Banner">
+                    <div class="p-header-banner p-header-banner-placeholder " qid="top-banner-logo">
+                        <img src="https://www.ifish.net/cdn-cgi/image/format=auto,onerror=redirect,quality=50,width=1920,fit=scale-down/https://images.platforum.cloud/banners/ifish_net_banner_720w.jpg" srcset="https://www.ifish.net/cdn-cgi/image/format=auto,onerror=redirect,quality=50,width=720,fit=scale-down/https://images.platforum.cloud/banners/ifish_net_banner_720w.jpg 720w, https://www.ifish.net/cdn-cgi/image/format=auto,onerror=redirect,quality=50,width=2880,fit=scale-down/https://images.platforum.cloud/banners/ifish_net_banner_2880w.jpg 2880w" alt="IFish Fishing Forum banner" />
+                    </div>
+                </a>
+            </section>
+            <header class="p-header p-navSticky js-navSticky js-mainHeader " id="cali-header" data-xf-init="sticky-header">
+                <div class="p-header-inner">
+                    <div class="p-header-content " qid="top-navbar">
+
+                        <div class="p-header-logo p-header-logo--image" qid="top-navbar-header-logo">
+                            <a href="https://www.ifish.net">
+                                <img src="https://images.platforum.cloud/logos/ifish_net.svg"
+                                    alt="IFish Fishing Forum"
+                                    srcset="https://images.platforum.cloud/logos/ifish_net.svg 2x" />
+                            </a>
+                        </div>
+
+                        
+                            
+                            <div class="p-nav-search ">
+                                <form id="top-search-form" action="/search/search" method="post"
+                                    data-xf-init="quick-search">
+                                    <div class="input-search">
+                                        <input type="text" class="input" name="keywords" id="search-keywords" placeholder="Search Community" aria-label="Search Community" data-menu-pos-ref="< .p-nav-search" autocomplete="off" data-menu-autofocus="true" qid="top-navbar-search-field" />
+                                        <input type="hidden" name="constraints" id="search-constraint" value="{&quot;c&quot;:[]}" />
+                                        <input type="hidden" name="search_type" id="search-type" value="" />
+                                        <input type="hidden" name="repeat_search" id="repeat-search" value="" />
+                                        <i class="fa fa-times" qid="top-navbar-search-field-clear"></i>
+                                        <i class="fa fa-search" qid="top-navbar-search-button"></i>
+                                        <div class="menu menu--search" data-menu="menu" aria-hidden="true">
+                                            <div class="menu-content" qid="recent-search-menu">
+                                                <a href="javascript:void(0)" class="menu-content--search-query menu-linkRow search-menu-item-click"></a>
+                                                
+                                                <a class="search-context" qid="top-navbar-search-context">
+                                                    <span><span class="search-context--plain-colour">in</span> the entire site</span>
+                                                </a>
+                                                <div id="filtered-search-history"></div>
+                                                <a href="/search/" class="advanced" id="quick-search-advanced">
+                                                    Advanced Search
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mobile-cancel">
+                                        Cancel
+                                    </div>
+                                    <input type="hidden" name="_xfToken" value="1720315446,fa46544c0ad39e3d3c5d77db19b55338" />
+                                </form>
+                            </div>
+                        
+
+                        <div class="p-navgroup headerPostAndAccountGroup">
+                            
+                            
+                                <a href="/forums/-/create-thread" class="new-navigation button--icon button" id="header-create-thread" data-xf-click="overlay" data-gtm="create-thread-CTA" data-gtm-context="action:nav-bar-create-thread" title="Create thread" aria-label="Create thread"><span class="button-text">
+                                    <span class="navigation-icon-frame">
+                                        <span class="thread-creation-icon" qid="navbar-forum-listing-button"></span>
+                                    </span>
+
+                                    <span class="navbar-button-text">Create thread</span>
+                                </span></a>
+                            
+                            <a href="/whats-new/posts/" class="new-navigation vl-middle wayfinding-1  button" id="header-whats-new" title="What&#039;s New" aria-label="What&#039;s New"><span class="button-text">
+                                <span class="navigation-icon-frame">
+                                    <span class="new-navigation-icon" qid="navbar-whats-new-button"></span>
+                                </span>
+                                <span class="navbar-button-text">New</span>
+                            </span></a>
+                            <a href="/forums/" class="new-navigation vl-middle wayfinding-2  button" id="header-forum-listing" title="Forums" aria-label="Forums"><span class="button-text">
+                                <span class="navigation-icon-frame">
+                                    <span class="forum-navigation-icon" qid="navbar-forum-listing-button"></span>
+                                </span>
+                                <span class="navbar-button-text">Forums</span>
+                            </span></a>
+
+                            <button type="button" id="header-site-navigation" class="new-navigation vl-middle style-chooser wayfinding-4 button reordered-ellipsis" title="Site navigation" aria-label="Site navigation" data-menu-pos-ref="< .p-navgroup" aria-expanded="false" aria-haspopup="true" data-xf-click="menu" qid="navbar-style-chooser-button">
+                                <span class="navigation-icon-frame">
+                                    <span class="ellipsis-icon-large"></span>
+                                </span>
+                                <span class="button-text">
+                                    <span class="navbar-button-text">More</span>
+                                </span>
+                            </button>
+
+                            
+                                <a href="/login/" class="new-navigation new-navigation-login button" data-xf-click="overlay" data-follow-redirects="on" rel="nofollow"><span class="button-text">
+                                    <span class="login-icon"></span>
+                                    <span class="p-navgroup-linkText registerButton ml-5 navbar-button-text" qid="navbar-login-register-button">Login / Join</span>
+                                </span></a>
+                            
+
+                            <div class="menu menu--structural menu--account menu--account-no-arrow" data-menu="menuStyle" aria-hidden="true">
+                                <div class="menu-content js-visitorMenuBody menu-account--content another-one" qid="theme-popup-menu">
+                                    <ul class="listPlain listColumns--narrow">
+                                        <li><a href="/whats-new/posts/" id="kebab-menu-whats-new-link" class="menu-linkRow">What's New</a></li>
+                                        <li><a href="/forums/" id="kebab-menu-forum-listing-link" class="menu-linkRow">Forum Listing</a></li>
+                                        
+                                        
+                                            <li>
+                                                <a href="/marketplace/" id="kebab-menu-marketplace-link" class="menu-linkRow" qid="marketplace-popup-item">
+                                                    <span class="menu-text">Marketplace</span>
+                                                </a>
+                                            </li>
+                                        
+                                        <li><a href="/showcase/" id="kebab-menu-showcase-link" class="menu-linkRow">Showcase</a></li>
+                                        <li><a href="/media/" id="kebab-menu-media-link" class="menu-linkRow">Gallery</a></li>
+                                        <li><a href="/search/" id="kebab-menu-search-link" class="menu-linkRow" qid="advanced-search-popup-item">Advanced Search</a></li>
+                                        <li><a href="/members/" id="kebab-menu-members-link" class="menu-linkRow" qid="members-popup-item">Members</a></li>
+                                        <li><a href="/help/faq" id="kebab-menu-faq-link" class="menu-linkRow" qid="faq-popup-item">FAQ</a></li>
+                                    </ul>
+                                    
+                                        <hr class="menu-separator" />
+                                        <ul class="listPlain">
+                                            
+                                            
+                                            
+                                                
+                                                    
+                                                        <li class="menu-theme-wrapper" data-value="California_DarkMode">
+                                                            <a
+                                                                class="menu-linkRow kebab-menu-theme-link"
+                                                                rel="nofollow"
+                                                                qid="theme-popup-menu-item"
+                                                                href="/misc/style?style_id=2&amp;t=1720315446%2Cfa46544c0ad39e3d3c5d77db19b55338"
+                                                            >
+                                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="california-icon " width="1.5rem" height="1.5rem"alt="Darkmode"><path fill="currentColor" d="M10.522 7.086a6.97 6.97 0 0 0-1.034 3.666 7 7 0 0 0 4.7 6.615q-.583.134-1.207.135c-3.025 0-5.481-2.46-5.481-5.5a5.5 5.5 0 0 1 3.025-4.916zm1.94-2.063A6.99 6.99 0 0 0 6 12.002c0 3.865 3.125 7 6.984 7a6.95 6.95 0 0 0 4.013-1.27c.06-.04.116-.084.172-.124a7 7 0 0 0 .681-.585.5.5 0 0 0-.434-.85 7 7 0 0 1-.347.05 6 6 0 0 1-.478.032h-.126a5.493 5.493 0 0 1-5.474-5.5 5.49 5.49 0 0 1 2.003-4.25q.047-.04.1-.082a5 5 0 0 1 .69-.462.5.5 0 0 0-.206-.931 6 6 0 0 0-.334-.02l-.256-.002q-.154 0-.307.006-.108.003-.215.013z"/></svg>
+                                                                <span class="menu-text">Dark Mode</span>
+                                                            </a>
+                                                        </li>
+
+                                                    
+                                                
+                                                    
+                                                        <li class="menu-theme-wrapper" data-value="California_LightMode_Teal">
+                                                            <a
+                                                                class="menu-linkRow kebab-menu-theme-link"
+                                                                rel="nofollow"
+                                                                qid="theme-popup-menu-item"
+                                                                href="/misc/style?style_id=9&amp;t=1720315446%2Cfa46544c0ad39e3d3c5d77db19b55338"
+                                                            >
+                                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="california-icon " width="1.5rem" height="1.5rem"alt="Lightmode"><path fill="currentColor" d="M12.75 4.75v2c0 .416-.334.75-.75.75a.75.75 0 0 1-.75-.75v-2c0-.416.334-.75.75-.75s.75.334.75.75m4.906 2.653L16.241 8.82a.75.75 0 0 1-1.06-1.06l1.416-1.415a.75.75 0 0 1 1.06 1.06M7.403 6.343 8.82 7.76a.75.75 0 0 1-1.06 1.06L6.344 7.403a.75.75 0 0 1 1.06-1.06M4.75 11.25h2c.416 0 .75.334.75.75s-.334.75-.75.75h-2A.75.75 0 0 1 4 12c0-.416.334-.75.75-.75m12.5 0h2c.416 0 .75.334.75.75s-.334.75-.75.75h-2a.75.75 0 0 1-.75-.75c0-.416.334-.75.75-.75m-8.431 4.994-1.416 1.412a.75.75 0 0 1-1.06-1.06l1.416-1.415a.75.75 0 0 1 1.06 1.06zm7.425-1.06 1.412 1.413a.75.75 0 0 1-1.06 1.06l-1.415-1.416a.75.75 0 0 1 1.06-1.06zM12.75 17.25v2c0 .416-.334.75-.75.75a.75.75 0 0 1-.75-.75v-2c0-.416.334-.75.75-.75s.75.334.75.75M14 12a2 2 0 1 0-4 0 2 2 0 0 0 4 0m-5.5 0a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0"/></svg>
+                                                                <span class="menu-text">Light Mode</span>
+                                                            </a>
+                                                        </li>
+
+                                                    
+                                                
+                                            
+                                        </ul>
+                                    
+                                </div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                </div>
+            </header>
+
+            
+                <div class="p-navSticky p-navSticky--primary js-navSticky" data-xf-init="sticky-header">
+                    
+                </div>
+                
+                
+
+            
+                <iframe id="google-one-tap-iframe" class="sign-up__google"
+                    src="/login/onetap" scrolling="no" allow="identity-credentials-get"
+                    allowtransparency="true" frameborder="0" seamless="seamless"
+                    width="1" height="1" title="Google One Tap login">
+                </iframe>
+            
+
+            <div class="offCanvasMenu offCanvasMenu--nav js-headerOffCanvasMenu" data-menu="menu" aria-hidden="true" data-ocm-builder="navigation">
+                <div class="offCanvasMenu-backdrop" data-menu-close="true"></div>
+                <div class="offCanvasMenu-content">
+                    <div class="offCanvasMenu-header">
+                        Menu
+                        <a class="offCanvasMenu-closer" data-menu-close="true" role="button" tabindex="0" aria-label="Close"></a>
+                    </div>
+                    
+                        <div class="p-offCanvasRegisterLink">
+                            <div class="offCanvasMenu-linkHolder">
+                                <a href="/login/" class="offCanvasMenu-link" data-xf-click="overlay" data-menu-close="true">
+                                    Log in
+                                </a>
+                            </div>
+                            <hr class="offCanvasMenu-separator" />
+                            
+                                <div class="offCanvasMenu-linkHolder">
+                                    <a href="/register/" class="offCanvasMenu-link" data-xf-click="overlay" data-menu-close="true">
+                                        Sign up
+                                    </a>
+                                </div>
+                                <hr class="offCanvasMenu-separator" />
+                            
+                        </div>
+                    
+                    <div class="js-offCanvasNavTarget"></div>
+                </div>
+            </div>
+            
+                <div class="p-sectionLinks california-header-nav">
+                    <div class="p-sectionLinks-inner headerNav">
+                        
+                        
+                            
+    
+        <ul class="p-breadcrumbs "
+            itemscope itemtype="https://schema.org/BreadcrumbList"
+            qid = "thread-view-breadcrumbs">
+            
+                
+
+                
+                
+                    
+                    
+    <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+        <a href="https://www.ifish.net" itemprop="item">
+            <span itemprop="name">Home</span>
+        </a>
+        <meta itemprop="position" content="1" />
+    </li>
+
+                
+
+                
+                
+
+            
+        </ul>
+    
+
+                        
+                        
+    
+    <div>
+        <div class="california-additional-header  ">
+            <div class="header-content-wrapper">
+                <h1 class="  "
+                    qid="page-header">Gallery</h1>
+                
+                
+                <div class="california-sc-header-mobile" qid="showcase-header-mobile">
+                    
+                </div>
+            </div>
+            
+                <div class="button-group">
+                    
+    
+
+                </div>
+            
+        </div>
+        <div class="california-sc-additional-info" qid="showcase-additional-info">
+            
+        </div>
+    </div>
+
+                        
+                    </div>
+                </div>
+            
+            <div class="p-body">
+                <div class="p-body-inner california-p-body-inner">
+                    <!--XF:EXTRA_OUTPUT-->
+
+                    
+
+                    
+
+                    
+
+                    
+
+                    
+	<noscript><div class="blockMessage blockMessage--important blockMessage--iconic u-noJsOnly">JavaScript is disabled. For a better experience, please enable JavaScript in your browser before proceeding.</div></noscript>
+
+                    
+	<!--[if lt IE 9]><div class="blockMessage blockMessage&#45;&#45;important blockMessage&#45;&#45;iconic">You are using an out of date browser. It  may not display this or other websites correctly.<br />You should upgrade or use an <a href="https://www.google.com/chrome/browser/" target="_blank">alternative browser</a>.</div><![endif]-->
+
+                    
+
+                    <div class="p-body-main  p-body-main--withSideNav">
+                        
+                        
+                            <div class="p-body-sideNav">
+                                <div class="p-body-sideNavTrigger">
+                                    
+                                </div>
+                                <div class="p-body-sideNavInner" data-ocm-class="offCanvasMenu offCanvasMenu--blocks" id="js-SideNavOcm" data-ocm-builder="sideNav">
+                                    <div data-ocm-class="offCanvasMenu-backdrop" data-menu-close="true"></div>
+                                    <div data-ocm-class="offCanvasMenu-content">
+                                        <div class="p-body-sideNavContent" qid="help-sidenav">
+                                            
+                                            
+                                                <div class="block">
+		<div class="block-container">
+			<h3 class="block-header">Navigation</h3>
+			<div class="block-body">
+				
+					
+	<ol class="categoryList toggleTarget is-active">
+		
+			
+	
+	
+	
+
+	<li class="categoryList-item">
+		<div class="categoryList-itemRow">
+			
+				<span class="categoryList-togglerSpacer"></span>
+			
+			<a href="/media/categories/www-ifish-net-member-galleries.8/" class="categoryList-link">
+				www.ifish.net member Galleries
+			</a>
+			<span class="categoryList-label">
+				<span class="label label--subtle label--smallest">154K</span>
+			</span>
+		</div>
+		
+	</li>
+
+		
+			
+	
+	
+	
+
+	<li class="categoryList-item">
+		<div class="categoryList-itemRow">
+			
+				<a class="categoryList-toggler"
+					data-xf-click="toggle" data-target="< :up :next"
+					role="button" tabindex="0" aria-label="Toggle expanded"
+				></a>
+			
+			<a href="/media/categories/www-ifish-net-graphics.2/" class="categoryList-link">
+				www.ifish.net graphics
+			</a>
+			<span class="categoryList-label">
+				<span class="label label--subtle label--smallest">7K</span>
+			</span>
+		</div>
+		
+			
+	<ol class="categoryList toggleTarget">
+		
+			
+	
+	
+	
+
+	<li class="categoryList-item">
+		<div class="categoryList-itemRow">
+			
+				<span class="categoryList-togglerSpacer"></span>
+			
+			<a href="/media/categories/avatar-area.3/" class="categoryList-link">
+				Avatar Area
+			</a>
+			<span class="categoryList-label">
+				<span class="label label--subtle label--smallest">941</span>
+			</span>
+		</div>
+		
+	</li>
+
+		
+			
+	
+	
+	
+
+	<li class="categoryList-item">
+		<div class="categoryList-itemRow">
+			
+				<span class="categoryList-togglerSpacer"></span>
+			
+			<a href="/media/categories/graemlins-smilies-emoticons.4/" class="categoryList-link">
+				Graemlins. Smilies, emoticons
+			</a>
+			<span class="categoryList-label">
+				<span class="label label--subtle label--smallest">69</span>
+			</span>
+		</div>
+		
+	</li>
+
+		
+			
+	
+	
+	
+
+	<li class="categoryList-item">
+		<div class="categoryList-itemRow">
+			
+				<span class="categoryList-togglerSpacer"></span>
+			
+			<a href="/media/categories/general-classified-pictures.5/" class="categoryList-link">
+				General Classified Pictures
+			</a>
+			<span class="categoryList-label">
+				<span class="label label--subtle label--smallest">2K</span>
+			</span>
+		</div>
+		
+	</li>
+
+		
+			
+	
+	
+	
+
+	<li class="categoryList-item">
+		<div class="categoryList-itemRow">
+			
+				<span class="categoryList-togglerSpacer"></span>
+			
+			<a href="/media/categories/boat-and-tackle-classifieds.6/" class="categoryList-link">
+				Boat and Tackle Classifieds
+			</a>
+			<span class="categoryList-label">
+				<span class="label label--subtle label--smallest">3K</span>
+			</span>
+		</div>
+		
+	</li>
+
+		
+			
+	
+	
+	
+
+	<li class="categoryList-item">
+		<div class="categoryList-itemRow">
+			
+				<span class="categoryList-togglerSpacer"></span>
+			
+			<a href="/media/categories/ifish-tech-tips-permanent-photos.7/" class="categoryList-link">
+				Ifish Tech Tips Permanent Photos
+			</a>
+			<span class="categoryList-label">
+				<span class="label label--subtle label--smallest">179</span>
+			</span>
+		</div>
+		
+	</li>
+
+		
+	</ol>
+
+		
+	</li>
+
+		
+	</ol>
+
+
+					<hr class="block-separator" />
+				
+				
+					
+						
+							<a href="/media/albums/" class="blockLink">Browse albums</a>
+						
+
+						
+					
+				
+			</div>
+		</div>
+	</div>
+                                            
+                                            
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        
+
+                        <div class="p-body-content">
+                            
+                            <div class="p-body-pageContent is-guest ">
+
+
+
+
+
+
+
+
+    
+
+    
+
+
+
+
+
+
+    
+    
+    
+        
+    
+
+
+
+
+
+
+
+
+
+<div class="block" data-xf-init="" data-type="xfmg_media" data-href="/inline-mod/">
+    <div class="block-outer no-padding-top california-gallery-filter-row"><div class="california-filter-button-left">
+                
+    
+
+
+    
+    <a class="filterBar-menuTrigger button button--alt" data-xf-click="menu" role="button" tabindex="0" aria-expanded="false" aria-haspopup="true">
+        Filters
+        
+    </a>
+    <div class="menu menu--wide" data-menu="menu" aria-hidden="true"
+        data-href="/media/filters"
+        data-load-target=".js-filterMenuBody">
+        <div class="menu-content">
+            <h4 class="menu-header">Show only:</h4>
+            <div class="js-filterMenuBody">
+                <div class="menu-row">Loading…</div>
+            </div>
+        </div>
+    </div>
+
+            </div></div>
+
+    <div class="block-container">
+        <div class="block-body">
+            
+                
+    
+
+    <div class="itemList">
+        
+            
+    <div class="itemList-item js-inlineModContainer" qid="gallery-item" data-author="Fool4FishnHuntn">
+        
+            
+    
+
+        
+        
+    
+        <div class="itemList-itemTypeIcon itemList-itemTypeIcon--image"></div>
+    
+
+        <a href="/media/img_2297-jpg.197374/" qid="gallery-item-link">
+            <div class="california-itemList-top-overlay"></div>
+            
+    
+        <span class='xfmgThumbnail xfmgThumbnail--image xfmgThumbnail--fluid'>
+			<img class='xfmgThumbnail-image' src='/d3/xfmg/thumbnail/197/197374-2eb82d7f481790dc13fea43b64eacc81.jpg?1718944924' alt='IMG_2297.JPG' />
+			<span class='xfmgThumbnail-icon'></span>
+		</span>
+    
+
+        </a>
+        
+    <div class="itemList-itemOverlay">
+        <div class="itemInfoRow">
+            <div class="itemInfoRow-main">
+                <h3 class="itemInfoRow-title">
+                    <a href="/media/img_2297-jpg.197374/">IMG_2297.JPG</a>
+                </h3>
+                <div class="itemInfoRow-status">
+                    <ul class="listInline listInline--bullet">
+                        <li><i class="fa--xf far fa-user" aria-hidden="true" title="Media owner"></i> <a href="/members/fool4fishnhuntn.8589/" class="username " dir="auto" data-user-id="8589" data-xf-init="member-tooltip">Fool4FishnHuntn</a></li>
+                        <li><i class="fa--xf far fa-clock" aria-hidden="true" title="Date added"></i> Jun 21, 2024</li>
+                    </ul>
+                </div>
+                <div class="itemInfoRow-status">
+                    <ul class="listInline listInline--bullet">
+                        <li><i class="fa--xf far fa-thumbs-up" aria-hidden="true" title="Reaction score"></i> 0</li>
+                        <li><i class="fa--xf far fa-comments" aria-hidden="true" title="Comments"></i> 0</li>
+                        
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    </div>
+
+        
+            
+    <div class="itemList-item js-inlineModContainer" qid="gallery-item" data-author="Fool4FishnHuntn">
+        
+            
+    
+
+        
+        
+    
+        <div class="itemList-itemTypeIcon itemList-itemTypeIcon--image"></div>
+    
+
+        <a href="/media/img_2296-jpg.197373/" qid="gallery-item-link">
+            <div class="california-itemList-top-overlay"></div>
+            
+    
+        <span class='xfmgThumbnail xfmgThumbnail--image xfmgThumbnail--fluid'>
+			<img class='xfmgThumbnail-image' src='/d3/xfmg/thumbnail/197/197373-8b0cbb5af3ffd3db8656bf20351ffd22.jpg?1718944924' alt='IMG_2296.JPG' />
+			<span class='xfmgThumbnail-icon'></span>
+		</span>
+    
+
+        </a>
+        
+    <div class="itemList-itemOverlay">
+        <div class="itemInfoRow">
+            <div class="itemInfoRow-main">
+                <h3 class="itemInfoRow-title">
+                    <a href="/media/img_2296-jpg.197373/">IMG_2296.JPG</a>
+                </h3>
+                <div class="itemInfoRow-status">
+                    <ul class="listInline listInline--bullet">
+                        <li><i class="fa--xf far fa-user" aria-hidden="true" title="Media owner"></i> <a href="/members/fool4fishnhuntn.8589/" class="username " dir="auto" data-user-id="8589" data-xf-init="member-tooltip">Fool4FishnHuntn</a></li>
+                        <li><i class="fa--xf far fa-clock" aria-hidden="true" title="Date added"></i> Jun 21, 2024</li>
+                    </ul>
+                </div>
+                <div class="itemInfoRow-status">
+                    <ul class="listInline listInline--bullet">
+                        <li><i class="fa--xf far fa-thumbs-up" aria-hidden="true" title="Reaction score"></i> 0</li>
+                        <li><i class="fa--xf far fa-comments" aria-hidden="true" title="Comments"></i> 0</li>
+                        
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    </div>
+
+        
+            
+    <div class="itemList-item js-inlineModContainer" qid="gallery-item" data-author="Fool4FishnHuntn">
+        
+            
+    
+
+        
+        
+    
+        <div class="itemList-itemTypeIcon itemList-itemTypeIcon--image"></div>
+    
+
+        <a href="/media/img_2295-jpg.197372/" qid="gallery-item-link">
+            <div class="california-itemList-top-overlay"></div>
+            
+    
+        <span class='xfmgThumbnail xfmgThumbnail--image xfmgThumbnail--fluid'>
+			<img class='xfmgThumbnail-image' src='/d3/xfmg/thumbnail/197/197372-3706fdb13890d3d48694ca0820cc21e5.jpg?1718944923' alt='IMG_2295.JPG' />
+			<span class='xfmgThumbnail-icon'></span>
+		</span>
+    
+
+        </a>
+        
+    <div class="itemList-itemOverlay">
+        <div class="itemInfoRow">
+            <div class="itemInfoRow-main">
+                <h3 class="itemInfoRow-title">
+                    <a href="/media/img_2295-jpg.197372/">IMG_2295.JPG</a>
+                </h3>
+                <div class="itemInfoRow-status">
+                    <ul class="listInline listInline--bullet">
+                        <li><i class="fa--xf far fa-user" aria-hidden="true" title="Media owner"></i> <a href="/members/fool4fishnhuntn.8589/" class="username " dir="auto" data-user-id="8589" data-xf-init="member-tooltip">Fool4FishnHuntn</a></li>
+                        <li><i class="fa--xf far fa-clock" aria-hidden="true" title="Date added"></i> Jun 21, 2024</li>
+                    </ul>
+                </div>
+                <div class="itemInfoRow-status">
+                    <ul class="listInline listInline--bullet">
+                        <li><i class="fa--xf far fa-thumbs-up" aria-hidden="true" title="Reaction score"></i> 0</li>
+                        <li><i class="fa--xf far fa-comments" aria-hidden="true" title="Comments"></i> 0</li>
+                        
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    </div>
+
+        
+            
+    <div class="itemList-item js-inlineModContainer" qid="gallery-item" data-author="Fool4FishnHuntn">
+        
+            
+    
+
+        
+        
+    
+        <div class="itemList-itemTypeIcon itemList-itemTypeIcon--image"></div>
+    
+
+        <a href="/media/img_2294-jpg.197371/" qid="gallery-item-link">
+            <div class="california-itemList-top-overlay"></div>
+            
+    
+        <span class='xfmgThumbnail xfmgThumbnail--image xfmgThumbnail--fluid'>
+			<img class='xfmgThumbnail-image' src='/d3/xfmg/thumbnail/197/197371-3fc6a7175b1cf0bf3eebc451c92bd0ca.jpg?1718944922' alt='IMG_2294.JPG' />
+			<span class='xfmgThumbnail-icon'></span>
+		</span>
+    
+
+        </a>
+        
+    <div class="itemList-itemOverlay">
+        <div class="itemInfoRow">
+            <div class="itemInfoRow-main">
+                <h3 class="itemInfoRow-title">
+                    <a href="/media/img_2294-jpg.197371/">IMG_2294.JPG</a>
+                </h3>
+                <div class="itemInfoRow-status">
+                    <ul class="listInline listInline--bullet">
+                        <li><i class="fa--xf far fa-user" aria-hidden="true" title="Media owner"></i> <a href="/members/fool4fishnhuntn.8589/" class="username " dir="auto" data-user-id="8589" data-xf-init="member-tooltip">Fool4FishnHuntn</a></li>
+                        <li><i class="fa--xf far fa-clock" aria-hidden="true" title="Date added"></i> Jun 21, 2024</li>
+                    </ul>
+                </div>
+                <div class="itemInfoRow-status">
+                    <ul class="listInline listInline--bullet">
+                        <li><i class="fa--xf far fa-thumbs-up" aria-hidden="true" title="Reaction score"></i> 0</li>
+                        <li><i class="fa--xf far fa-comments" aria-hidden="true" title="Comments"></i> 0</li>
+                        
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    </div>
+
+        
+            
+    <div class="itemList-item js-inlineModContainer" qid="gallery-item" data-author="Fool4FishnHuntn">
+        
+            
+    
+
+        
+        
+    
+        <div class="itemList-itemTypeIcon itemList-itemTypeIcon--image"></div>
+    
+
+        <a href="/media/img_2293-jpg.197370/" qid="gallery-item-link">
+            <div class="california-itemList-top-overlay"></div>
+            
+    
+        <span class='xfmgThumbnail xfmgThumbnail--image xfmgThumbnail--fluid'>
+			<img class='xfmgThumbnail-image' src='/d3/xfmg/thumbnail/197/197370-1336a912ed3b430347dffb9e4dc6501e.jpg?1718944921' alt='IMG_2293.JPG' />
+			<span class='xfmgThumbnail-icon'></span>
+		</span>
+    
+
+        </a>
+        
+    <div class="itemList-itemOverlay">
+        <div class="itemInfoRow">
+            <div class="itemInfoRow-main">
+                <h3 class="itemInfoRow-title">
+                    <a href="/media/img_2293-jpg.197370/">IMG_2293.JPG</a>
+                </h3>
+                <div class="itemInfoRow-status">
+                    <ul class="listInline listInline--bullet">
+                        <li><i class="fa--xf far fa-user" aria-hidden="true" title="Media owner"></i> <a href="/members/fool4fishnhuntn.8589/" class="username " dir="auto" data-user-id="8589" data-xf-init="member-tooltip">Fool4FishnHuntn</a></li>
+                        <li><i class="fa--xf far fa-clock" aria-hidden="true" title="Date added"></i> Jun 21, 2024</li>
+                    </ul>
+                </div>
+                <div class="itemInfoRow-status">
+                    <ul class="listInline listInline--bullet">
+                        <li><i class="fa--xf far fa-thumbs-up" aria-hidden="true" title="Reaction score"></i> 0</li>
+                        <li><i class="fa--xf far fa-comments" aria-hidden="true" title="Comments"></i> 0</li>
+                        
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    </div>
+
+        
+            
+    <div class="itemList-item js-inlineModContainer" qid="gallery-item" data-author="Fool4FishnHuntn">
+        
+            
+    
+
+        
+        
+    
+        <div class="itemList-itemTypeIcon itemList-itemTypeIcon--image"></div>
+    
+
+        <a href="/media/img_2292-jpg.197369/" qid="gallery-item-link">
+            <div class="california-itemList-top-overlay"></div>
+            
+    
+        <span class='xfmgThumbnail xfmgThumbnail--image xfmgThumbnail--fluid'>
+			<img class='xfmgThumbnail-image' src='/d3/xfmg/thumbnail/197/197369-358eca64b21be3870772dc2d565a8656.jpg?1718944921' alt='IMG_2292.JPG' />
+			<span class='xfmgThumbnail-icon'></span>
+		</span>
+    
+
+        </a>
+        
+    <div class="itemList-itemOverlay">
+        <div class="itemInfoRow">
+            <div class="itemInfoRow-main">
+                <h3 class="itemInfoRow-title">
+                    <a href="/media/img_2292-jpg.197369/">IMG_2292.JPG</a>
+                </h3>
+                <div class="itemInfoRow-status">
+                    <ul class="listInline listInline--bullet">
+                        <li><i class="fa--xf far fa-user" aria-hidden="true" title="Media owner"></i> <a href="/members/fool4fishnhuntn.8589/" class="username " dir="auto" data-user-id="8589" data-xf-init="member-tooltip">Fool4FishnHuntn</a></li>
+                        <li><i class="fa--xf far fa-clock" aria-hidden="true" title="Date added"></i> Jun 21, 2024</li>
+                    </ul>
+                </div>
+                <div class="itemInfoRow-status">
+                    <ul class="listInline listInline--bullet">
+                        <li><i class="fa--xf far fa-thumbs-up" aria-hidden="true" title="Reaction score"></i> 0</li>
+                        <li><i class="fa--xf far fa-comments" aria-hidden="true" title="Comments"></i> 0</li>
+                        
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    </div>
+
+        
+            
+    <div class="itemList-item js-inlineModContainer" qid="gallery-item" data-author="Fool4FishnHuntn">
+        
+            
+    
+
+        
+        
+    
+        <div class="itemList-itemTypeIcon itemList-itemTypeIcon--image"></div>
+    
+
+        <a href="/media/img_2291-jpg.197368/" qid="gallery-item-link">
+            <div class="california-itemList-top-overlay"></div>
+            
+    
+        <span class='xfmgThumbnail xfmgThumbnail--image xfmgThumbnail--fluid'>
+			<img class='xfmgThumbnail-image' src='/d3/xfmg/thumbnail/197/197368-34a8c6e920536f578f72f821d39edfd7.jpg?1718944920' alt='IMG_2291.JPG' />
+			<span class='xfmgThumbnail-icon'></span>
+		</span>
+    
+
+        </a>
+        
+    <div class="itemList-itemOverlay">
+        <div class="itemInfoRow">
+            <div class="itemInfoRow-main">
+                <h3 class="itemInfoRow-title">
+                    <a href="/media/img_2291-jpg.197368/">IMG_2291.JPG</a>
+                </h3>
+                <div class="itemInfoRow-status">
+                    <ul class="listInline listInline--bullet">
+                        <li><i class="fa--xf far fa-user" aria-hidden="true" title="Media owner"></i> <a href="/members/fool4fishnhuntn.8589/" class="username " dir="auto" data-user-id="8589" data-xf-init="member-tooltip">Fool4FishnHuntn</a></li>
+                        <li><i class="fa--xf far fa-clock" aria-hidden="true" title="Date added"></i> Jun 21, 2024</li>
+                    </ul>
+                </div>
+                <div class="itemInfoRow-status">
+                    <ul class="listInline listInline--bullet">
+                        <li><i class="fa--xf far fa-thumbs-up" aria-hidden="true" title="Reaction score"></i> 0</li>
+                        <li><i class="fa--xf far fa-comments" aria-hidden="true" title="Comments"></i> 0</li>
+                        
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    </div>
+
+        
+            
+    <div class="itemList-item js-inlineModContainer" qid="gallery-item" data-author="Fool4FishnHuntn">
+        
+            
+    
+
+        
+        
+    
+        <div class="itemList-itemTypeIcon itemList-itemTypeIcon--image"></div>
+    
+
+        <a href="/media/img_2290-jpg.197367/" qid="gallery-item-link">
+            <div class="california-itemList-top-overlay"></div>
+            
+    
+        <span class='xfmgThumbnail xfmgThumbnail--image xfmgThumbnail--fluid'>
+			<img class='xfmgThumbnail-image' src='/d3/xfmg/thumbnail/197/197367-066766fe2a83fa472cf096054bb45301.jpg?1718944919' alt='IMG_2290.JPG' />
+			<span class='xfmgThumbnail-icon'></span>
+		</span>
+    
+
+        </a>
+        
+    <div class="itemList-itemOverlay">
+        <div class="itemInfoRow">
+            <div class="itemInfoRow-main">
+                <h3 class="itemInfoRow-title">
+                    <a href="/media/img_2290-jpg.197367/">IMG_2290.JPG</a>
+                </h3>
+                <div class="itemInfoRow-status">
+                    <ul class="listInline listInline--bullet">
+                        <li><i class="fa--xf far fa-user" aria-hidden="true" title="Media owner"></i> <a href="/members/fool4fishnhuntn.8589/" class="username " dir="auto" data-user-id="8589" data-xf-init="member-tooltip">Fool4FishnHuntn</a></li>
+                        <li><i class="fa--xf far fa-clock" aria-hidden="true" title="Date added"></i> Jun 21, 2024</li>
+                    </ul>
+                </div>
+                <div class="itemInfoRow-status">
+                    <ul class="listInline listInline--bullet">
+                        <li><i class="fa--xf far fa-thumbs-up" aria-hidden="true" title="Reaction score"></i> 0</li>
+                        <li><i class="fa--xf far fa-comments" aria-hidden="true" title="Comments"></i> 0</li>
+                        
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    </div>
+
+        
+            
+    <div class="itemList-item js-inlineModContainer" qid="gallery-item" data-author="Fool4FishnHuntn">
+        
+            
+    
+
+        
+        
+    
+        <div class="itemList-itemTypeIcon itemList-itemTypeIcon--image"></div>
+    
+
+        <a href="/media/img_2289-jpg.197366/" qid="gallery-item-link">
+            <div class="california-itemList-top-overlay"></div>
+            
+    
+        <span class='xfmgThumbnail xfmgThumbnail--image xfmgThumbnail--fluid'>
+			<img class='xfmgThumbnail-image' src='/d3/xfmg/thumbnail/197/197366-dfe236b41f7e937b10e8483588d492f9.jpg?1718944918' alt='IMG_2289.JPG' />
+			<span class='xfmgThumbnail-icon'></span>
+		</span>
+    
+
+        </a>
+        
+    <div class="itemList-itemOverlay">
+        <div class="itemInfoRow">
+            <div class="itemInfoRow-main">
+                <h3 class="itemInfoRow-title">
+                    <a href="/media/img_2289-jpg.197366/">IMG_2289.JPG</a>
+                </h3>
+                <div class="itemInfoRow-status">
+                    <ul class="listInline listInline--bullet">
+                        <li><i class="fa--xf far fa-user" aria-hidden="true" title="Media owner"></i> <a href="/members/fool4fishnhuntn.8589/" class="username " dir="auto" data-user-id="8589" data-xf-init="member-tooltip">Fool4FishnHuntn</a></li>
+                        <li><i class="fa--xf far fa-clock" aria-hidden="true" title="Date added"></i> Jun 21, 2024</li>
+                    </ul>
+                </div>
+                <div class="itemInfoRow-status">
+                    <ul class="listInline listInline--bullet">
+                        <li><i class="fa--xf far fa-thumbs-up" aria-hidden="true" title="Reaction score"></i> 0</li>
+                        <li><i class="fa--xf far fa-comments" aria-hidden="true" title="Comments"></i> 0</li>
+                        
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    </div>
+
+        
+            
+    <div class="itemList-item js-inlineModContainer" qid="gallery-item" data-author="Fool4FishnHuntn">
+        
+            
+    
+
+        
+        
+    
+        <div class="itemList-itemTypeIcon itemList-itemTypeIcon--image"></div>
+    
+
+        <a href="/media/img_2288-jpg.197365/" qid="gallery-item-link">
+            <div class="california-itemList-top-overlay"></div>
+            
+    
+        <span class='xfmgThumbnail xfmgThumbnail--image xfmgThumbnail--fluid'>
+			<img class='xfmgThumbnail-image' src='/d3/xfmg/thumbnail/197/197365-f9b89b04474dc59639764eeb88dfbbd4.jpg?1718944918' alt='IMG_2288.JPG' />
+			<span class='xfmgThumbnail-icon'></span>
+		</span>
+    
+
+        </a>
+        
+    <div class="itemList-itemOverlay">
+        <div class="itemInfoRow">
+            <div class="itemInfoRow-main">
+                <h3 class="itemInfoRow-title">
+                    <a href="/media/img_2288-jpg.197365/">IMG_2288.JPG</a>
+                </h3>
+                <div class="itemInfoRow-status">
+                    <ul class="listInline listInline--bullet">
+                        <li><i class="fa--xf far fa-user" aria-hidden="true" title="Media owner"></i> <a href="/members/fool4fishnhuntn.8589/" class="username " dir="auto" data-user-id="8589" data-xf-init="member-tooltip">Fool4FishnHuntn</a></li>
+                        <li><i class="fa--xf far fa-clock" aria-hidden="true" title="Date added"></i> Jun 21, 2024</li>
+                    </ul>
+                </div>
+                <div class="itemInfoRow-status">
+                    <ul class="listInline listInline--bullet">
+                        <li><i class="fa--xf far fa-thumbs-up" aria-hidden="true" title="Reaction score"></i> 0</li>
+                        <li><i class="fa--xf far fa-comments" aria-hidden="true" title="Comments"></i> 0</li>
+                        
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    </div>
+
+        
+            
+    <div class="itemList-item js-inlineModContainer" qid="gallery-item" data-author="Fool4FishnHuntn">
+        
+            
+    
+
+        
+        
+    
+        <div class="itemList-itemTypeIcon itemList-itemTypeIcon--image"></div>
+    
+
+        <a href="/media/img_2287-jpg.197364/" qid="gallery-item-link">
+            <div class="california-itemList-top-overlay"></div>
+            
+    
+        <span class='xfmgThumbnail xfmgThumbnail--image xfmgThumbnail--fluid'>
+			<img class='xfmgThumbnail-image' src='/d3/xfmg/thumbnail/197/197364-8ab99147d2d6ef138e14da65f6cb7a2b.jpg?1718944917' alt='IMG_2287.JPG' />
+			<span class='xfmgThumbnail-icon'></span>
+		</span>
+    
+
+        </a>
+        
+    <div class="itemList-itemOverlay">
+        <div class="itemInfoRow">
+            <div class="itemInfoRow-main">
+                <h3 class="itemInfoRow-title">
+                    <a href="/media/img_2287-jpg.197364/">IMG_2287.JPG</a>
+                </h3>
+                <div class="itemInfoRow-status">
+                    <ul class="listInline listInline--bullet">
+                        <li><i class="fa--xf far fa-user" aria-hidden="true" title="Media owner"></i> <a href="/members/fool4fishnhuntn.8589/" class="username " dir="auto" data-user-id="8589" data-xf-init="member-tooltip">Fool4FishnHuntn</a></li>
+                        <li><i class="fa--xf far fa-clock" aria-hidden="true" title="Date added"></i> Jun 21, 2024</li>
+                    </ul>
+                </div>
+                <div class="itemInfoRow-status">
+                    <ul class="listInline listInline--bullet">
+                        <li><i class="fa--xf far fa-thumbs-up" aria-hidden="true" title="Reaction score"></i> 0</li>
+                        <li><i class="fa--xf far fa-comments" aria-hidden="true" title="Comments"></i> 0</li>
+                        
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    </div>
+
+        
+            
+    <div class="itemList-item js-inlineModContainer" qid="gallery-item" data-author="Fool4FishnHuntn">
+        
+            
+    
+
+        
+        
+    
+        <div class="itemList-itemTypeIcon itemList-itemTypeIcon--image"></div>
+    
+
+        <a href="/media/img_2286-jpg.197363/" qid="gallery-item-link">
+            <div class="california-itemList-top-overlay"></div>
+            
+    
+        <span class='xfmgThumbnail xfmgThumbnail--image xfmgThumbnail--fluid'>
+			<img class='xfmgThumbnail-image' src='/d3/xfmg/thumbnail/197/197363-0ef1d698078de682a7422f2292ab71fd.jpg?1718944916' alt='IMG_2286.JPG' />
+			<span class='xfmgThumbnail-icon'></span>
+		</span>
+    
+
+        </a>
+        
+    <div class="itemList-itemOverlay">
+        <div class="itemInfoRow">
+            <div class="itemInfoRow-main">
+                <h3 class="itemInfoRow-title">
+                    <a href="/media/img_2286-jpg.197363/">IMG_2286.JPG</a>
+                </h3>
+                <div class="itemInfoRow-status">
+                    <ul class="listInline listInline--bullet">
+                        <li><i class="fa--xf far fa-user" aria-hidden="true" title="Media owner"></i> <a href="/members/fool4fishnhuntn.8589/" class="username " dir="auto" data-user-id="8589" data-xf-init="member-tooltip">Fool4FishnHuntn</a></li>
+                        <li><i class="fa--xf far fa-clock" aria-hidden="true" title="Date added"></i> Jun 21, 2024</li>
+                    </ul>
+                </div>
+                <div class="itemInfoRow-status">
+                    <ul class="listInline listInline--bullet">
+                        <li><i class="fa--xf far fa-thumbs-up" aria-hidden="true" title="Reaction score"></i> 0</li>
+                        <li><i class="fa--xf far fa-comments" aria-hidden="true" title="Comments"></i> 0</li>
+                        
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    </div>
+
+        
+            
+    <div class="itemList-item js-inlineModContainer" qid="gallery-item" data-author="Top AnglersFishingCabo">
+        
+            
+    
+
+        
+        
+    
+        <div class="itemList-itemTypeIcon itemList-itemTypeIcon--image"></div>
+    
+
+        <a href="/media/bull-dorado.197362/" qid="gallery-item-link">
+            <div class="california-itemList-top-overlay"></div>
+            
+    
+        <span class='xfmgThumbnail xfmgThumbnail--image xfmgThumbnail--fluid'>
+			<img class='xfmgThumbnail-image' src='/d3/xfmg/thumbnail/197/197362-90dc95766795432ef3648aae195be840.jpg?1718107616' alt='Bull Dorado' />
+			<span class='xfmgThumbnail-icon'></span>
+		</span>
+    
+
+        </a>
+        
+    <div class="itemList-itemOverlay">
+        <div class="itemInfoRow">
+            <div class="itemInfoRow-main">
+                <h3 class="itemInfoRow-title">
+                    <a href="/media/bull-dorado.197362/">Bull Dorado</a>
+                </h3>
+                <div class="itemInfoRow-status">
+                    <ul class="listInline listInline--bullet">
+                        <li><i class="fa--xf far fa-user" aria-hidden="true" title="Media owner"></i> <a href="/members/top-anglersfishingcabo.237405/" class="username " dir="auto" data-user-id="237405" data-xf-init="member-tooltip">Top AnglersFishingCabo</a></li>
+                        <li><i class="fa--xf far fa-clock" aria-hidden="true" title="Date added"></i> Jun 11, 2024</li>
+                    </ul>
+                </div>
+                <div class="itemInfoRow-status">
+                    <ul class="listInline listInline--bullet">
+                        <li><i class="fa--xf far fa-thumbs-up" aria-hidden="true" title="Reaction score"></i> 0</li>
+                        <li><i class="fa--xf far fa-comments" aria-hidden="true" title="Comments"></i> 0</li>
+                        
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    </div>
+
+        
+            
+    <div class="itemList-item js-inlineModContainer" qid="gallery-item" data-author="Spinitrode">
+        
+            
+    
+
+        
+        
+    
+        <div class="itemList-itemTypeIcon itemList-itemTypeIcon--image"></div>
+    
+
+        <a href="/media/0c0c32c9-8af3-41ac-9083-c351e0588466-jpeg.197361/" qid="gallery-item-link">
+            <div class="california-itemList-top-overlay"></div>
+            
+    
+        <span class='xfmgThumbnail xfmgThumbnail--image xfmgThumbnail--fluid'>
+			<img class='xfmgThumbnail-image' src='/d3/xfmg/thumbnail/197/197361-e22640f15e5ea3d382b44746e37f4d90.jpg?1716673159' alt='0C0C32C9-8AF3-41AC-9083-C351E0588466.jpeg' />
+			<span class='xfmgThumbnail-icon'></span>
+		</span>
+    
+
+        </a>
+        
+    <div class="itemList-itemOverlay">
+        <div class="itemInfoRow">
+            <div class="itemInfoRow-main">
+                <h3 class="itemInfoRow-title">
+                    <a href="/media/0c0c32c9-8af3-41ac-9083-c351e0588466-jpeg.197361/">0C0C32C9-8AF3-41AC-9083-C351E0588466.jpeg</a>
+                </h3>
+                <div class="itemInfoRow-status">
+                    <ul class="listInline listInline--bullet">
+                        <li><i class="fa--xf far fa-user" aria-hidden="true" title="Media owner"></i> <a href="/members/spinitrode.171385/" class="username " dir="auto" data-user-id="171385" data-xf-init="member-tooltip">Spinitrode</a></li>
+                        <li><i class="fa--xf far fa-clock" aria-hidden="true" title="Date added"></i> May 25, 2024</li>
+                    </ul>
+                </div>
+                <div class="itemInfoRow-status">
+                    <ul class="listInline listInline--bullet">
+                        <li><i class="fa--xf far fa-thumbs-up" aria-hidden="true" title="Reaction score"></i> 0</li>
+                        <li><i class="fa--xf far fa-comments" aria-hidden="true" title="Comments"></i> 0</li>
+                        
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    </div>
+
+        
+            
+    <div class="itemList-item js-inlineModContainer" qid="gallery-item" data-author="Seawolf690">
+        
+            
+    
+
+        
+        
+    
+        <div class="itemList-itemTypeIcon itemList-itemTypeIcon--image"></div>
+    
+
+        <a href="/media/screenshot_20240514_114836_com-huawei-himovie-overseas-jpg.197360/" qid="gallery-item-link">
+            <div class="california-itemList-top-overlay"></div>
+            
+    
+        <span class='xfmgThumbnail xfmgThumbnail--image xfmgThumbnail--fluid'>
+			<img class='xfmgThumbnail-image' src='/d3/xfmg/thumbnail/197/197360-a219fe6cd2e30c2c674dc9454dc97727.jpg?1715680505' alt='Screenshot_20240514_114836_com.huawei.himovie.overseas.jpg' />
+			<span class='xfmgThumbnail-icon'></span>
+		</span>
+    
+
+        </a>
+        
+    <div class="itemList-itemOverlay">
+        <div class="itemInfoRow">
+            <div class="itemInfoRow-main">
+                <h3 class="itemInfoRow-title">
+                    <a href="/media/screenshot_20240514_114836_com-huawei-himovie-overseas-jpg.197360/">Screenshot_20240514_114836_com.huawei.himovie.overseas.jpg</a>
+                </h3>
+                <div class="itemInfoRow-status">
+                    <ul class="listInline listInline--bullet">
+                        <li><i class="fa--xf far fa-user" aria-hidden="true" title="Media owner"></i> <a href="/members/seawolf690.236440/" class="username " dir="auto" data-user-id="236440" data-xf-init="member-tooltip">Seawolf690</a></li>
+                        <li><i class="fa--xf far fa-clock" aria-hidden="true" title="Date added"></i> May 14, 2024</li>
+                    </ul>
+                </div>
+                <div class="itemInfoRow-status">
+                    <ul class="listInline listInline--bullet">
+                        <li><i class="fa--xf far fa-thumbs-up" aria-hidden="true" title="Reaction score"></i> 0</li>
+                        <li><i class="fa--xf far fa-comments" aria-hidden="true" title="Comments"></i> 0</li>
+                        
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    </div>
+
+        
+            
+    <div class="itemList-item js-inlineModContainer" qid="gallery-item" data-author="Ronnie Burns">
+        
+            
+    
+
+        
+        
+    
+        <div class="itemList-itemTypeIcon itemList-itemTypeIcon--image"></div>
+    
+
+        <a href="/media/img_20230501_125255495_hdr-jpg.197359/" qid="gallery-item-link">
+            <div class="california-itemList-top-overlay"></div>
+            
+    
+        <span class='xfmgThumbnail xfmgThumbnail--image xfmgThumbnail--fluid'>
+			<img class='xfmgThumbnail-image' src='/d3/xfmg/thumbnail/197/197359-4aaac0350320c7bfa14f62a1693c0388.jpg?1713761237' alt='IMG_20230501_125255495_HDR.jpg' />
+			<span class='xfmgThumbnail-icon'></span>
+		</span>
+    
+
+        </a>
+        
+    <div class="itemList-itemOverlay">
+        <div class="itemInfoRow">
+            <div class="itemInfoRow-main">
+                <h3 class="itemInfoRow-title">
+                    <a href="/media/img_20230501_125255495_hdr-jpg.197359/">IMG_20230501_125255495_HDR.jpg</a>
+                </h3>
+                <div class="itemInfoRow-status">
+                    <ul class="listInline listInline--bullet">
+                        <li><i class="fa--xf far fa-user" aria-hidden="true" title="Media owner"></i> <a href="/members/ronnie-burns.235416/" class="username " dir="auto" data-user-id="235416" data-xf-init="member-tooltip">Ronnie Burns</a></li>
+                        <li><i class="fa--xf far fa-clock" aria-hidden="true" title="Date added"></i> Apr 22, 2024</li>
+                    </ul>
+                </div>
+                <div class="itemInfoRow-status">
+                    <ul class="listInline listInline--bullet">
+                        <li><i class="fa--xf far fa-thumbs-up" aria-hidden="true" title="Reaction score"></i> 0</li>
+                        <li><i class="fa--xf far fa-comments" aria-hidden="true" title="Comments"></i> 0</li>
+                        
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    </div>
+
+        
+            
+    <div class="itemList-item js-inlineModContainer" qid="gallery-item" data-author="Coho Cowboy">
+        
+            
+    
+
+        
+        
+    
+        <div class="itemList-itemTypeIcon itemList-itemTypeIcon--image"></div>
+    
+
+        <a href="/media/img_2737-png.197358/" qid="gallery-item-link">
+            <div class="california-itemList-top-overlay"></div>
+            
+    
+        <span class='xfmgThumbnail xfmgThumbnail--image xfmgThumbnail--fluid'>
+			<img class='xfmgThumbnail-image' src='/d3/xfmg/thumbnail/197/197358-de50db9f03315739c64b8da1792ed25f.jpg?1712982300' alt='IMG_2737.png' />
+			<span class='xfmgThumbnail-icon'></span>
+		</span>
+    
+
+        </a>
+        
+    <div class="itemList-itemOverlay">
+        <div class="itemInfoRow">
+            <div class="itemInfoRow-main">
+                <h3 class="itemInfoRow-title">
+                    <a href="/media/img_2737-png.197358/">IMG_2737.png</a>
+                </h3>
+                <div class="itemInfoRow-status">
+                    <ul class="listInline listInline--bullet">
+                        <li><i class="fa--xf far fa-user" aria-hidden="true" title="Media owner"></i> <a href="/members/coho-cowboy.16705/" class="username " dir="auto" data-user-id="16705" data-xf-init="member-tooltip">Coho Cowboy</a></li>
+                        <li><i class="fa--xf far fa-clock" aria-hidden="true" title="Date added"></i> Apr 13, 2024</li>
+                    </ul>
+                </div>
+                <div class="itemInfoRow-status">
+                    <ul class="listInline listInline--bullet">
+                        <li><i class="fa--xf far fa-thumbs-up" aria-hidden="true" title="Reaction score"></i> 0</li>
+                        <li><i class="fa--xf far fa-comments" aria-hidden="true" title="Comments"></i> 0</li>
+                        
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    </div>
+
+        
+            
+    <div class="itemList-item js-inlineModContainer" qid="gallery-item" data-author="Coho Cowboy">
+        
+            
+    
+
+        
+        
+    
+        <div class="itemList-itemTypeIcon itemList-itemTypeIcon--image"></div>
+    
+
+        <a href="/media/71303019078__748ff418-278b-4be2-a6df-6ef483880165-jpeg.197357/" qid="gallery-item-link">
+            <div class="california-itemList-top-overlay"></div>
+            
+    
+        <span class='xfmgThumbnail xfmgThumbnail--image xfmgThumbnail--fluid'>
+			<img class='xfmgThumbnail-image' src='/d3/xfmg/thumbnail/197/197357-5e0159132cbfb55b6df70b40a9c07b23.jpg?1712382020' alt='71303019078__748FF418-278B-4BE2-A6DF-6EF483880165.jpeg' />
+			<span class='xfmgThumbnail-icon'></span>
+		</span>
+    
+
+        </a>
+        
+    <div class="itemList-itemOverlay">
+        <div class="itemInfoRow">
+            <div class="itemInfoRow-main">
+                <h3 class="itemInfoRow-title">
+                    <a href="/media/71303019078__748ff418-278b-4be2-a6df-6ef483880165-jpeg.197357/">71303019078__748FF418-278B-4BE2-A6DF-6EF483880165.jpeg</a>
+                </h3>
+                <div class="itemInfoRow-status">
+                    <ul class="listInline listInline--bullet">
+                        <li><i class="fa--xf far fa-user" aria-hidden="true" title="Media owner"></i> <a href="/members/coho-cowboy.16705/" class="username " dir="auto" data-user-id="16705" data-xf-init="member-tooltip">Coho Cowboy</a></li>
+                        <li><i class="fa--xf far fa-clock" aria-hidden="true" title="Date added"></i> Apr 6, 2024</li>
+                    </ul>
+                </div>
+                <div class="itemInfoRow-status">
+                    <ul class="listInline listInline--bullet">
+                        <li><i class="fa--xf far fa-thumbs-up" aria-hidden="true" title="Reaction score"></i> 0</li>
+                        <li><i class="fa--xf far fa-comments" aria-hidden="true" title="Comments"></i> 0</li>
+                        
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    </div>
+
+        
+            
+    <div class="itemList-item js-inlineModContainer" qid="gallery-item" data-author="Phil Layer">
+        
+            
+    
+
+        
+        
+    
+        <div class="itemList-itemTypeIcon itemList-itemTypeIcon--image"></div>
+    
+
+        <a href="/media/tuna-divers-jpg.197356/" qid="gallery-item-link">
+            <div class="california-itemList-top-overlay"></div>
+            
+    
+        <span class='xfmgThumbnail xfmgThumbnail--image xfmgThumbnail--fluid'>
+			<img class='xfmgThumbnail-image' src='/d3/xfmg/thumbnail/197/197356-8e98d99e3060a5f526957c627c5f49cc.jpg?1712335482' alt='tuna divers.jpg' />
+			<span class='xfmgThumbnail-icon'></span>
+		</span>
+    
+
+        </a>
+        
+    <div class="itemList-itemOverlay">
+        <div class="itemInfoRow">
+            <div class="itemInfoRow-main">
+                <h3 class="itemInfoRow-title">
+                    <a href="/media/tuna-divers-jpg.197356/">tuna divers.jpg</a>
+                </h3>
+                <div class="itemInfoRow-status">
+                    <ul class="listInline listInline--bullet">
+                        <li><i class="fa--xf far fa-user" aria-hidden="true" title="Media owner"></i> <a href="/members/phil-layer.883/" class="username " dir="auto" data-user-id="883" data-xf-init="member-tooltip">Phil Layer</a></li>
+                        <li><i class="fa--xf far fa-clock" aria-hidden="true" title="Date added"></i> Apr 5, 2024</li>
+                    </ul>
+                </div>
+                <div class="itemInfoRow-status">
+                    <ul class="listInline listInline--bullet">
+                        <li><i class="fa--xf far fa-thumbs-up" aria-hidden="true" title="Reaction score"></i> 0</li>
+                        <li><i class="fa--xf far fa-comments" aria-hidden="true" title="Comments"></i> 0</li>
+                        
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    </div>
+
+        
+            
+    <div class="itemList-item js-inlineModContainer" qid="gallery-item" data-author="Phil Layer">
+        
+            
+    
+
+        
+        
+    
+        <div class="itemList-itemTypeIcon itemList-itemTypeIcon--image"></div>
+    
+
+        <a href="/media/swimbaits-jpg.197355/" qid="gallery-item-link">
+            <div class="california-itemList-top-overlay"></div>
+            
+    
+        <span class='xfmgThumbnail xfmgThumbnail--image xfmgThumbnail--fluid'>
+			<img class='xfmgThumbnail-image' src='/d3/xfmg/thumbnail/197/197355-3abf506e4e6d0f6ca7b0a3ad8e52983d.jpg?1712335467' alt='Swimbaits.jpg' />
+			<span class='xfmgThumbnail-icon'></span>
+		</span>
+    
+
+        </a>
+        
+    <div class="itemList-itemOverlay">
+        <div class="itemInfoRow">
+            <div class="itemInfoRow-main">
+                <h3 class="itemInfoRow-title">
+                    <a href="/media/swimbaits-jpg.197355/">Swimbaits.jpg</a>
+                </h3>
+                <div class="itemInfoRow-status">
+                    <ul class="listInline listInline--bullet">
+                        <li><i class="fa--xf far fa-user" aria-hidden="true" title="Media owner"></i> <a href="/members/phil-layer.883/" class="username " dir="auto" data-user-id="883" data-xf-init="member-tooltip">Phil Layer</a></li>
+                        <li><i class="fa--xf far fa-clock" aria-hidden="true" title="Date added"></i> Apr 5, 2024</li>
+                    </ul>
+                </div>
+                <div class="itemInfoRow-status">
+                    <ul class="listInline listInline--bullet">
+                        <li><i class="fa--xf far fa-thumbs-up" aria-hidden="true" title="Reaction score"></i> 0</li>
+                        <li><i class="fa--xf far fa-comments" aria-hidden="true" title="Comments"></i> 0</li>
+                        
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    </div>
+
+        
+            
+    <div class="itemList-item js-inlineModContainer" qid="gallery-item" data-author="Phil Layer">
+        
+            
+    
+
+        
+        
+    
+        <div class="itemList-itemTypeIcon itemList-itemTypeIcon--image"></div>
+    
+
+        <a href="/media/raps-jpg.197354/" qid="gallery-item-link">
+            <div class="california-itemList-top-overlay"></div>
+            
+    
+        <span class='xfmgThumbnail xfmgThumbnail--image xfmgThumbnail--fluid'>
+			<img class='xfmgThumbnail-image' src='/d3/xfmg/thumbnail/197/197354-5ee8dbfc8393d8e47023e6f0bb71cc36.jpg?1712335457' alt='Raps.jpg' />
+			<span class='xfmgThumbnail-icon'></span>
+		</span>
+    
+
+        </a>
+        
+    <div class="itemList-itemOverlay">
+        <div class="itemInfoRow">
+            <div class="itemInfoRow-main">
+                <h3 class="itemInfoRow-title">
+                    <a href="/media/raps-jpg.197354/">Raps.jpg</a>
+                </h3>
+                <div class="itemInfoRow-status">
+                    <ul class="listInline listInline--bullet">
+                        <li><i class="fa--xf far fa-user" aria-hidden="true" title="Media owner"></i> <a href="/members/phil-layer.883/" class="username " dir="auto" data-user-id="883" data-xf-init="member-tooltip">Phil Layer</a></li>
+                        <li><i class="fa--xf far fa-clock" aria-hidden="true" title="Date added"></i> Apr 5, 2024</li>
+                    </ul>
+                </div>
+                <div class="itemInfoRow-status">
+                    <ul class="listInline listInline--bullet">
+                        <li><i class="fa--xf far fa-thumbs-up" aria-hidden="true" title="Reaction score"></i> 0</li>
+                        <li><i class="fa--xf far fa-comments" aria-hidden="true" title="Comments"></i> 0</li>
+                        
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    </div>
+
+        
+            
+    <div class="itemList-item js-inlineModContainer" qid="gallery-item" data-author="Phil Layer">
+        
+            
+    
+
+        
+        
+    
+        <div class="itemList-itemTypeIcon itemList-itemTypeIcon--image"></div>
+    
+
+        <a href="/media/used-clones-jpg.197353/" qid="gallery-item-link">
+            <div class="california-itemList-top-overlay"></div>
+            
+    
+        <span class='xfmgThumbnail xfmgThumbnail--image xfmgThumbnail--fluid'>
+			<img class='xfmgThumbnail-image' src='/d3/xfmg/thumbnail/197/197353-44b714d617aeb7d934bc2829f186f290.jpg?1712335445' alt='Used clones.jpg' />
+			<span class='xfmgThumbnail-icon'></span>
+		</span>
+    
+
+        </a>
+        
+    <div class="itemList-itemOverlay">
+        <div class="itemInfoRow">
+            <div class="itemInfoRow-main">
+                <h3 class="itemInfoRow-title">
+                    <a href="/media/used-clones-jpg.197353/">Used clones.jpg</a>
+                </h3>
+                <div class="itemInfoRow-status">
+                    <ul class="listInline listInline--bullet">
+                        <li><i class="fa--xf far fa-user" aria-hidden="true" title="Media owner"></i> <a href="/members/phil-layer.883/" class="username " dir="auto" data-user-id="883" data-xf-init="member-tooltip">Phil Layer</a></li>
+                        <li><i class="fa--xf far fa-clock" aria-hidden="true" title="Date added"></i> Apr 5, 2024</li>
+                    </ul>
+                </div>
+                <div class="itemInfoRow-status">
+                    <ul class="listInline listInline--bullet">
+                        <li><i class="fa--xf far fa-thumbs-up" aria-hidden="true" title="Reaction score"></i> 0</li>
+                        <li><i class="fa--xf far fa-comments" aria-hidden="true" title="Comments"></i> 0</li>
+                        
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    </div>
+
+        
+            
+    <div class="itemList-item js-inlineModContainer" qid="gallery-item" data-author="Phil Layer">
+        
+            
+    
+
+        
+        
+    
+        <div class="itemList-itemTypeIcon itemList-itemTypeIcon--image"></div>
+    
+
+        <a href="/media/new-clones-jpg.197352/" qid="gallery-item-link">
+            <div class="california-itemList-top-overlay"></div>
+            
+    
+        <span class='xfmgThumbnail xfmgThumbnail--image xfmgThumbnail--fluid'>
+			<img class='xfmgThumbnail-image' src='/d3/xfmg/thumbnail/197/197352-72a06a5f570f968bd7ae5361dfa050dc.jpg?1712335433' alt='New clones.jpg' />
+			<span class='xfmgThumbnail-icon'></span>
+		</span>
+    
+
+        </a>
+        
+    <div class="itemList-itemOverlay">
+        <div class="itemInfoRow">
+            <div class="itemInfoRow-main">
+                <h3 class="itemInfoRow-title">
+                    <a href="/media/new-clones-jpg.197352/">New clones.jpg</a>
+                </h3>
+                <div class="itemInfoRow-status">
+                    <ul class="listInline listInline--bullet">
+                        <li><i class="fa--xf far fa-user" aria-hidden="true" title="Media owner"></i> <a href="/members/phil-layer.883/" class="username " dir="auto" data-user-id="883" data-xf-init="member-tooltip">Phil Layer</a></li>
+                        <li><i class="fa--xf far fa-clock" aria-hidden="true" title="Date added"></i> Apr 5, 2024</li>
+                    </ul>
+                </div>
+                <div class="itemInfoRow-status">
+                    <ul class="listInline listInline--bullet">
+                        <li><i class="fa--xf far fa-thumbs-up" aria-hidden="true" title="Reaction score"></i> 0</li>
+                        <li><i class="fa--xf far fa-comments" aria-hidden="true" title="Comments"></i> 0</li>
+                        
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    </div>
+
+        
+            
+    <div class="itemList-item js-inlineModContainer" qid="gallery-item" data-author="Phil Layer">
+        
+            
+    
+
+        
+        
+    
+        <div class="itemList-itemTypeIcon itemList-itemTypeIcon--image"></div>
+    
+
+        <a href="/media/frabill2-jpg.197351/" qid="gallery-item-link">
+            <div class="california-itemList-top-overlay"></div>
+            
+    
+        <span class='xfmgThumbnail xfmgThumbnail--image xfmgThumbnail--fluid'>
+			<img class='xfmgThumbnail-image' src='/d3/xfmg/thumbnail/197/197351-24823c9103099f57c752f6d1d66ed681.jpg?1712265059' alt='Frabill2.jpg' />
+			<span class='xfmgThumbnail-icon'></span>
+		</span>
+    
+
+        </a>
+        
+    <div class="itemList-itemOverlay">
+        <div class="itemInfoRow">
+            <div class="itemInfoRow-main">
+                <h3 class="itemInfoRow-title">
+                    <a href="/media/frabill2-jpg.197351/">Frabill2.jpg</a>
+                </h3>
+                <div class="itemInfoRow-status">
+                    <ul class="listInline listInline--bullet">
+                        <li><i class="fa--xf far fa-user" aria-hidden="true" title="Media owner"></i> <a href="/members/phil-layer.883/" class="username " dir="auto" data-user-id="883" data-xf-init="member-tooltip">Phil Layer</a></li>
+                        <li><i class="fa--xf far fa-clock" aria-hidden="true" title="Date added"></i> Apr 4, 2024</li>
+                    </ul>
+                </div>
+                <div class="itemInfoRow-status">
+                    <ul class="listInline listInline--bullet">
+                        <li><i class="fa--xf far fa-thumbs-up" aria-hidden="true" title="Reaction score"></i> 0</li>
+                        <li><i class="fa--xf far fa-comments" aria-hidden="true" title="Comments"></i> 0</li>
+                        
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    </div>
+
+        
+            
+    <div class="itemList-item js-inlineModContainer" qid="gallery-item" data-author="Phil Layer">
+        
+            
+    
+
+        
+        
+    
+        <div class="itemList-itemTypeIcon itemList-itemTypeIcon--image"></div>
+    
+
+        <a href="/media/frabill1-jpg.197350/" qid="gallery-item-link">
+            <div class="california-itemList-top-overlay"></div>
+            
+    
+        <span class='xfmgThumbnail xfmgThumbnail--image xfmgThumbnail--fluid'>
+			<img class='xfmgThumbnail-image' src='/d3/xfmg/thumbnail/197/197350-b56c91fd86d8b755c01a9adc4c0b0185.jpg?1712265058' alt='Frabill1.jpg' />
+			<span class='xfmgThumbnail-icon'></span>
+		</span>
+    
+
+        </a>
+        
+    <div class="itemList-itemOverlay">
+        <div class="itemInfoRow">
+            <div class="itemInfoRow-main">
+                <h3 class="itemInfoRow-title">
+                    <a href="/media/frabill1-jpg.197350/">Frabill1.jpg</a>
+                </h3>
+                <div class="itemInfoRow-status">
+                    <ul class="listInline listInline--bullet">
+                        <li><i class="fa--xf far fa-user" aria-hidden="true" title="Media owner"></i> <a href="/members/phil-layer.883/" class="username " dir="auto" data-user-id="883" data-xf-init="member-tooltip">Phil Layer</a></li>
+                        <li><i class="fa--xf far fa-clock" aria-hidden="true" title="Date added"></i> Apr 4, 2024</li>
+                    </ul>
+                </div>
+                <div class="itemInfoRow-status">
+                    <ul class="listInline listInline--bullet">
+                        <li><i class="fa--xf far fa-thumbs-up" aria-hidden="true" title="Reaction score"></i> 0</li>
+                        <li><i class="fa--xf far fa-comments" aria-hidden="true" title="Comments"></i> 0</li>
+                        
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    </div>
+
+        
+        
+    
+        <div class="itemList-item itemList-item--placeholder"></div>
+    
+        <div class="itemList-item itemList-item--placeholder"></div>
+    
+        <div class="itemList-item itemList-item--placeholder"></div>
+    
+        <div class="itemList-item itemList-item--placeholder"></div>
+    
+        <div class="itemList-item itemList-item--placeholder"></div>
+    
+        <div class="itemList-item itemList-item--placeholder"></div>
+    
+        <div class="itemList-item itemList-item--placeholder"></div>
+    
+        <div class="itemList-item itemList-item--placeholder"></div>
+    
+        <div class="itemList-item itemList-item--placeholder"></div>
+    
+        <div class="itemList-item itemList-item--placeholder"></div>
+    
+
+    </div>
+
+                
+                
+        </div>
+    </div>
+    <div class="block-outer block-outer--after block-outer-opposite">
+        <div class="block-outer-main"><nav aria-label="Pagination" class="pageNav">
+    <a
+        aria-disabled="true"
+        data-xf-init="tooltip"
+        title="Prev"
+        href=""
+        class="button pageNav-jump pageNav-jump--prev"
+        qid="page-nav-prev-button"
+    ></a>
+
+    
+
+    
+        <a class="button button--primary pageNav-jump" aria-label="Current Page, Page 1" aria-current="page" href="/media/" qid="page-nav-current">1</a>
+        
+
+
+    
+        <a class="button  pageNav-jump"
+            data-xf-init="tooltip"
+            title="Go to page"
+            data-xf-click="menu"
+            role="button"
+            tabindex="0"
+            aria-expanded="false"
+            aria-haspopup="true"
+            aria-current=""
+        >
+            1 of 7010
+        </a>
+        
+
+    <div class="menu menu--pageJump" data-menu="menu" aria-hidden="true">
+        <div class="menu-content">
+            <h4 class="menu-header" qid="go-to-page-title">Go to page</h4>
+            <div class="menu-row" data-xf-init="page-jump" data-page-url="/media/page-%page%">
+                <div class="inputGroup inputGroup--numbers">
+                    <div class="inputGroup inputGroup--numbers inputNumber" data-xf-init="number-box"><input type="number" pattern="\d*" class="input input--number js-numberBoxTextInput input input--numberNarrow js-pageJumpPage" value="1"  min="1" max="7010" step="1" required="required" aria-label="Enter Page Number" data-menu-autofocus="true" qid="page-jump-input" /></div>
+                    <span class="inputGroup-text"><button type="button" class="js-pageJumpGo button" aria-label="Go To The Selected Page" qid="page-jump-go-button"><span class="button-text">Go</span></button></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
+
+    
+        
+
+    
+        <a class="button pageNav-jump" aria-label="Goto Page 7010" href="/media/page-7010" qid="page-nav-other-page">7010</a>
+    
+
+    
+
+    <a
+        aria-disabled="false"
+        data-xf-init="tooltip"
+        title="Next"
+        href="/media/page-2"
+        class="button pageNav-jump pageNav-jump--next"
+        qid="page-nav-next-button"
+    ></a>
+</nav>
+
+
+
+
+</div>
+
+        
+    </div>
+</div>
+
+
+
+
+
+
+</div>
+                            
+                        </div>
+
+                        
+                    </div>
+                </div>
+            </div>
+
+            
+            
+
+            
+                <div class="p-sectionLinks mt-15">
+                    <div class="p-sectionLinks-inner">
+                        
+    
+        <ul class="p-breadcrumbs p-breadcrumbs--bottom"
+            itemscope itemtype="https://schema.org/BreadcrumbList"
+            qid = "thread-view-breadcrumbs">
+            
+                
+
+                
+                
+                    
+                    
+    <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+        <a href="https://www.ifish.net" itemprop="item">
+            <span itemprop="name">Home</span>
+        </a>
+        <meta itemprop="position" content="1" />
+    </li>
+
+                
+
+                
+                
+
+            
+        </ul>
+    
+
+                    </div>
+                </div>
+            
+
+            <footer class="p-footer" id="footer" data-adhesion="1">
+                <div class="p-footer-inner">
+                    <div>
+                        <div class="p-footer-row-main">
+                            <ul class="p-footer-linkList">
+                                
+                                    <li><a href="https://www.ifish.net">Home</a></li>
+                                
+                                <li><a href="/about/">About Us</a></li>
+                                <li><a href="/help/terms">Terms of Use</a></li>
+                                <li><a href="/help/privacy">Privacy Policy</a></li>
+                                <li><a href="/help/">Help</a></li>
+                                
+                                    <li><a href="/business/directory">Business Directory</a></li>
+                                
+                                <li><a href="/help/contact">Contact Us</a></li>
+                                
+                                    <li class="vertical-line">
+                                        <a href="/business/">
+                                            <span class="menu-text">Grow Your Business</span>
+                                        </a>
+                                    </li>
+                                
+                                <li><a href="/forums/-/index.rss" target="_blank" title="RSS"><i class="fa--xf far fa-rss" aria-hidden="true"></i></a></li>
+                            </ul>
+                        </div>
+
+                        <ul class="p-footer-row-main p-footer-disclaimers">
+                            <li>When you purchase through links on our site, we may earn an affiliate commission, which supports our community.</li>
+                            
+                                <li>The Fora platform includes forum software by XenForo.</li>
+                            
+                            
+                            
+                                <li>VerticalScope Inc.,  111 Peter Street, Suite 600, Toronto, Ontario, M5V 2H1, Canada
+</li>
+                            
+                        </ul>
+                    </div>
+
+                    <div class="p-footer-row-opposite">
+                        <div>
+                            <a href="https://fora.com/communities"><span class="fora-logo" alt="Fora" qid="fora-logo"></span></a>
+                            <span class="bbb-logo" alt="BBB accredited business" qid="bbb-logo"></span>
+                        </div>
+                        <div id="privacy-consent-container" class="p-footer-privacy-consent-container">
+                            <div><a class="qc-cmp-persistent-link">Manage Consent</a></div>
+                            <div><a class="qc-ccpa-persistent-link" href="javascript:void(0);"><img src="https://storage.googleapis.com/vs-cmp/privacyoptions123x59.png" class="opt-out-icon" alt="California Consumer Privacy Act (CCPA) Opt-Out Icon" />Your Privacy Choices</a></div>
+                        </div>
+                    </div>
+
+                    
+                        <div class="p-footer-copyright">
+                            
+                                <a href="https://xenforo.com" class="u-concealed" rel="noopener noreferrer" dir="ltr" target="_blank">Forum software by XenForo<sup>&reg;</sup> <span class="copyright">&copy; 2010-2019 XenForo Ltd.</span></a>
+                                
+                            
+                        </div>
+                    
+                </div>
+
+                
+            </footer>
+
+            
+                <div class="california-sticky-footer-ad-container">
+                    <div id="Mobile_Adhesion" class="california-sticky-footer-ad"></div>
+                </div>
+                
+                    
+                    
+                    
+                        
+                    
+                    <div class="desktop-adhesion-ad__footer-ad-container">
+                        <div id="desktop-adhesion-ad__container" class="desktop-adhesion-ad__footer-ad ">
+                            <div id="desktop-adhesion-ad__inner-container">
+                                <div id="Desktop_Adhesion"></div>
+                                <button title="Close" type="button" id="desktop-adhesion-ad__close-button" class="overlay-titleCloser" data-desktop-adhesion=" "></button>
+                            </div>
+                        </div>
+                    </div>
+                
+            
+        </div>
+        <!-- closing p-pageWrapper -->
+
+        <div class="u-bottomFixer js-bottomFixTarget">
+            
+            
+        </div>
+
+        
+            <div class="u-scrollButtons js-scrollButtons" data-trigger-type="up">
+                <a href="#top" class="button--scroll button" data-xf-click="scroll-to"><span class="button-text"><i class="fa--xf far fa-arrow-up" aria-hidden="true"></i><span class="u-srOnly">Top</span></span></a>
+                
+            </div>
+        
+
+        
+    
+	<script src="/js/california/dist/vendor-compiled.ts.62299a387a56864606b4.js"></script>
+	<script src="/js/xf/core-compiled.js?_v=2c5b3457"></script>
+    <script src="/js/california/dist/ad_stack_hometalk_prebidcache.ts.c75800d21e2f19a786e8.js"></script>
+<script src="/js/california/dist/action-override.ts.15af7dcd1a2323ee568d.js"></script>
+<script src="/js/california/dist/california-gallery.ts.c21a837d2e0bcc719cc4.js"></script>
+<script src="/js/california/dist/advanced-search-gtm.ts.ab00df7edceae019ccbe.js"></script>
+<script src="/js/california/dist/header-gtm.ts.ffbabc761c7c2a0c5eea.js"></script>
+<script src="/js/california/dist/scroll-analytic.ts.860f8f70ce232335ea79.js"></script>
+<script src="/js/california/dist/core-override.ts.17c4c7d751a41f364eac.js"></script>
+<script src="/js/california/dist/identity.ts.aa27ce4c20a6ed0b74d0.js"></script>
+<script src="/js/california/dist/hide-search.ts.8c70e1ff93fd473005ee.js"></script>
+<script src="/js/california/dist/marketplace-gtm.ts.2d3d752a56a0017828a4.js"></script>
+<script src="/js/california/dist/autocomplete_search.ts.c447d05ae350fd050438.js"></script>
+<script src="/js/california/dist/page-view-counter.ts.6c7689e5145fa0d66141.js"></script>
+<script src="/js/california/dist/desktop-adhesion-close.ts.3ee54f612de9f7130972.js"></script>
+<script src="/js/california/dist/runtime.db367ecdd4c7b111f776.js"></script>
+<script src="/js/california/dist/structure-override.ts.26738dfbaafd7ff3fe8e.js"></script>
+<script src="/js/california/dist/unregister-serviceworkers.ts.63ec51f854d745830847.js"></script>
+<script src="/js/california/dist/tooltip-override.ts.7a2bc65662802ef419f9.js"></script>
+<script src="/js/california/dist/form-override.ts.5e4145ac0b821155d537.js"></script>
+<script src="/js/california/dist/override-notice-enable-push.ts.208ee98f6eb287c729a4.js"></script>
+
+	<script async type="text/javascript" src="https://cdn.threadloom.com/ga/c5a3666324684a921606f2f49ca50c16.js"></script>
+
+    
+
+    <script>
+		jQuery.extend(true, XF.config, {
+			// 
+			userId: 0,
+			enablePush: true,
+			rubiconAdOnly: false,
+			pushAppServerKey: 'BAW53ba8vn8tNOOduMe3uFReTjCDynh9lJjqZ8SKKTbolaBf+7AmFyeBGQ7R2rwRIAyxDl9v6jhLl6MQBaEvTN8=',
+			url: {
+				fullBase: 'https://www.ifish.net/',
+				basePath: '/',
+				css: '/css.php?css=__SENTINEL__&s=9&h=9fd292fe',
+				keepAlive: '/login/keep-alive'
+			},
+			cookie: {
+				path: '/',
+				domain: '',
+				prefix: 'xf_',
+				secure: true
+			},
+			csrf: '1720315446,fa46544c0ad39e3d3c5d77db19b55338',
+			js: {"\/js\/california\/dist\/ad_stack_hometalk_prebidcache.ts.c75800d21e2f19a786e8.js":true,"\/js\/california\/dist\/action-override.ts.15af7dcd1a2323ee568d.js":true,"\/js\/california\/dist\/california-gallery.ts.c21a837d2e0bcc719cc4.js":true,"\/js\/california\/dist\/advanced-search-gtm.ts.ab00df7edceae019ccbe.js":true,"\/js\/california\/dist\/header-gtm.ts.ffbabc761c7c2a0c5eea.js":true,"\/js\/california\/dist\/scroll-analytic.ts.860f8f70ce232335ea79.js":true,"\/js\/california\/dist\/core-override.ts.17c4c7d751a41f364eac.js":true,"\/js\/california\/dist\/identity.ts.aa27ce4c20a6ed0b74d0.js":true,"\/js\/california\/dist\/hide-search.ts.8c70e1ff93fd473005ee.js":true,"\/js\/california\/dist\/marketplace-gtm.ts.2d3d752a56a0017828a4.js":true,"\/js\/california\/dist\/autocomplete_search.ts.c447d05ae350fd050438.js":true,"\/js\/california\/dist\/page-view-counter.ts.6c7689e5145fa0d66141.js":true,"\/js\/california\/dist\/desktop-adhesion-close.ts.3ee54f612de9f7130972.js":true,"\/js\/california\/dist\/runtime.db367ecdd4c7b111f776.js":true,"\/js\/california\/dist\/structure-override.ts.26738dfbaafd7ff3fe8e.js":true,"\/js\/california\/dist\/unregister-serviceworkers.ts.63ec51f854d745830847.js":true,"\/js\/california\/dist\/tooltip-override.ts.7a2bc65662802ef419f9.js":true,"\/js\/california\/dist\/form-override.ts.5e4145ac0b821155d537.js":true,"\/js\/california\/dist\/override-notice-enable-push.ts.208ee98f6eb287c729a4.js":true},
+			css: {"public:normalize.css":true,"public:core.less":true,"public:california_additional_header.less":true,"public:california_gallery.less":true,"public:desktop_adhesion_ad.less":true,"public:desktop_adhesion_ad_small_screen.less":true,"public:xfmg_media_list.less":true,"public:app.less":true,"public:extra.less":true},
+			time: {
+				now: 1720315446,
+				today: 1720238400,
+				todayDow: 6
+			},
+			borderSizeFeature: '3px',
+			fontAwesomeWeight: 'r',
+			enableRtnProtect: true,
+			enableFormSubmitSticky: true,
+			uploadMaxFilesize: 20971520,
+			attachmentMaxPerMessage: 10,
+			attachmentExtensions: "txt,pdf,png,jpg,jpeg,jpe,gif",
+			allowedVideoExtensions: ["m4v","mov","mp4","mp4v","mpeg","mpg","ogv","webm"],
+			shortcodeToEmoji: true,
+			visitorCounts: {
+				conversations_unread: '0',
+				alerts_unread: '0',
+				total_unread: '0',
+				title_count: true,
+				icon_indicator: true
+			},
+			jsState: {},
+			publicMetadataLogoUrl: 'https://images.platforum.cloud/logos/ifish_net_profile.png',
+			publicPushBadgeUrl: 'https://www.ifish.net/styles/default/xenforo/bell.png'
+		});
+
+		jQuery.extend(XF.phrases, {
+			// 
+			date_x_at_time_y: "{date} at {time}",
+			day_x_at_time_y:  "{day} at {time}",
+			yesterday_at_x:   "Yesterday at {time}",
+			x_minutes_ago:    "{minutes} minutes ago",
+			one_minute_ago:   "1 minute ago",
+			a_moment_ago:     "A moment ago",
+			today_at_x:       "Today at {time}",
+			in_a_moment:      "In a moment",
+			in_a_minute:      "In a minute",
+			in_x_minutes:     "In {minutes} minutes",
+			later_today_at_x: "Later today at {time}",
+			tomorrow_at_x:    "Tomorrow at {time}",
+
+			california_a_moment_ago: "a moment ago",
+			california_x_mins_ago:   "{mins}m ago",
+			california_x_hour_ago:   "{hour}h ago",
+			california_x_hours_ago:  "{hours}h ago",
+			california_x_day_ago:    "{day}d ago",
+			california_x_days_ago:   "{days}d ago",
+			california_x_month_ago:  "{month}mo ago",
+			california_x_months_ago: "{months}mo ago",
+
+			day0: "Sunday",
+			day1: "Monday",
+			day2: "Tuesday",
+			day3: "Wednesday",
+			day4: "Thursday",
+			day5: "Friday",
+			day6: "Saturday",
+
+			dayShort0: "Sun",
+			dayShort1: "Mon",
+			dayShort2: "Tue",
+			dayShort3: "Wed",
+			dayShort4: "Thu",
+			dayShort5: "Fri",
+			dayShort6: "Sat",
+
+			month0: "January",
+			month1: "February",
+			month2: "March",
+			month3: "April",
+			month4: "May",
+			month5: "June",
+			month6: "July",
+			month7: "August",
+			month8: "September",
+			month9: "October",
+			month10: "November",
+			month11: "December",
+
+			active_user_changed_reload_page: "The active user has changed. Reload the page for the latest version.",
+			server_did_not_respond_in_time_try_again: "The server did not respond in time. Please try again.",
+			oops_we_ran_into_some_problems: "Oops! We ran into some problems.",
+			oops_we_ran_into_some_problems_more_details_console: "Oops! We ran into some problems. Please try again later. More error details may be in the browser console.",
+			file_too_large_to_upload: "The file is too large to be uploaded.",
+			uploaded_file_is_too_large_for_server_to_process: "The uploaded file is too large for the server to process.",
+			files_being_uploaded_are_you_sure: "Files are still being uploaded. Are you sure you want to submit this form?",
+			attach: "Attach files",
+			rich_text_box: "Rich text box",
+			close: "Close",
+			link_copied_to_clipboard: "Link copied to clipboard.",
+			text_copied_to_clipboard: "Text copied to clipboard.",
+			loading: "Loading…",
+
+			processing: "Processing",
+			'processing...': "Processing…",
+
+			showing_x_of_y_items: "Showing {count} of {total} items",
+			showing_all_items: "Showing all items",
+			no_items_to_display: "No items to display",
+
+			push_enable_notification_title: "Push notifications enabled successfully at IFish Fishing Forum",
+			push_enable_notification_body: "Thank you for enabling push notifications!"
+		});
+	</script>
+
+    <form class="concealed" hidden="hidden">
+        <input type="text" name="_xfClientLoadTime" value="" id="_xfClientLoadTime" title="_xfClientLoadTime" tabindex="-1" />
+    </form>
+
+    <script src="/js/california/dist/california-time.ts.c5b727205a1c56e0c4ff.js"></script>
+
+        
+        
+        
+        
+        
+        <!--This needs to exist on the PAGE CONTAINER level, as the JS needs to load across all pages to handle silently subscribing users-->
+        
+
+        
+            <script type="text/template" id="xfReactTooltipTemplate">
+		<div class="tooltip-content-inner">
+			<div class="reactTooltip">
+				
+					<a href="#" class="reaction reaction--1" data-reaction-id="1"><i aria-hidden="true"></i><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" class="reaction-sprite js-reaction" alt="Like" title="Like" data-xf-init="tooltip" /></a>
+				
+					<a href="#" class="reaction reaction--2" data-reaction-id="2"><i aria-hidden="true"></i><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" class="reaction-sprite js-reaction" alt="Love" title="Love" data-xf-init="tooltip" /></a>
+				
+					<a href="#" class="reaction reaction--7" data-reaction-id="7"><i aria-hidden="true"></i><img src="/styles/default/xenforo/reactions/emojione/helpful.png"  class="reaction-image js-reaction" alt="Helpful" title="Helpful" data-xf-init="tooltip" /></a>
+				
+					<a href="#" class="reaction reaction--3" data-reaction-id="3"><i aria-hidden="true"></i><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" class="reaction-sprite js-reaction" alt="Haha" title="Haha" data-xf-init="tooltip" /></a>
+				
+					<a href="#" class="reaction reaction--4" data-reaction-id="4"><i aria-hidden="true"></i><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" class="reaction-sprite js-reaction" alt="Wow" title="Wow" data-xf-init="tooltip" /></a>
+				
+					<a href="#" class="reaction reaction--5" data-reaction-id="5"><i aria-hidden="true"></i><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" class="reaction-sprite js-reaction" alt="Sad" title="Sad" data-xf-init="tooltip" /></a>
+				
+					<a href="#" class="reaction reaction--6" data-reaction-id="6"><i aria-hidden="true"></i><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" class="reaction-sprite js-reaction" alt="Angry" title="Angry" data-xf-init="tooltip" /></a>
+				
+			</div>
+		</div>
+	</script>
+        
+
+        
+
+
+        <!-- BEGIN Redirect old post id anchors -->
+        <script>
+	var anchor = window.location.hash.match(/^#(post|p|msg|entry)(\d+)$/);
+	if (anchor && anchor.length === 3) {
+		var redirectAnchor = 'post-' + anchor[2];
+		// if we have an anchor on the page, simply jump to the anchor
+		if (document.getElementById(redirectAnchor) != null) {
+			window.location.hash = redirectAnchor;
+		} else {
+			window.location = "/posts/" + anchor[2];
+		}
+	}
+</script>
+        <!-- END Redirect old post id anchors -->
+
+        
+            <script>
+		window.addEventListener("message", (event) => {
+			if (event.origin !== location.origin) {
+				return;
+			}
+
+			if (event.data === "googleOneTapError") {
+				XF.alert(XF.phrase("oops_we_ran_into_some_problems"));
+			}
+		}, false);
+
+		window.onload = function() {
+			adjustIframeVerticalPosition();
+		}
+
+		$(window).onPassive('scroll', adjustIframeVerticalPosition);
+
+		function adjustIframeVerticalPosition() {
+			if (window.innerWidth > 650) {
+				let iframeElement = document.getElementById("google-one-tap-iframe");
+				let header = document.getElementById("cali-header");
+				let headerBannerHeight = document.getElementById("header-banner").offsetHeight;
+				let scrollY = window.scrollY;
+				if (scrollY < (headerBannerHeight - header.offsetHeight)) {
+					iframeElement.style.position = "absolute";
+					iframeElement.style.top = (header.offsetHeight + header.offsetTop) + "px";
+				}
+				else {
+					iframeElement.style.position = "fixed";
+					iframeElement.style.top = header.offsetHeight + "px";
+				}
+
+			}
+		}
+	</script>
+        
+
+        
+    </body>
+</html>
+
+
+
+

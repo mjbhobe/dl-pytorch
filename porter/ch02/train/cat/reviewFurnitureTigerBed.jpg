@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+    <html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Conservation Efforts: Changing Perspectives</title>
+
+<meta name="description" content="">
+
+<meta name="robots" content="all" />
+<link rel="icon" type="image/png" href="/favicon.png" />
+
+
+    <link rel="stylesheet" href="/css/style2.css">
+</head>
+<body>
+    <header>
+    <div class="container row">
+    <!--    <time datetime="2024-07-06 19:49:42">Saturday, July 6, 2024 7:49 PM</time> -->
+    <time id="currentDatetimeLang"></time>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const dateElement = document.getElementById('currentDatetimeLang');
+        const current = new Date();
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        
+        const htmlLang = document.documentElement.lang;
+        
+        const dateString = current.toLocaleDateString(htmlLang, options);
+        dateElement.textContent = dateString;
+    });
+</script>
+
+        <form class="d-flex" role="search" method="get" action="/search">
+    <input type="search" class="form-control"  name="q" placeholder="Rechercher" aria-label="Rechercher"  pattern=".*\S.*" required>
+    <button type="submit" class="btn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18px" height="18px" fill="currentColor" viewBox="0 0 512 512">
+                    <path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352a144 144 0 1 0 0-288 144 144 0 1 0 0 288z"/>
+                </svg>
+    </button>
+</form>
+    </div>
+    <div class="container-fluid d-flex justify-content-center">
+        <nav class="navbar container navbar-expand-xl m-0 pt-3">
+            <div class="container-fluid">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-list" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5"></path>
+                    </svg>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                    <ul class="navbar-nav">
+                                                    <li class="nav-item">
+    <a href="/wild-animal" class="nav-link">Wild animal</a>
+    </li>
+                                    <li class="nav-item">
+    <a href="/dog" class="nav-link">Dog</a>
+    </li>
+                                    <li class="nav-item">
+    <a href="/cats" class="nav-link">Cats</a>
+    </li>
+                                    <li class="nav-item">
+    <a href="/pets" class="nav-link">Pets</a>
+    </li>
+                                    <li class="nav-item">
+    <a href="/miscellaneous" class="nav-link">Miscellaneous</a>
+    </li>
+                            </ul>
+                </div>
+            </div>
+        </nav>
+    </div>
+</header>
+<main>
+        <div class="container main" ></div>    <section class="container-fluid full">
+            <img class="img-fluid" src="/images/how-can-we-ensure-the-protection-of-animals.jpg" alt="">            <div class="container-fluid">
+                <div class="container">
+                    <div class="col-12 col-lg-6">
+                        <h3><a href="/how-can-we-ensure-the-protection-of-animals" title="How can we ensure the protection of animals?">How can we ensure the protection of animals?</a></h3>                        <time datetime="2022-02-10 15:29:12">Thursday, February 10, 2022 3:29 PM</time>                                                <p>Animals are also living beings that need to be protected and cared for to be in good shape. And not being fully aware of the dangers, their protection must be ensured by man. Discover in the following, some very important rules to apply for their protection.
+Identification and good hydration of animals
+Often, we see the disappearance of animals, especially pets. And it is at this moment that investigations are launched to find these animals. In order to avoid these kinds of surprises, you just have to identify your animals. Whether it is a dog or a cat, you can proceed to their identification by two means. These are identification by chip and identification by tattoo. In the latter case, make sure that the tattoo is very legible, because it can disappear with time. But to be sure, you...</p>                    </div>
+                </div>
+            </div>
+
+        </section>
+    
+        
+        
+        
+            <section class="column-3">
+
+        <div class="container">
+            <h2>Wild animal</h2>            <div class="row">
+                                    <div class="col-12 col-md-5 col-lg-4 item">
+
+                        <figure><a href="/which-pet-should-i-choose" title="Which pet should I choose?"><img class="img-fluid" src="/images/which-pet-should-i-choose.jpeg" alt="Which pet should I choose?"></a></figure><figcaption>Which pet should I choose?</figcaption>                        <div>
+                            <h3><a href="/which-pet-should-i-choose" title="Which pet should I choose?">Which pet should I choose?</a></h3>                        </div>
+                        <time datetime="2022-02-10 15:22:29">Thursday, February 10, 2022 3:22 PM</time>                        
+                        <div>Choosing a pet should not be taken lightly. While dogs and cats deserve love and attention, there are several others that do not require special attention. Read this article for advice on which pet to choose.
+Opting for a dog or cat
+If you're feeling lonely, why not adopt a dog or cat to keep you...</div>                                            </div>
+
+                                                        <div class="col-12 col-md-5 col-lg-4 item">
+
+                        <figure><a href="/cat-training-how-to-succeed" title="Cat training: how to succeed?"><img class="img-fluid" src="/images/cat-training-how-to-succeed.jpeg" alt="Cat training: how to succeed?"></a></figure><figcaption>Cat training: how to succeed?</figcaption>                        <div>
+                            <h3><a href="/cat-training-how-to-succeed" title="Cat training: how to succeed?">Cat training: how to succeed?</a></h3>                        </div>
+                        <time datetime="2022-02-10 15:18:18">Thursday, February 10, 2022 3:18 PM</time>                        
+                        <div>Cats are one of the most popular pets. If you've just adopted one, you'll need to train it to obey you. Here are some tips and tricks for successfully training your cat.
+Answering Your Call
+Many people think that it may be difficult to get a cat to obey you. In addition to being easy, the process...</div>                                            </div>
+
+                                                        <div class="col-12 col-md-5 col-lg-4 item">
+
+                        <figure><a href="/how-to-feed-your-dog" title="How to feed your dog?"><img class="img-fluid" src="/images/how-to-feed-your-dog.jpg" alt="How to feed your dog?"></a></figure><figcaption>How to feed your dog?</figcaption>                        <div>
+                            <h3><a href="/how-to-feed-your-dog" title="How to feed your dog?">How to feed your dog?</a></h3>                        </div>
+                        <time datetime="2022-02-10 14:59:59">Thursday, February 10, 2022 2:59 PM</time>                        
+                        <div>Having a pet like a dog is a very good idea. However, it is very important to take care of his diet in order to ensure a perfect health. Reading this article will tell you more about the proper feeding of your dog.
+The household ration
+It is not uncommon to see some people feeding their dogs table...</div>                                            </div>
+
+                                </div>
+            <div class="row">
+                                                                    <div class="col-12 col-md-5 col-lg-4 empty"></div>
+                            </div>
+        </div>
+        
+    </section>
+<section class="newest-list">
+        <div class="container">
+                        <h2>Dog</h2>
+            <div class="row">
+                                    <div class="col-12 col-md-4">
+                        <figure><a href="/cat-training-how-to-succeed" title="Cat training: how to succeed?"><img class="img-fluid" src="/images/cat-training-how-to-succeed.jpeg" alt="Cat training: how to succeed?"></a></figure><figcaption>Cat training: how to succeed?</figcaption>                        <div>
+                                                    </div>
+                        <h4><a href="/cat-training-how-to-succeed" title="Cat training: how to succeed?">Cat training: how to succeed?</a></h4>                        <time datetime="2022-02-10 15:18:18">Thursday, February 10, 2022 3:18 PM</time>                        <div>Cats are one of the most popular pets. If you've just adopted one, you'll need to train it to obey...</div>                    </div>
+                                    <div class="col-12 col-md-4">
+                        <figure><a href="/how-to-feed-your-dog" title="How to feed your dog?"><img class="img-fluid" src="/images/how-to-feed-your-dog.jpg" alt="How to feed your dog?"></a></figure><figcaption>How to feed your dog?</figcaption>                        <div>
+                                                    </div>
+                        <h4><a href="/how-to-feed-your-dog" title="How to feed your dog?">How to feed your dog?</a></h4>                        <time datetime="2022-02-10 14:59:59">Thursday, February 10, 2022 2:59 PM</time>                        <div>Having a pet like a dog is a very good idea. However, it is very important to take care of his...</div>                    </div>
+                                    <div class="col-12 col-md-4">
+                        <figure><a href="/how-to-feed-a-puppy-healthy-food" title="How to feed a puppy healthy food?"><img class="img-fluid" src="/images/how-to-feed-a-puppy-healthy-food.jpeg" alt="How to feed a puppy healthy food?"></a></figure><figcaption>How to feed a puppy healthy food?</figcaption>                        <div>
+                                                    </div>
+                        <h4><a href="/how-to-feed-a-puppy-healthy-food" title="How to feed a puppy healthy food?">How to feed a puppy healthy food?</a></h4>                        <time datetime="2022-02-10 15:33:03">Thursday, February 10, 2022 3:33 PM</time>                        <div>A dog that plays its role perfectly is first and foremost a well-maintained puppy. That's why you...</div>                    </div>
+                            </div>
+        </div>
+    </section>
+    <section class="block-sidebar">
+        <div class="container">
+            <h2>Cats</h2>            <div class="row">
+                <div class="col-lg-9 order-1 order-md-2 col-12 main">
+                    <div class="row">
+                                                    <div class="col-12 col-lg-6 item">
+                                <figure><a href="/how-to-feed-your-dog" title="How to feed your dog?"><img class="d-block w-100" src="/images/how-to-feed-your-dog.jpg" alt="How to feed your dog?"></a></figure><figcaption>How to feed your dog?</figcaption>                                <div>
+                                    <h3><a href="/how-to-feed-your-dog" title="How to feed your dog?">How to feed your dog?</a></h3>                                </div>
+                                <time datetime="2022-02-10 14:59:59">Thursday, February 10, 2022 2:59 PM</time>                                
+                                <p>Having a pet like a dog is a very good idea. However, it is very important to take care of his diet in order to ensure a perfect health. Reading this article will tell you more about the proper feeding of your dog.
+The household ration
+It is not uncommon to see some people feeding their dogs table...</p>                            </div>
+
+                                                                                <div class="col-12 col-lg-6 item">
+                                <figure><a href="/how-to-feed-a-puppy-healthy-food" title="How to feed a puppy healthy food?"><img class="d-block w-100" src="/images/how-to-feed-a-puppy-healthy-food.jpeg" alt="How to feed a puppy healthy food?"></a></figure><figcaption>How to feed a puppy healthy food?</figcaption>                                <div>
+                                    <h3><a href="/how-to-feed-a-puppy-healthy-food" title="How to feed a puppy healthy food?">How to feed a puppy healthy food?</a></h3>                                </div>
+                                <time datetime="2022-02-10 15:33:03">Thursday, February 10, 2022 3:33 PM</time>                                
+                                <p>A dog that plays its role perfectly is first and foremost a well-maintained puppy. That's why you need to know about good puppy feeding. Find out the mandatory tips for healthy puppy feeding.
+Pace and change of feeding
+To facilitate digestion in humans, meals should be taken at specific times....</p>                            </div>
+
+                                                </div>
+                    <div class="row">
+                                                                            <div class="col-12 col-lg-6 item">
+                                <figure><a href="/how-can-we-ensure-the-protection-of-animals" title="How can we ensure the protection of animals?"><img class="d-block w-100" src="/images/how-can-we-ensure-the-protection-of-animals.jpg" alt="How can we ensure the protection of animals?"></a></figure><figcaption>How can we ensure the protection of animals?</figcaption>                                <div>
+                                    <h3><a href="/how-can-we-ensure-the-protection-of-animals" title="How can we ensure the protection of animals?">How can we ensure the protection of animals?</a></h3>                                </div>
+                                <time datetime="2022-02-10 15:29:12">Thursday, February 10, 2022 3:29 PM</time>                                
+                                <p>Animals are also living beings that need to be protected and cared for to be in good shape. And not being fully aware of the dangers, their protection must be ensured by man. Discover in the following, some very important rules to apply for their protection.
+Identification and good hydration of...</p>                            </div>
+
+                                                                                <div class="col-12 col-lg-6 item">
+                                <figure><a href="/which-pet-should-i-choose" title="Which pet should I choose?"><img class="d-block w-100" src="/images/which-pet-should-i-choose.jpeg" alt="Which pet should I choose?"></a></figure><figcaption>Which pet should I choose?</figcaption>                                <div>
+                                    <h3><a href="/which-pet-should-i-choose" title="Which pet should I choose?">Which pet should I choose?</a></h3>                                </div>
+                                <time datetime="2022-02-10 15:22:29">Thursday, February 10, 2022 3:22 PM</time>                                
+                                <p>Choosing a pet should not be taken lightly. While dogs and cats deserve love and attention, there are several others that do not require special attention. Read this article for advice on which pet to choose.
+Opting for a dog or cat
+If you're feeling lonely, why not adopt a dog or cat to keep you...</p>                            </div>
+
+                                                </div>
+                    <div class="row">
+                                                                    </div>
+                                    </div>
+                                    <aside class="col-lg-3 order-2 order-md-2 col-12 aside-right">
+                        <div>
+                                                            <div class="d-flex">
+                                    <figure><a href="/cat-training-how-to-succeed" title="Cat training: how to succeed?"><img class="d-block w-100" src="/images/cat-training-how-to-succeed.jpeg" alt="Cat training: how to succeed?"></a></figure>                                    <div>
+                                        <h3><a href="/cat-training-how-to-succeed" title="Cat training: how to succeed?">Cat training: how to succeed?</a></h3>                                        <p>Cats are one of the most popular pets. If you've just adopted one, you'll need to train it to obey you. Here are some tips and tricks for successfully training your cat.
+Answering Your Call
+Many people think that it may be difficult to get a cat to obey you. In addition to being easy, the process...</p>                                    </div>
+                                </div>
+                            
+                        </div>
+                    </aside>
+                            </div>
+        </div>
+    </section>
+    <section class="newest-articles">
+        <div class="container">
+            <h2>Pets</h2>            <div class="row">
+                <div class="row">
+                                            <div class="col-12 col-md-4">
+                            <figure><a href="/how-can-we-ensure-the-protection-of-animals" title="How can we ensure the protection of animals?"><img class="img-fluid" src="/images/how-can-we-ensure-the-protection-of-animals.jpg" alt="How can we ensure the protection of animals?"></a></figure><figcaption>How can we ensure the protection of animals?</figcaption>                            <div>
+                                                            </div>
+                            <h4><a href="/how-can-we-ensure-the-protection-of-animals" title="How can we ensure the protection of animals?">How can we ensure the protection of animals?</a></h4>                            <time datetime="2022-02-10 15:29:12">Thursday, February 10, 2022 3:29 PM</time>                            <div>Animals are also living beings that need to be protected and cared for to be in good shape. And...</div>                        </div>
+                                            <div class="col-12 col-md-4">
+                            <figure><a href="/which-pet-should-i-choose" title="Which pet should I choose?"><img class="img-fluid" src="/images/which-pet-should-i-choose.jpeg" alt="Which pet should I choose?"></a></figure><figcaption>Which pet should I choose?</figcaption>                            <div>
+                                                            </div>
+                            <h4><a href="/which-pet-should-i-choose" title="Which pet should I choose?">Which pet should I choose?</a></h4>                            <time datetime="2022-02-10 15:22:29">Thursday, February 10, 2022 3:22 PM</time>                            <div>Choosing a pet should not be taken lightly. While dogs and cats deserve love and attention, there...</div>                        </div>
+                                            <div class="col-12 col-md-4">
+                            <figure><a href="/cat-training-how-to-succeed" title="Cat training: how to succeed?"><img class="img-fluid" src="/images/cat-training-how-to-succeed.jpeg" alt="Cat training: how to succeed?"></a></figure><figcaption>Cat training: how to succeed?</figcaption>                            <div>
+                                                            </div>
+                            <h4><a href="/cat-training-how-to-succeed" title="Cat training: how to succeed?">Cat training: how to succeed?</a></h4>                            <time datetime="2022-02-10 15:18:18">Thursday, February 10, 2022 3:18 PM</time>                            <div>Cats are one of the most popular pets. If you've just adopted one, you'll need to train it to obey...</div>                        </div>
+                                    </div>
+                <div class="row">
+                                            <div class="row col-12 col-md-6">
+                            <figure class="col-12 col-md-6"><a href="/how-to-feed-your-dog" title="How to feed your dog?"><img class="img-fluid" src="/images/how-to-feed-your-dog.jpg" alt="How to feed your dog?"></a></figure><figcaption>How to feed your dog?</figcaption>                            <div class="col-12 col-md-6">
+                                <div>
+                                    
+                                </div>
+                                <h4><a href="/how-to-feed-your-dog" title="How to feed your dog?">How to feed your dog?</a></h4>                                <time datetime="2022-02-10 14:59:59">Thursday, February 10, 2022 2:59 PM</time>                                <div>Having a pet like a dog is a very good idea. However, it is very important to take care of his...</div>                            </div>
+                        </div>
+
+                                            <div class="row col-12 col-md-6">
+                            <figure class="col-12 col-md-6"><a href="/how-to-feed-a-puppy-healthy-food" title="How to feed a puppy healthy food?"><img class="img-fluid" src="/images/how-to-feed-a-puppy-healthy-food.jpeg" alt="How to feed a puppy healthy food?"></a></figure><figcaption>How to feed a puppy healthy food?</figcaption>                            <div class="col-12 col-md-6">
+                                <div>
+                                    
+                                </div>
+                                <h4><a href="/how-to-feed-a-puppy-healthy-food" title="How to feed a puppy healthy food?">How to feed a puppy healthy food?</a></h4>                                <time datetime="2022-02-10 15:33:03">Thursday, February 10, 2022 3:33 PM</time>                                <div>A dog that plays its role perfectly is first and foremost a well-maintained puppy. That's why you...</div>                            </div>
+                        </div>
+
+                                    </div>
+            </div>
+        </div>
+    </section>
+    <section class="column-2">
+
+        <div class="container">
+            <h2>Miscellaneous</h2>            <div class="row">
+                                    <div class="col-12 col-md-6 col-lg-6">
+                        <figure><a href="/how-to-feed-a-puppy-healthy-food" title="How to feed a puppy healthy food?"><img class="img-fluid" src="/images/how-to-feed-a-puppy-healthy-food.jpeg" alt="How to feed a puppy healthy food?"></a></figure><figcaption>How to feed a puppy healthy food?</figcaption>                        <div>
+                            <h3><a href="/how-to-feed-a-puppy-healthy-food" title="How to feed a puppy healthy food?">How to feed a puppy healthy food?</a></h3>                        </div>
+                                                <time datetime="2022-02-10 15:33:03">Thursday, February 10, 2022 3:33 PM</time>
+                        <div>A dog that plays its role perfectly is first and foremost a well-maintained puppy. That's why you need to know about good puppy feeding. Find out the mandatory tips for healthy puppy feeding.
+Pace and change of feeding
+To facilitate digestion in humans, meals should be taken at specific times....</div>                                            </div>
+
+                                                        <div class="col-12 col-md-6 col-lg-6">
+                        <figure><a href="/how-can-we-ensure-the-protection-of-animals" title="How can we ensure the protection of animals?"><img class="img-fluid" src="/images/how-can-we-ensure-the-protection-of-animals.jpg" alt="How can we ensure the protection of animals?"></a></figure><figcaption>How can we ensure the protection of animals?</figcaption>                        <div>
+                            <h3><a href="/how-can-we-ensure-the-protection-of-animals" title="How can we ensure the protection of animals?">How can we ensure the protection of animals?</a></h3>                        </div>
+                                                <time datetime="2022-02-10 15:29:12">Thursday, February 10, 2022 3:29 PM</time>
+                        <div>Animals are also living beings that need to be protected and cared for to be in good shape. And not being fully aware of the dangers, their protection must be ensured by man. Discover in the following, some very important rules to apply for their protection.
+Identification and good hydration of...</div>                                            </div>
+
+                                </div>
+            <div class="row">
+                                                    <div class="col-12 col-md-6 col-lg-6">
+                        <figure><a href="/which-pet-should-i-choose" title="Which pet should I choose?"><img class="img-fluid" src="/images/which-pet-should-i-choose.jpeg" alt="Which pet should I choose?"></a></figure><figcaption>Which pet should I choose?</figcaption>                        <div>
+                            <h3><a href="/which-pet-should-i-choose" title="Which pet should I choose?">Which pet should I choose?</a></h3>                        </div>
+                                                <time datetime="2022-02-10 15:22:29">Thursday, February 10, 2022 3:22 PM</time>
+                        <div>Choosing a pet should not be taken lightly. While dogs and cats deserve love and attention, there are several others that do not require special attention. Read this article for advice on which pet to choose.
+Opting for a dog or cat
+If you're feeling lonely, why not adopt a dog or cat to keep you...</div>                                            </div>
+
+                                                        <div class="col-12 col-md-6 col-lg-6">
+                        <figure><a href="/cat-training-how-to-succeed" title="Cat training: how to succeed?"><img class="img-fluid" src="/images/cat-training-how-to-succeed.jpeg" alt="Cat training: how to succeed?"></a></figure><figcaption>Cat training: how to succeed?</figcaption>                        <div>
+                            <h3><a href="/cat-training-how-to-succeed" title="Cat training: how to succeed?">Cat training: how to succeed?</a></h3>                        </div>
+                                                <time datetime="2022-02-10 15:18:18">Thursday, February 10, 2022 3:18 PM</time>
+                        <div>Cats are one of the most popular pets. If you've just adopted one, you'll need to train it to obey you. Here are some tips and tricks for successfully training your cat.
+Answering Your Call
+Many people think that it may be difficult to get a cat to obey you. In addition to being easy, the process...</div>                                            </div>
+
+                                </div>
+            <div class="row">
+                                                    <div class="col-12 col-md-6 col-lg-6">
+                        <figure><a href="/how-to-feed-your-dog" title="How to feed your dog?"><img class="img-fluid" src="/images/how-to-feed-your-dog.jpg" alt="How to feed your dog?"></a></figure><figcaption>How to feed your dog?</figcaption>                        <div>
+                            <h3><a href="/how-to-feed-your-dog" title="How to feed your dog?">How to feed your dog?</a></h3>                        </div>
+                                                <time datetime="2022-02-10 14:59:59">Thursday, February 10, 2022 2:59 PM</time>
+                        <div>Having a pet like a dog is a very good idea. However, it is very important to take care of his diet in order to ensure a perfect health. Reading this article will tell you more about the proper feeding of your dog.
+The household ration
+It is not uncommon to see some people feeding their dogs table...</div>                                            </div>
+
+                                        <div class="col-12 col-md-6 col-lg-6 empty"></div>
+                                            </div>
+        </div>
+        
+    </section>
+<section class="column-3">
+
+        <div class="container">
+            <h2>New</h2>            <div class="row">
+                                    <div class="col-12 col-md-5 col-lg-4 item">
+
+                        <figure><a href="/how-to-feed-a-puppy-healthy-food" title="How to feed a puppy healthy food?"><img class="img-fluid" src="/images/how-to-feed-a-puppy-healthy-food.jpeg" alt="How to feed a puppy healthy food?"></a></figure><figcaption>How to feed a puppy healthy food?</figcaption>                        <div>
+                            <h3><a href="/how-to-feed-a-puppy-healthy-food" title="How to feed a puppy healthy food?">How to feed a puppy healthy food?</a></h3>                        </div>
+                        <time datetime="2022-02-10 15:33:03">Thursday, February 10, 2022 3:33 PM</time>                        
+                        <div>A dog that plays its role perfectly is first and foremost a well-maintained puppy. That's why you need to know about good puppy feeding. Find out the mandatory tips for healthy puppy feeding.
+Pace and change of feeding
+To facilitate digestion in humans, meals should be taken at specific times....</div>                                            </div>
+
+                                                        <div class="col-12 col-md-5 col-lg-4 item">
+
+                        <figure><a href="/how-can-we-ensure-the-protection-of-animals" title="How can we ensure the protection of animals?"><img class="img-fluid" src="/images/how-can-we-ensure-the-protection-of-animals.jpg" alt="How can we ensure the protection of animals?"></a></figure><figcaption>How can we ensure the protection of animals?</figcaption>                        <div>
+                            <h3><a href="/how-can-we-ensure-the-protection-of-animals" title="How can we ensure the protection of animals?">How can we ensure the protection of animals?</a></h3>                        </div>
+                        <time datetime="2022-02-10 15:29:12">Thursday, February 10, 2022 3:29 PM</time>                        
+                        <div>Animals are also living beings that need to be protected and cared for to be in good shape. And not being fully aware of the dangers, their protection must be ensured by man. Discover in the following, some very important rules to apply for their protection.
+Identification and good hydration of...</div>                                            </div>
+
+                                                        <div class="col-12 col-md-5 col-lg-4 item">
+
+                        <figure><a href="/which-pet-should-i-choose" title="Which pet should I choose?"><img class="img-fluid" src="/images/which-pet-should-i-choose.jpeg" alt="Which pet should I choose?"></a></figure><figcaption>Which pet should I choose?</figcaption>                        <div>
+                            <h3><a href="/which-pet-should-i-choose" title="Which pet should I choose?">Which pet should I choose?</a></h3>                        </div>
+                        <time datetime="2022-02-10 15:22:29">Thursday, February 10, 2022 3:22 PM</time>                        
+                        <div>Choosing a pet should not be taken lightly. While dogs and cats deserve love and attention, there are several others that do not require special attention. Read this article for advice on which pet to choose.
+Opting for a dog or cat
+If you're feeling lonely, why not adopt a dog or cat to keep you...</div>                                            </div>
+
+                                </div>
+            <div class="row">
+                                                    <div class="col-12 col-md-5 col-lg-4 item">
+
+                        <figure><a href="/cat-training-how-to-succeed" title="Cat training: how to succeed?"><img class="img-fluid" src="/images/cat-training-how-to-succeed.jpeg" alt="Cat training: how to succeed?"></a></figure><figcaption>Cat training: how to succeed?</figcaption>                        <div>
+                            <h3><a href="/cat-training-how-to-succeed" title="Cat training: how to succeed?">Cat training: how to succeed?</a></h3>                        </div>
+                        <time datetime="2022-02-10 15:18:18">Thursday, February 10, 2022 3:18 PM</time>                        
+                        <div>Cats are one of the most popular pets. If you've just adopted one, you'll need to train it to obey you. Here are some tips and tricks for successfully training your cat.
+Answering Your Call
+Many people think that it may be difficult to get a cat to obey you. In addition to being easy, the process...</div>                                            </div>
+
+                                                        <div class="col-12 col-md-5 col-lg-4 item">
+
+                        <figure><a href="/how-to-feed-your-dog" title="How to feed your dog?"><img class="img-fluid" src="/images/how-to-feed-your-dog.jpg" alt="How to feed your dog?"></a></figure><figcaption>How to feed your dog?</figcaption>                        <div>
+                            <h3><a href="/how-to-feed-your-dog" title="How to feed your dog?">How to feed your dog?</a></h3>                        </div>
+                        <time datetime="2022-02-10 14:59:59">Thursday, February 10, 2022 2:59 PM</time>                        
+                        <div>Having a pet like a dog is a very good idea. However, it is very important to take care of his diet in order to ensure a perfect health. Reading this article will tell you more about the proper feeding of your dog.
+The household ration
+It is not uncommon to see some people feeding their dogs table...</div>                                            </div>
+
+                                                                </div>
+        </div>
+        
+    </section>
+        </main>
+<footer>
+    <div class="container-fluid">
+        <div class="container">
+            <div class="row">
+                <div class="col-12 col-lg-4">
+                    <div class="row">
+                        <section>
+            <div>
+                <h3><a href="/wild-animal" title="Wild animal">Wild animal</a></h3>                            </div>
+        </section>
+            <section>
+            <div>
+                <h3><a href="/dog" title="Dog">Dog</a></h3>                            </div>
+        </section>
+            <section>
+            <div>
+                <h3><a href="/cats" title="Cats">Cats</a></h3>                            </div>
+        </section>
+            <section>
+            <div>
+                <h3><a href="/pets" title="Pets">Pets</a></h3>                            </div>
+        </section>
+            <section>
+            <div>
+                <h3><a href="/miscellaneous" title="Miscellaneous">Miscellaneous</a></h3>                            </div>
+        </section>
+                            </div>
+                                    </div>
+                <div class="col-12 col-lg-4">
+                    <form class="d-flex" role="search" method="get" action="/search">
+    <input type="search" class="form-control"  name="q" placeholder="Rechercher" aria-label="Rechercher"  pattern=".*\S.*" required>
+    <button type="submit" class="btn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18px" height="18px" fill="currentColor" viewBox="0 0 512 512">
+                    <path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352a144 144 0 1 0 0-288 144 144 0 1 0 0 288z"/>
+                </svg>
+    </button>
+</form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="container-fluid">
+        <div class="row">
+            
+   
+    </div>
+    </div>
+</footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+    </body>
+</html>
