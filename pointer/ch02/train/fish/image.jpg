@@ -1,0 +1,899 @@
+<html xmlns="https://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml"><head><title>Zoomshare: Home</title><meta name="keywords" content="web page, website, domain, affordable web hosting, create a web site, design web site, web pages, web site, blog, calendar, build a web site, photo album, blog, email, hosting, storage, Follow, Follow Friend, Follow Websites file storage, personal website"><meta name="description" content="Build a website, follow friends, photo album, blog, file storage, email, and get a vanity domain with Zoomshare."><link href="css/yui-index.css" type="text/css" rel="stylesheet"><link href="css/zm-index.css" type="text/css" rel="stylesheet"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"><link href="https://getbootstrap.com/docs/5.3/assets/css/docs.css" rel="stylesheet"><link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css"><link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.jqueryui.min.css"><link rel="stylesheet" href="https://cdn.datatables.net/scroller/2.2.0/css/scroller.jqueryui.min.css"><script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script><script type="text/javascript">
+                var TLD = (location.hostname.indexOf("dwqa")>-1) ? 'dwqa' : 'com';
+    </script><script type="text/javascript" src="js/jquery.js"></script><script type="text/javascript" src="js/yui-index.js"></script><script type="text/javascript" src="https://partner.googleadservices.com/gampad/google_service.js"></script><script type="text/javascript">
+    GS_googleAddAdSenseService("ca-pub-3370800852844528");
+    GS_googleEnableAllServices();
+    </script><script type="text/javascript">
+    GA_googleAddSlot("ca-pub-3370800852844528", "ZSHome");
+    </script><script type="text/javascript">
+    GA_googleFetchAds();
+    </script><script type="text/javascript">
+    GS_googleAddAdSenseService("ca-pub-3370800852844528");
+    GS_googleEnableAllServices();
+    </script><script type="text/javascript">
+    GA_googleAddSlot("ca-pub-3370800852844528", "ZSHome");
+    </script><script type="text/javascript">
+    GA_googleFetchAds();
+    </script><script type="text/javascript">
+
+    /* <![CDATA[ */
+
+      // common ns
+      var C = YAHOO.util.Cookie;
+      var D = YAHOO.util.Dom;
+      var E = YAHOO.util.Event;
+      //var M = google.maps;
+      var W = YAHOO.widget;
+
+      // browse widget vars, a temp convenience
+      //var Cities = ZSFat.Cities, CCategories = ZSFat.Cat;
+      var ads_map, loc_map, loc_menu, pane;
+
+      function calllogin(){
+        
+        var f = document.getElementById('zslogin');
+        f.action = 'https://ssl.zoomshare.'+TLD+'/:slogin';
+        f.validate = function () {
+          var rc = false;
+          var u;
+          var p = f['p'].value;
+          try {
+            f['u'].value =
+            f['u'].value.replace(/^\s+/,'').replace(/\s+$/,'').toLowerCase();
+            u = f['u'].value;
+            if (! u.match(/\w/)) {
+              f['u'].focus(); throw('Please enter your username');
+            }
+            if (! p.match(/\w/)) {
+              f['p'].focus(); throw('Please enter your password');
+            }
+            if (u.match(/.\@.+/)) {
+              f['u'].focus();
+              throw(u + "looks like an e-mail address, not a username");
+            }
+            if (u.match(/[^a-z0-9\-]/)) {
+              f['u'].focus();
+              throw("Your username may only contain letters, " +
+                "numerals and hyphens");
+            }
+            rc = true;
+          }
+          catch (e) { alert(e); }
+          finally { return rc; }
+        };
+        return f.validate();
+      }
+
+
+    /* ]]> */
+    </script><style>
+        .foot {
+            color: #999;
+            font-size: 80%;
+            text-decoration: none;
+        }
+
+        .btn {
+            --bs-btn-padding-x: 0.25rem;
+            --bs-btn-padding-y: 0.175rem;
+        }
+
+        
+        .feed_user_date {
+            width: 190px;
+
+        }
+
+        .img-fluid {
+          max-width: 200%;
+          height: auto;
+        }
+        .clock-container {
+            text-align: center;
+            font-size: 36px;
+            color: #333;
+            background-color: #f0f0f0;
+            border-radius: 50%;
+            width: 200px;
+            height: 200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        #digital-clock {
+            margin-top: 45px;
+            font-family: 'Courier New', monospace;
+        }
+       
+    </style></head><body bgcolor="#fff" text="#000">
+    <div align="CENTER" width="100%">
+        <table cellspacing="0" cellpadding="0" class="table" width="900">
+            <tbody>
+                <tr class="fc-first fc-last">
+                    <td valign="top" class="fc-sun fc-widget-header fc-first">
+                        <nav class="navbar navbar-expand-lg bg-body-tertiary">
+                        
+                            <div class="container-fluid">
+                                <a class="navbar-brand" href="https://zoomshare.com"><img class="img-fluid" src="img/ZS-Flame-Logo177-Italic.png" alt="zoomshare"></a>
+                                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                                    <span class="navbar-toggler-icon"></span>
+                                </button>
+                                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                                    	<li><a href="/features.shtml">Features</a></li>
+                                    </ul>
+                                    <form class="d-flex" role="search">
+                                      <a class="btn btn-outline-primary" href="https://signup.zoomshare.com">Sign Up</a>
+
+                                         
+                                        <button class="btn btn-outline-success" type="button" data-bs-toggle="modal" data-bs-target="#loginModal">Tools Login</button>
+                                         
+                                        
+                                        <button id="followButton" class="btn btn-outline-info" type="button" data-bs-toggle="modal" data-bs-target="#followloginModal">Follow Login</button>
+                                         
+                                        <button type="button" id="logout-button" onclick="followlogout();" class="btn btn-outline-info" style="padding: 8px 16px; float: left; text-align: left; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold; margin-left: 10px;">Follow Logout</button>
+
+
+                                    </form>
+                                </div>
+                            </div>
+                        </nav>
+                    </td>
+                </tr>
+                </tbody></table>
+                         <div class="container">
+                        	<div class="row">
+                            	<div class="lg-col-6 md-col-6 sm-col-12 xs-col-12"><h4 style="text-align:center;"><a href="https://signup.zoomshare.com" style="color:#cc3333; text-decoration:none">Get your Zoomshare website with <em><strong>Unlimited Follow Feature!</strong></em><br>30 day Free trial then $12.95 a month!</a></h4></div>
+                               
+                               <div class="lg-col-6 md-col-6 sm-col-12 xs-col-12"><img src="img/man-phone-100b.png" class="img-fluid"> <span id="digital-clock" class=""></span></div>
+                                 
+                            
+                            </div>
+                            <table class="table table-striped lg-max-width-80%" id="feedTable">
+                                <thead>
+                                  <tr>
+                                    <th class="feed_user_date" scope="col">User/Date</th>
+                                    <th scope="col">Notification</th>      
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                </tbody>
+                            </table>
+                          <h4 style="text-align: center;" id="loading_img">Feed is Loading... Please wait!</h4>
+                        </div> 
+                         <br><br>
+                        <div class="tiny2">
+                            <a href="/privacyPolicy.shtml">privacy policy</a> | <a href="/tos.shtml">tos</a> | <a href="/intellectual.shtml">intellectual property</a> | <a href="#" oncl ick="window.open('/:interactivehelp', 'contactUs', 'height=282,width=545,menubar=no,toolbar=no,scrollbars=yes,resizable=yes')">zoomshare faqs</a> | <a style="text-decoration:underline" href="mailto:customerservice@zoomshare.com?subject=C
+                            ustomer Service Inquiry from Zoomshare.com">contact us</a> <br>
+                            <span class="tiny2">Copyright Â© 1998-2023 DW Data, Inc. All Rights Reserved.<br>
+                          DigitalWork, I-Works, TotalWeb and Zoomshare are trademarks of DW Data, Inc. and may be registered in certain jurisdictions.</span>
+                            <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="loginModalLabel">Welcome Back!</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <form id="zslogin" onsubmit="calllogin()" action="" method="post">
+                                                <div>
+                                                    <table>
+                                                        <tr>
+                                                            <td><strong>Login</strong></td>
+                                                            <td><span class="login">Username</span><br>
+                                                                <input type="text" id="u" name="u" size="10" maxlength="255" class="tiny" placeholder="zoomshare username" value="">
+                                                            </td>
+                                                            <td>
+                                                                <span class="login">Password</span><br>
+                                                                <input type="password" id="p" name="p" size="10" maxlength="255" class="tiny" placeholder="zoomshare password" value="">
+                                                            </td>
+                                                            <td>
+                                                                <input type="submit" name="gobutton" value="Zoomshare Log In" class="goButton">
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td colspan="4" align="right">
+                                                                <a href="https://www.zoomshare.com/zoomshare_forgotpw.html" class="login">Forgot
+                                                                    your username or password?</a>
+                                                                <br><br>
+                                                                <div><em>Optimized for <a href="https://www.google.com/chrome/" target="_blank">Google Chrome</a></em></div>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            
+                            <div class="modal fade" id="followloginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content" style="width: 70%;">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="loginModalLabel">Login to get your feeds!</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div id="signup-container">
+                                                <label for="email" style="display: block;text-align: left; margin-bottom: 5px;">Email:</label>
+                                                <input type="email" id="email" required style="width: 100%; padding: 5px;float: left;text-align: left; border: 1px solid #ccc; border-radius: 4px;">
+                                                <br>
+                                                <br>
+                                                <label for="password" style="display: block;text-align: left; margin-bottom: 5px;">Password:</label>
+                                                <div style="position: relative;">
+
+                                                <input type="password" id="password" required style="width: 100%; padding: 5px; border: 1px solid #ccc;float: left;text-align: left; border-radius: 4px;">
+                                                <br><br>
+                                                <span id="password-toggle" class="password-toggle" style="position: absolute; top: 8px; right: 10px; cursor: pointer;"><i class="fas fa-eye"></i></span>
+                                                </div>
+                                                <br>
+                                                
+                                                <span class="success_message" style="color: green;float: left;text-align: left;"></span>
+                                                <br>
+                                                <br>
+                                                <button type="button" id="login-button" onclick="followlogin();" style="padding: 8px 16px;float: left;text-align: left; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold; background-color: #007bff; color: #fff;">Login</button>
+                                                
+                                                <button type="button" data-bs-dismiss="modal" aria-label="Close" style="padding: 8px 16px; border: none;float: left;text-align: left; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold; background-color: #dc3545; color: #fff; margin-left: 10px;">Cancel</button>
+                                                <br>
+                                                                                                
+                                                <a href="https://www.zoomshare.com/personalise_forgot_pw.html" class="login">Forgot your  password?</a>
+                                                <br><br>
+                                                <div><em>Optimized for <a href="https://www.google.com/chrome/" target="_blank">Google Chrome</a>
+                                            </em></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+                        </div>
+                    
+                
+            
+        
+    </div>
+</div></body><script src="https://www.google-analytics.com/urchin.js" type="text/javascript"></script><script src="https://code.jquery.com/jquery-3.7.0.js"></script><script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script><script src="https://cdn.datatables.net/1.13.6/js/dataTables.jqueryui.min.js"></script><script src="https://cdn.datatables.net/scroller/2.2.0/js/dataTables.scroller.min.js"></script><script>
+
+$(document).ready(function () {
+
+
+  jQuery("#password-toggle").click(function () {
+    var passwordInput = $("#password");
+    var passwordToggle = $("#password-toggle");
+
+    if (passwordInput.attr("type") === "password") {
+      passwordInput.attr("type", "text");
+      passwordToggle.html('<i class="fas fa-eye"></i>');
+    } else {
+      passwordInput.attr("type", "password");
+      passwordToggle.html('<i class="fas fa-eye-slash"></i>');
+    }
+  });
+
+  $("#login-button").click(function () {
+    // Your login button click handler here
+    followlogin();
+  });
+
+
+
+  
+ 
+});
+</script><script>
+//this function authenticate the user if they have personalisation account or not
+    function followlogin(){
+        
+        var email = jQuery("#email").val();
+        var password = jQuery("#password").val();
+        var emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,4}$/;
+        if (email && password && emailRegex.test(email) ) {
+            var data = {
+                'email' : email,
+                'password' : password,
+                'action' :  'login_zoomshare'
+            };
+            jQuery.ajax({
+                url: 'https://www.followapi.zoomshare.com/index_follow.cgi',
+                method: 'POST',
+                data: data,
+                dataType: 'json',
+                success: function(responseData) {
+                    jQuery(".success_message").html("");
+                    if (responseData.success == true) {
+                        setCookie("uuid",responseData.uuid);
+                        setCookie("feeds_count",0);
+                        localStorage.removeItem("feeds_data_site_ids");
+                        localStorage.removeItem("feeds_data_file_size");
+                        if(setCookie){
+                          location.reload();
+                        }
+                      jQuery(".success_message").css("color","green");
+                      jQuery(".success_message").html(responseData.message);
+                
+
+                    }else{
+                      
+                      jQuery(".success_message").css("color","red");
+                      jQuery(".success_message").html(responseData.message);
+                      
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error:', status, error);
+                }
+            });
+
+        }else{
+        
+            jQuery(".success_message").css("color","red");
+            jQuery(".success_message").html("Please enter valid email and password !");
+            
+        }
+    }
+
+        function followlogout(){
+            document.cookie = "uuid=; expires=Thu, 01 Jan 1970 00:00:00 UTC;  domain=zoomshare.com;  path=/";
+            document.cookie = "uuid=;  expires=Thu, 01 Jan 1970 00:00:00 UTC;  path=/";
+            window.location.reload();
+
+        }
+
+    function showPersonalizationPopup() {
+      document.getElementById('personalizationPopup').style.display = 'block';
+    }
+
+    function hidePersonalizationPopup() {
+       document.getElementById('personalizationPopup').style.display = 'none';
+    }
+
+    function cancelSignup() {
+      hidePersonalizationPopup();
+    }
+
+    function setCookie(cname,cvalue) {
+      var date = new Date();
+      date.setTime(date.getTime() + (365 * 24 * 60 * 60 * 1000));
+      var expires = "expires=" + date.toUTCString();
+      document.cookie = cname + "=" + cvalue;
+      document.cookie = cname + "=" + cvalue + "; " + expires + "; domain=zoomshare.com;path=/";
+    }
+
+    function getCookie(cname) {
+        let name = cname + "=";
+        let decodedCookie = decodeURIComponent(document.cookie);
+        let ca = decodedCookie.split(';');
+        for(let i = 0; i < ca.length; i++) {
+            let c = ca[i];
+            while (c.charAt(0) == ' ') {
+              c = c.substring(1);
+            }
+            if (c.indexOf(name) == 0) {
+              return c.substring(name.length, c.length);
+            }
+        }
+        return "";
+    }
+
+
+var check_uuid = getCookie("uuid");
+if(check_uuid){
+    jQuery("#followButton").hide();
+    jQuery("#logout-button").show();
+    
+}else{
+    jQuery("#followButton").show();
+    jQuery("#logout-button").hide();
+    
+} 
+
+
+//this function checks file size and storing it to local sorage
+check_file_size();
+function check_file_size() {
+    var data = {
+      'action': 'check_file_size'
+    };
+    jQuery.ajax({
+      url: 'https://www.followapi.zoomshare.com/index_follow.cgi',
+      method: 'POST',
+      data: data,
+      dataType: 'json',
+      success: function(responseData) {
+        localStorage.setItem("feeds_data_file_size",JSON.stringify(responseData));
+      },
+      error: function(xhr, status, error) {
+        console.error('Error:', status, error);
+      }
+    });
+}
+
+
+var uuidValue_zoomshare = getCookie("uuid");
+//this function is storing all site_ids (name of sites user is following)
+cache_randomfeed_site_ids(uuidValue_zoomshare);
+function cache_randomfeed_site_ids(uuidValue_zoomshare) {
+    var data = {
+      'action': 'cache_randomfeed_site_ids',
+      'uuid' : uuidValue_zoomshare
+    };
+    jQuery.ajax({
+      url: 'https://www.followapi.zoomshare.com/index_follow.cgi',
+      method: 'POST',
+      data: data,
+      dataType: 'json',
+      success: function(responseData) {
+        if(responseData.action == "true") {
+            localStorage.removeItem("feeds_data_site_ids");
+            localStorage.setItem("feeds_data_site_ids",JSON.stringify(responseData.site_ids));
+        }
+      }, error: function(xhr, status, error) {
+        console.error('Error:', status, error);
+      }
+    });
+}
+//this is checking if person is having uuid value or not based on this personalise feed or random feeds 
+
+if(uuidValue_zoomshare){
+    personalize_feeds_onload(uuidValue_zoomshare);
+    setInterval(function() {
+//it is also checking feeds real time every 10 sec *********
+        personalize_random_feeds_refresh(uuidValue_zoomshare);
+        check_file_size();
+    }, 10000);
+}else {
+   showrandomfeeds_onload();
+   setInterval(function() {
+    showrandomfeeds_refresh();
+    check_file_size();
+    }, 10000); 
+}
+//this below function is called on load and it calls cache_randomfeed_site_ids function which will stores all sites in local storage every 3 minutes by making database call
+setInterval(function(){
+ cache_randomfeed_site_ids(uuidValue_zoomshare);
+},180000);
+
+
+//this function is called if person is having personalisation account and if he load zoomshare page
+function personalize_feeds_onload(uuidValue_zoomshare) {
+    if(uuidValue_zoomshare){
+          var data = {
+          'action': 'personalize_feeds_onload',
+          'uuid': uuidValue_zoomshare
+        };
+        jQuery.ajax({
+          url: 'https://www.followapi.zoomshare.com/index_follow.cgi',
+          method: 'POST',
+          data: data,
+          dataType: 'json',
+          success: function(responseData) {
+            
+            if (Array.isArray(responseData)) {
+              var feedarrayblog  = responseData;
+              fetchAndDisplayXMLFeed(feedarrayblog);
+            } else {
+                console.log("Invalid response format");
+            }
+          },
+          error: function(xhr, status, error) {
+            console.error('Error:', status, error);
+          }
+        });
+    }
+}
+    
+
+//this function is called if person is having personalisation account and a new blog is added.it is comparing size of files of local storage and server side file .
+function personalize_random_feeds_refresh(uuidValue_zoomshare){
+var feed_data_string = localStorage.getItem('feeds_data_file_size');
+var feeds_data_site_ids = localStorage.getItem('feeds_data_site_ids');
+
+if(uuidValue_zoomshare){
+      var data = {
+      'action': 'show_personalise_feed_refresh',
+      'uuid': uuidValue_zoomshare,
+      'feeds_data_file_size' : feed_data_string,
+      'feeds_data_site_ids'  : feeds_data_site_ids
+    };
+    jQuery.ajax({
+      url: 'https://www.followapi.zoomshare.com/index_follow.cgi',
+      method: 'POST',
+      data: data,
+      dataType: 'json',
+      success: function(responseData) {
+        if (Array.isArray(responseData)) {
+          var feedarrayblog  = responseData;
+          var feed_counts = getCookie("feeds_count");
+          feedRefersh(feedarrayblog, feed_counts);
+        } else {
+            console.log(responseData);
+        }
+      },
+      error: function(xhr, status, error) {
+        console.error('Error:', status, error);
+      }
+    });
+}
+}
+//this function is called if person not  having personalisation account and if he load zoomshare page
+function showrandomfeeds_onload() {
+
+var data = {
+    'action' :  'showrandomfeeds'
+};
+jQuery.ajax({
+  url: 'https://www.followapi.zoomshare.com/index_follow.cgi',
+  method: 'POST',
+  data: data,
+  dataType: 'json',
+  success: function(responseData) {
+   
+    
+    if (Array.isArray(responseData)) {
+      var feedarrayblog  = responseData;
+      var feedsArrayCount = feedarrayblog.length;
+      fetchAndDisplayXMLFeed(feedarrayblog);
+    } else {
+        console.log("Invalid response format");
+    }
+  },
+  error: function(xhr, status, error) {
+    console.error('Error:', status, error);
+  }
+});
+} 
+
+//this function is called if person not having personalisation account and a new blog is added.it is comparing size of files of local storage and server side file .
+
+function showrandomfeeds_refresh() {
+    var feed_data_string = localStorage.getItem('feeds_data_file_size');
+    var feeds_data_site_ids = localStorage.getItem('feeds_data_site_ids');
+    var data = {
+        'action' :  'showrandomfeeds_refresh',
+        'feeds_data_file_size' : feed_data_string,
+        'feeds_data_site_ids'  : feeds_data_site_ids
+    };
+    jQuery.ajax({
+      url: 'https://www.followapi.zoomshare.com/index_follow.cgi',
+      method: 'POST',
+      data: data,
+      dataType: 'json',
+      success: function(responseData) {
+        
+        if (Array.isArray(responseData)) {
+            
+          var feedarrayblog  = responseData;
+         
+          var feed_counts = getCookie("feeds_count");
+          
+          feedRefersh(feedarrayblog, feed_counts);
+        }
+      },
+      error: function(xhr, status, error) {
+        console.error('Error:', status, error);
+      }
+    });
+}
+
+//this function is setting feed count and storing it to storage
+
+    function feedRefersh(feedarrayblog, feed_counts){
+        fetchAndDisplayXMLFeedRealTime(feedarrayblog);
+    }
+//this below function is displaying xml feed on load .
+
+        function fetchAndDisplayXMLFeed(feedarrayblog) {
+
+            //var image_thumbnail_HTML = '';
+
+            var table = $('#feedTable').DataTable({
+                // Disable sorting for the name column (assuming it's the first column, index 0).
+               
+                "bSort": false
+            });
+            if (table.rows().count() === 0) {
+                for(let i = 0; i < feedarrayblog.length; i++) {
+                    $("#loading_img").show();
+                    var record = feedarrayblog[i];
+                    var user = record.user; 
+                    var userHTML = '<strong>' + user + '</strong>';
+                    var image_thumbnail_HTML = '';
+                    var image_thumbnail_midsize_HTML = '';
+                    const parsedDate = new Date(record.date);
+
+                if (isNaN(parsedDate.getTime())) {
+                    
+                // Handle invalid date here, for example, set it to a default value
+                    var feed_date = 'Invalid Date';
+                } else {
+                   
+                    var feed_date = formatDateString(parsedDate);
+                }
+                    
+
+                    var userDateCell = userHTML + '<br>' + feed_date;
+                    var description = record.description;
+                    var title = record.title;
+                    var thumbnail = record.thumbnail;
+                    var thumbnail_midsize = record.thumbnail_midsize;
+                    var titleHTML = '<strong>' + title + '</strong>';
+                    
+                    var link = record.link;
+                    var notificationText = '';
+                    var imageRegex = /image./;
+                    
+                    var match = imageRegex.exec(link);
+                    
+                    // Regex for finding the blog in link
+                    const blogRegex = /blog/g;
+                    const matchedLink = link.match(blogRegex);
+                    if (match) {
+                        // var imageURL = match[1];
+                        notificationText = '<p><a style="color:blue; font-weight:700;" href="' + link + '" target="_blank">Photo:</a> ' + titleHTML +'</p>';
+                        //image_thumbnail_HTML = '<p><a " href="' + link + '" target="_blank">' + '<img src="' + thumbnail + '" style="float:left;width:42px;height:42px;' +  '" alt="' + title + '"></p>';
+                        //image_thumbnail_HTML = '<a " href="' + link + '" target="_blank">' + '<img src="' + thumbnail + '" style="float:left;border:5px double black;border-radius: 5%; ' +  '" alt="' + title + '">';
+                        image_thumbnail_HTML = '<a " href="' + link + '" target="_blank">' + '<img src="' + thumbnail + '" style="float:left;border:5px black;border-radius: 10%;padding: 0px 5px 0px 0px; ' +  '" alt="' + title + '">';
+                        //image_thumbnail_midsize_HTML = '<a " href="' + link + '" target="_blank">' + '<img src="' + thumbnail_midsize + '" style="float:left;border:5px black;border-radius: 10%;padding: 0px 5px 0px 0px; ' +  '" alt="' + title + '">';
+                        image_thumbnail_midsize_HTML = '<a " href="' + link + '" target="_blank">' + '<img src="' + thumbnail_midsize + '" style="float:left;border:5px black;border-radius: 10%;padding: 0px 5px 0px 0px; height:125 ' +  '" alt="' + title + '">';
+                        //image_thumbnail_HTML = '<h2>----Test----</h2>';
+
+                    } else if (matchedLink) {
+                        var url_link = link;
+                        var regex_link = /:blog\?id=([A-Fa-f0-9_]+)/;
+                        var match_link = url_link.match(regex_link);
+                        if (match_link) {
+                              var extractedPart = match_link[1];
+                              var blogLink = link;
+                              notificationText = '<p><a style="color:blue; font-weight:700;" href="' + blogLink + '" target="_blank">Blog:</a> ' + titleHTML +'</p>';
+                        }
+                    }
+                    // Code for notification end
+
+                    var descriptionText = description;
+                    var descriptionContent = '';
+
+
+                     if (descriptionText != null) {
+                        if (descriptionText.length > 700) {
+                            // Display truncated description
+                             var cleanedText = descriptionText.replace(/<[^>]*>/g, '');
+                             // cleanedText = cleanedText.trim();
+                            descriptionContent = "<div class='less-zs-desc-content" + i + "'>" + cleanedText.substring(0, 700) + "</div><div class='more-zs-desc-content" + i + "' style='display:none;'>" + descriptionText + "</div>";
+                            var moreButton = "<p class='more-button more-button_"+i+"' onclick=\"truncateZSDescriptionTextmoreonload('.more-zs-desc-content" + i + "','.less-zs-desc-content" + i + "', 10000,  '_"+i+"');\"></p><p style='display:none;'  class='less-button less-button_"+i+"' onclick=\"truncateZSDescriptionTextlessonload('.more-zs-desc-content" + i + "', '.less-zs-desc-content" + i + "', 700, '_"+i+"');\"></p>";
+                            descriptionContent += moreButton;
+                        }else {
+                            // Description is short enough, no "more" button needed
+                              if (Object.keys(description).length === 0) {
+                               var descriptionContent = "";
+                            } else {
+                               var descriptionContent = descriptionText;
+                            }
+                        }
+                    }
+                    //var description_notification = notificationText + ' ' + descriptionContent + image_thumbnail_HTML;
+                    var description_notification = notificationText + ' ' + descriptionContent + image_thumbnail_midsize_HTML;
+                    table.row.add([userDateCell,description_notification]);
+                }
+                table.draw();
+            }
+             
+            $("#loading_img").hide();
+            $("input[type='search']").wrap("<form>");
+            $("input[type='search']").closest("form").attr("autocomplete","off");
+            $("#feedTable_filter label").css('display','flex');   
+        }
+
+        function truncateZSDescriptionTextmoreonload(selectormore,selectorless, maxLength, desc_index) {
+                    
+            var element = document.querySelector(selectormore);
+            var truncated = element.innerText;
+            truncated = truncated.substr(0, truncated.length);
+             var moreselector = $(selectormore);
+             var lessselector = $(selectorless);
+             var lessbuttonselector = $(".less-button"+desc_index);
+             var morebuttonselector = $(".more-button"+desc_index);
+             moreselector.show();
+             lessbuttonselector.show();
+             morebuttonselector.hide();
+             lessselector.hide();
+             element.innerText = truncated;
+        }
+
+            function truncateZSDescriptionTextlessonload(selectormore,selectorless, maxLength, desc_index) {
+                    var element = document.querySelector(selectorless);
+                    var truncated = element.innerText;
+                    truncated = truncated.substr(0, maxLength) + '...';
+                    var moreselector = $(selectormore);
+                    var lessselector = $(selectorless);
+                    var lessbuttonselector = $(".less-button"+desc_index);
+                    var morebuttonselector = $(".more-button"+desc_index);
+                    lessbuttonselector.hide();
+                    morebuttonselector.show();
+                    moreselector.hide();
+                    lessselector.show();
+                    element.innerText = truncated;
+            }
+
+        //this below function is displaying xml feed on RealTime .
+        function fetchAndDisplayXMLFeedRealTime(feedarrayblog){
+            var tbody = $("#feedTable tbody");
+            
+            if (tbody.children().length != 0) {
+                    var table = $('#feedTable').DataTable();
+                    if ($.fn.DataTable.isDataTable('#feedTable')) {
+                      table.destroy();
+                    }
+                    table = $('#feedTable').DataTable({
+                        
+                        "bSort": false
+                    }); 
+                        
+                    var rowsToAdd = [];
+                    
+                    for(let i = 0; i < feedarrayblog.length; i++) {
+                        $("#loading_img").show();
+                        var record = feedarrayblog[i];
+                        var user = record.user;
+                        var userHTML = '<strong>' + user + '</strong>';
+                        const parsedDate = new Date(record.date);
+
+                        if (isNaN(parsedDate.getTime())) {
+                    
+                        // Handle invalid date here, for example, set it to a default value
+                            var feed_date = 'Invalid Date';
+                        } else {
+                           
+                            var feed_date = formatDateString(parsedDate);
+                        }
+
+                        var feed_date = formatDateString(parsedDate);
+                        var userDateCell = userHTML + '<br>' + feed_date;
+                        var description = record.description;
+                        var title = record.title;
+                        var titleHTML = '<strong>' + title + '</strong>';
+                        var link = record.link;
+                        var notificationText = '';
+                        var imageRegex = /image./;
+                        var match = imageRegex.exec(link);
+                        // Regex for finding the blog in link
+                        const blogRegex = /blog/g;
+                        const matchedLink = link.match(blogRegex);
+                        if (match) {
+                            // var imageURL = match[1];
+                            notificationText = '<p><a style="color:blue; font-weight:700;" href="' + link + '" target="_blank">Photo:</a> ' + titleHTML +'</p>';
+                        } else if (matchedLink) {
+                             var url_link = link;
+                             var regex_link = /:blog\?id=([A-Fa-f0-9_]+)/;
+                             var match_link = url_link.match(regex_link);
+                             if (match_link) {
+                              var extractedPart = match_link[1];
+
+                              var blogLink = link;
+                              
+                              notificationText = '<p><a style="color:blue; font-weight:700;" href="' + blogLink + '" target="_blank">Blog:</a> ' + titleHTML +'</p>';
+                              
+                            }
+                        }
+                        // Code for notification end
+                        var descriptionText = description;
+                        var descriptionContent = '';
+
+                    if (descriptionText != null) {
+                         
+                        if (descriptionText.length > 700) {
+                            // Display truncated description
+                             var cleanedText = descriptionText.replace(/<[^>]*>/g, '');
+                             // cleanedText = cleanedText.trim();
+                            descriptionContent = "<div class='less-zs-desc-content" + i + "'>" + cleanedText.substring(0, 700) + "</div><div class='more-zs-desc-content" + i + "' style='display:none;'>" + descriptionText + "</div>";
+
+                            var moreButton = "<p class='more-button more-button-refresh_"+i+"' onclick=\"truncateZSDescriptionTextmoreonrefresh('.more-zs-desc-content" + i + "','.less-zs-desc-content" + i + "', 10000, '_"+i+"');\"></p><p style='display:none;' class='less-button less-button-refresh_"+i+"' onclick=\"truncateZSDescriptionTextlessonrefresh('.more-zs-desc-content" + i + "', '.less-zs-desc-content" + i + "', 700, '_"+i+"');\"></p>";
+
+                            descriptionContent += moreButton;
+                        }else {
+                            // Description is short enough, no "more" button needed
+                            if (Object.keys(description).length === 0) {
+                               var descriptionContent = "";
+                            } else {
+                               var descriptionContent = descriptionText;
+                            }
+                        }
+                    }
+                        var description_notification = notificationText + ' ' + descriptionContent;
+                        rowsToAdd.push([userDateCell, description_notification]);
+                    }
+                    table.clear().rows.add(rowsToAdd).draw();
+            }
+
+            $("#loading_img").hide();
+            $("input[type='search']").wrap("<form>");
+            $("input[type='search']").closest("form").attr("autocomplete","off");
+            $("#feedTable_filter label").css('display','flex');
+        }
+
+        function truncateZSDescriptionTextmoreonrefresh(selectormore,selectorless, maxLength, desc_index) {
+            var element = document.querySelector(selectormore);
+            var truncated = element.innerText;
+            truncated = truncated.substr(0, truncated.length);
+             var moreselector = $(selectormore);
+             var lessselector = $(selectorless);
+             var lessbuttonselector = $(".less-button-refresh"+desc_index);
+             var morebuttonselector = $(".more-button-refresh"+desc_index);
+             lessbuttonselector.show();
+             morebuttonselector.hide();
+             moreselector.show();
+             lessselector.hide();
+            element.innerText = truncated;
+        }
+
+        function truncateZSDescriptionTextlessonrefresh(selectormore,selectorless, maxLength, desc_index) {
+                var element = document.querySelector(selectorless);
+                var truncated = element.innerText;
+                truncated = truncated.substr(0, maxLength) + '...';
+                var moreselector = $(selectormore);
+                var lessselector = $(selectorless);
+                var lessbuttonselector = $(".less-button-refresh"+desc_index);
+                var morebuttonselector = $(".more-button-refresh"+desc_index);
+                lessbuttonselector.hide();
+                morebuttonselector.show();
+                moreselector.hide();
+                lessselector.show();
+                element.innerText = truncated;
+        }
+
+        function findArrayDifference(array1, array2) {
+          const difference = [];
+
+          for (const item1 of array1) {
+            let found = false;
+            for (const item2 of array2) {
+              if (JSON.stringify(item1) === JSON.stringify(item2)) {
+                found = true;
+                break;
+              }
+            }
+            if (!found) {
+              difference.push(item1);
+            }
+          }
+
+          return difference;
+        }
+
+        // Function to format a Date object as "Thu Aug 10 4:40pm"
+        function formatDateString(date) {
+            const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+            const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            const day = daysOfWeek[date.getDay()];
+            const month = months[date.getMonth()];
+            const dayOfMonth = date.getDate();
+            let hours = date.getHours();
+            const ampm = hours >= 12 ? "pm" : "am";
+            hours = hours % 12 || 12; // Convert to 12-hour format
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            const seconds = String(date.getSeconds()).padStart(2, '0');
+            return `${day} ${month} ${dayOfMonth} ${hours}:${minutes}:${seconds} ${ampm}`;
+        }
+
+
+
+        
+</script><script>
+function updateClock() {
+    const now = new Date();
+    const hours = now.getHours().toString().padStart(2, '0');
+    const minutes = now.getMinutes().toString().padStart(2, '0');
+    const seconds = now.getSeconds().toString().padStart(2, '0');
+    document.getElementById('digital-clock').textContent = `${hours}:${minutes}:${seconds}`;
+}
+
+// Update the clock every second
+setInterval(updateClock, 1000);
+
+// Initial clock update
+updateClock();
+</script><script type="text/javascript">
+  _uacct = "UA-83262-2";
+  urchinTracker();
+  D.get('u').select();
+</script></html>
