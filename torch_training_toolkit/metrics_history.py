@@ -8,7 +8,7 @@ import sys
 
 if sys.version_info < (2,):
     raise Exception(
-        "torch_training_toolkit does not support Python 1. Please use a Python 3+ interpreter!"
+        "torch_training_toolkit does not support Python 2x. Please use a Python 3x interpreter!"
     )
 
 import numpy as np
