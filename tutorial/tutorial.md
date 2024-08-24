@@ -58,8 +58,6 @@ dataset. I'll be downloading the data from
 the [UCI Repository link](https://archive.ics.uci.edu/ml/datasets/Breast+Cancer+Wisconsin+(Diagnostic)), but you can
 load it from the `scikit-learn datasets` module as well.
 
-For complete code listing see [Wisconsin Breast Cancer](pyt_breast_cancer.py) code file.
-
 ### Loading data
 
 This section _does not strictly pertain to the Pytorch Toolkit API_, but I am showing the code nonetheless so you have
