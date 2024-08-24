@@ -8,10 +8,14 @@ Use at your own risk!! I am not responsible if your CPU or GPU gets fried :D
 """
 
 import warnings
+import logging
+import logging.config
 
 warnings.filterwarnings("ignore")
 
+import sys
 import os
+import pathlib
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -28,7 +32,10 @@ import torch
 
 print("Using Pytorch version: ", torch.__version__)
 import torch.nn as nn
-from torchmetrics.classification import BinaryAccuracy, BinaryF1Score, BinaryAUROC
+import torchsummary
+from torchmetrics.classification import BinaryAccuracy
+
+# from torchmetrics.classification import BinaryF1Score, BinaryAUROC
 
 # import pytorch_toolkit - training Nirvana :)
 import torch_training_toolkit as t3
@@ -36,10 +43,21 @@ import torch_training_toolkit as t3
 # to ensure that you get consistent results across runs & machines
 # @see: https://discuss.pytorch.org/t/reproducibility-over-different-machines/63047
 SEED = t3.seed_all(123)
+
+logger = t3.get_logger(pathlib.Path(__file__), level=logging.INFO)
+
+
 data_file_path = os.path.join(
     os.path.dirname(__file__), "data", "wisconsin_breast_cancer.csv"
 )
-DEVICE = torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
+DEVICE = (
+    "cuda"
+    if torch.cuda.is_available()
+    else "mps" if torch.backends.mps.is_available() else "cpu"
+)
+
+logger.info(f"Will train model on {DEVICE}")
+logger.info(f"data_file_path = {data_file_path}")
 
 
 def download_data_file(force=False):
@@ -164,6 +182,10 @@ DECAY = 0.01
 
 
 def main():
+    # setup command line parser
+    parser = t3.TrainingArgsParser()
+    args = parser.parse_args()
+
     # load our data & build tensor datasets for cross-training & testing
     (X_train, y_train), (X_test, y_test) = load_data()
     print(X_train.shape, y_train.shape, X_test.shape, y_test.shape)
@@ -171,8 +193,8 @@ def main():
     loss_fn = nn.BCELoss()
     metrics_map = {
         "acc": BinaryAccuracy(),
-        "f1": BinaryF1Score(),
-        "roc_auc": BinaryAUROC(thresholds=None),
+        # "f1": BinaryF1Score(),
+        # "roc_auc": BinaryAUROC(thresholds=None),
     }
     trainer = t3.Trainer(
         loss_fn=loss_fn,
@@ -182,24 +204,26 @@ def main():
         batch_size=BATCH_SIZE,
     )
 
-    if DO_TRAINING:
+    if args.train:
         model = WBCNet(NUM_FEATURES, NUM_CLASSES)
-        optimizer = torch.optim.SGD(
-            model.parameters(), lr=LEARNING_RATE, weight_decay=DECAY
-        )
+        optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, weight_decay=DECAY)
         print(model)
 
         # train model
         print("Training model...")
         hist = trainer.fit(
-            model, optimizer, train_dataset=(X_train, y_train), validation_split=0.20
+            model,
+            optimizer,
+            train_dataset=(X_train, y_train),
+            validation_split=0.20,
+            seed=SEED,
         )  # validation_dataset = val_dataset)
         hist.plot_metrics(fig_size=(16, 8))
         # save model state
         t3.save_model(model, MODEL_SAVE_PATH)
         del model
 
-    if DO_EVAL:
+    if args.eval:
         # evaluate model performance on train/eval & test datasets
         model = WBCNet(NUM_FEATURES, NUM_CLASSES)
         model = t3.load_model(model, MODEL_SAVE_PATH)
@@ -214,7 +238,7 @@ def main():
         print(f"Testing metrics -> {metrics}")
         del model
 
-    if DO_PREDICTION:
+    if args.pred:
         print("\nRunning predictions...")
         model = WBCNet(NUM_FEATURES, NUM_CLASSES)
         model = t3.load_model(model, MODEL_SAVE_PATH)
