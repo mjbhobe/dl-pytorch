@@ -510,3 +510,52 @@ You can address several issues during training by using various combination of t
 * [pyt_fashion_mnist_dnn3.py](pyt_fashion_mnist_dnn3.py) - adds a learning rate scheduler to the training loop. We use the `StepLR` learning rate scheduler.
 * [pyt_fashion_mnist_dnn4.py](pyt_fashion_mnist_dnn4.py) - adds early stopping to training loop.
 
+### The `TrainingArgsParser` utility class
+Across the examples above, you'll notice that we have used a utility `TrainingArgsParser` class. This class is derived from the `argparse.ArgumentParser` class and provides several convenient command line parameters, with default values for each parameter, that helps you set values for various hyper-parameters you used during the training/evaluation and testing process.
+
+For example, this class allows you to set values for `epochs`, `batch_size`, whether to selectively run just the training (`train`) or evaluation (`eval`) or testing (`test`) and so on.
+
+Here is how you can use the class:
+
+```python
+import torch_training_toolkit as t3
+
+if __name__ == "__main__":
+  parser = t3.TrainingArgsParser()
+  args = parser.parse_args()
+
+  # now you can use all the parameters configured
+  # in the TrainingArgsParser class, like this
+  if args.train:
+    # execute the training part 
+
+  if args.eval:
+    # execute the evaluation
+
+  if args.test:
+    # execute the test
+```
+
+When calling the Python file on the command line you will use parameters as follows:
+
+```bash
+$> python fashion_dnn.py --train --eval --test --epochs=45 --batch_size=45 ....
+```
+
+Here are the parameters defined in the `TrainingArgsParser` class, with their default values:
+* `--train` (bool, default False) - pass this flag to train model
+* `--eval`  (bool, default False) - pass this flag to cross-validate model
+NOTE: you must have a cross-validation dataset defined
+* `--pred` (bool, default False) - pass this flag to run predictions against a test dataset.  
+NOTE: you must have a test dataset defined & you must have trained model before
+* `--show_sample` (bool, default False) - pass this parameter to signal that your code should display a sample of loaded data.
+* `--epochs=EPOCHS` (int, default 25) - use this flag to define the number of training epochs
+* `--batch_size=BATCH_SIZE` (int, default 64) - use this flag to define batch size
+* `--lr=LR` (float, default 0.001) - use this flag to define the learning rate
+* `--l2_reg=L2_REG` (float, default 0.005) - use this flag to define quantum of L2 regularization applied by the optimizer (i.e. the weight=XXX parameter of the optimizer)
+* `--verbose=level` (int, default 2) - define the verbosity of the output from training loop
+    0 = silent (no progress reported),
+    1 = update at end of epoch only,
+    2 = detailed batch-by-batch progress reported
+* `--val_split` (float, default=0.20) - define the validation split percentage (default 20%)
+* `--test_split` (float, default=0.10) -- define the test split percentage (default 10%)
