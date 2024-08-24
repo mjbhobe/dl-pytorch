@@ -1,3 +1,8 @@
+|**NOTE**|
+|:--------|
+|<font color="firebrick">There is a newer version of this toolkit, which addresses most of the shortcomings of this version. Please refer to the [new tutorial & examples here](tutorial/tutorial.md)</font>|
+
+
 # Introducing Pytorch Toolkit (PyTk)
 
 ## A Keras-like API to train, evaluate and test Pytorch Models
