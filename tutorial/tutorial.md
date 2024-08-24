@@ -43,6 +43,8 @@ tested on Python 3.8+ on Windows and Linux - I don't own a Mac :(.
 
 ## Training model when data available in 2D Numpy arrays
 
+For complete code refer to [this code file](pyt_breast_cancer.py)
+
 Often data & labels are available in Numpy arrays. This is true especially for structured datasets (e.g. datasets
 available with the `scikit-learn` package, like the Iris dataset, the Boston Housing dataset, the Wisconsin Breast
 Cancer dataset etc.) and in several repositories on Kaggle and UCI.
