@@ -1,6 +1,6 @@
 # Pytorch Toolkit - Tutorial (Version 2.0)
 
-Thank you for your interest in the `Pytorch Toolkit`. I wrote this as a set of utility functions & classes that will ease the process of training, evaluating & running predictions from a model. As a developer, I would rather spend my time productively concentrating on the core tasks of ML - viz. preparing data, designing/re-using appropriate model architecture and tuning the hyper-parameters to get the best performance from the model. Keras does a great job of hiding boilerplate code for training the model, evaluating performance and running predictions. I aim to bring the ease that Keras provides to Pytorch via the `Pytorch Toolkit`. Most of the API is similar to the Keras API, so Keras users should find it very easy to understand.
+Thank you for your interest in the `Pytorch Toolkit`. I wrote this as a set of utility functions & classes that will ease the process of training, evaluating & running predictions from a model. As a developer, I would rather spend my time productively concentrating on the core tasks of ML - viz. preparing data, designing/re-using appropriate model architecture and tuning the hyper-parameters to get the best performance from the model. Keras does a great job of hiding boilerplate code for training the model, evaluating performance and running predictions. I aim to bring the ease that Keras provides to Pytorch via the `Pytorch Toolkit`. 
 
 |**NOTE**|
 |:--------|
@@ -29,8 +29,7 @@ With that perspective, let's get started.
 
 ## Dependencies
 
-`Pytorch Toolkit` relies on the following Python libraries, which must be installed using `pip` or `conda`. It has been
-tested on Python 3.8+ on Windows and Linux - I don't own a Mac :(.
+`Pytorch Toolkit` relies on the following Python libraries, which must be installed using `pip` or `conda`. It has been tested on Python 3.8+ on Windows and Linux - I don't own a Mac :(.
 
 * pathlib
 * numpy
@@ -40,6 +39,28 @@ tested on Python 3.8+ on Windows and Linux - I don't own a Mac :(.
 * torch (Pytorch, of course!)
 * torchsummary
 * torchmetrics
+
+## A note on setting up the library
+
+I have yet to convert this into a PyPl compatible module, which you can `pip` install. Until that is done, please follow the steps below on your local machine to access this library across your Pytorch projects.
+
+1. Clone this repository to your local machine from GitHub under any folder - say `$HOME/code` folder. This could be any folder on your hard disk - let's refer to this folder as the ROOT_FOLDER henceforth.
+
+    ```bash
+    $~/code> git clone https://github.com/mjbhobe/dl-pytorch.git
+    ```
+    This will create a folder `ROOT_FOLDER/dl-pytorch` on your disk.
+
+2. Add the `ROOT_FOLDER/dl-pytorch` to the PYTHONPATH system variable. On Linux, open `.bashrc` and add the following line to it
+
+    ```bashrc
+    # replace ~/code in line below with the folder to which 
+    # you cloned the dl-pytorch git repo
+    export PYTHONPATH=~/code/dl-pytorch
+    ```
+
+3. Restart your shell and you are all set.
+
 
 ## Training model when data available in 2D Numpy arrays
 
@@ -505,7 +526,7 @@ By default, training progress is reported/printed after each epoch. Set this val
 * `num_workers` (optional, type: int, default=4) - The numbers of workers to be used when shuffling the train & cross-validation datasets.
 
 You can address several issues during training by using various combination of these parameters. We have developed a series of multi-class classification examples on the Fashion MNIST dataset. Please refer to examples as below:
-* [pyt_fashion_mnist_dnn.py](pyt_fashion_mnist_dnn.py) - basic multi-class classification examples without using additional metrics.
+* [pyt_fashion_mnist_dnn.py](pyt_fashion_mnist_dnn.py) - basic multi-class classification examples without using additional metrics. We have separate instances of training & cross-validation datasets and data is available as instances of `torch.utils.data.Dataset` class.
 * [pyt_fashion_mnist_dnn2.py](pyt_fashion_mnist_dnn2.py) - add additional metrics `acc` and `f1` which are tracked during training.
 * [pyt_fashion_mnist_dnn3.py](pyt_fashion_mnist_dnn3.py) - adds a learning rate scheduler to the training loop. We use the `StepLR` learning rate scheduler.
 * [pyt_fashion_mnist_dnn4.py](pyt_fashion_mnist_dnn4.py) - adds early stopping to training loop.
