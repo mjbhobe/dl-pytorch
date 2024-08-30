@@ -16,7 +16,7 @@ I wrote this library much before I discovered `Pytorch Lightning`. If you are lo
 
 This tutorial will gradually expose you to the API provided by the **Pytorch Toolkit**, so it is best that you **follow
 along from beginning to the end**. I use a very informal style of writing, which I hope you'll like. The API is inspired
-by Keras, so if you have used Keras before you'll feel very much at home.
+by Keras & Pytorch Lightning, so if you have used either of these frameworks, before you'll feel very much at home.
 
 I am assuming that you have already installed the pre-requisites and have done the preliminary test as explained in
 the [Readme](Readme.md) file - if not, please do so now.
