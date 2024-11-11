@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-pyt_linear_regression.py - Linear Regression with Pytorch on synthetic data
+pyt_linear_regression2.py - Linear Regression with Pytorch on realistic dataset
 
 @author: Manish Bhobe
 
@@ -8,12 +8,18 @@ My experiments with Python, Machine Learning & Deep Learning.
 This code is meant for education purposes only & is not intended for commercial/production use!
 Use at your own risk!! I am not responsible if your CPU or GPU gets fried :D
 """
+# %% imports
 import warnings
 
 warnings.filterwarnings("ignore")
 
+import sys
+
+# print(sys.path, flush=True)
+
 import os
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 import pathlib
 from sklearn.datasets import make_regression
@@ -40,30 +46,20 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 print(f"Using Pytorch: {torch.__version__}. Model will train on {DEVICE}")
 
+# %% get data
+data_url = "https://gist.githubusercontent.com/noamross/e5d3e859aa0c794be10b/raw/b999fb4425b54c63cab088c0ce2c0d6ce961a563/cars.csv"
+data_local_path = pathlib.Path(__file__).parent / "data" / "cars.csv"
 
-def get_data(
-    num_samples=25_000,
-    num_features=10,
-    noise=5,
-    val_split=0.3,
-    test_split=0.1,
-    seed=SEED,
-):
-    X, y = make_regression(
-        n_samples=num_samples, n_features=num_features, noise=noise, random_state=seed
-    )
-    y = y.reshape(-1, 1)
-    x_scaler = MinMaxScaler()
-    X_scaled = x_scaler.fit_transform(X)
-    y_scaler = MinMaxScaler()
-    y_scaled = y_scaler.fit_transform(y)
-    X_train, X_test, y_train, y_test = train_test_split(
-        X_scaled, y_scaled, test_size=val_split, random_state=seed
-    )
-    X_val, X_test, y_val, y_test = train_test_split(
-        X_test, y_test, test_size=test_split, random_state=seed
-    )
-    return X_train, y_train, X_val, y_val, X_test, y_test
+if not data_local_path.exists():
+    df = pd.read_csv(data_url)
+    df.to_csv(str(data_local_path))
+else:
+    df = pd.read_csv(str(data_local_path))
+print(df.head())
+
+sys.exit(-1)
+
+# %% other code
 
 
 class MyDataset(Dataset):
