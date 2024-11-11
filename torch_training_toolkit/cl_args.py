@@ -1,6 +1,7 @@
 """
 cmd_opts.py - parse command line options
 """
+
 import argparse
 import logging
 
@@ -10,7 +11,7 @@ logger = logging.getLogger(__name__)
 class TrainingArgsParser(argparse.ArgumentParser):
     """
     class derived from argparse.ArgumentParser to set/parse typical command line parameters
-    for training/evaluating/predict a Pytorch model. This class defines the following
+    for training/evaluating/predictions from a Pytorch model. This class defines the following
     command line params - each has been assigned a default value, so all are optional.
         @usage: in the __main__ function, use this class as follows
             import torch_training_toolkit as t3
@@ -26,10 +27,10 @@ class TrainingArgsParser(argparse.ArgumentParser):
                 if args.eval:
                     ...
         @defined parameters & their default values (all are optional as each has default assigned):
-            --train (bool, default False) - pass this flag to train model
-            --eval (bool, default False) - pass this flag to cross-validate model.
+            --train (bool, default False) - pass this flag on command line to train model
+            --eval (bool, default False) - pass this flag on command line to cross-validate model.
                 NOTE: you must have a cross-validation dataset defined
-            --pred (bool, default False) - pass this flag to run predictions against
+            --pred (bool, default False) - pass this flag on command line to run predictions against
                 a test dataset.
                 NOTE: you must have a test dataset defined & you must have trained model before
             --show_sample (bool, default False) -- pass this parameter to signal that
@@ -99,7 +100,8 @@ class TrainingArgsParser(argparse.ArgumentParser):
             "--eval",
             dest="eval",
             action="store_true",
-            help="Flag that specifies that model should validate performance against a dataset " "(default=False)",
+            help="Flag that specifies that model should validate performance against a dataset "
+            "(default=False)",
         )
         self.set_defaults(eval=False)
 
@@ -109,7 +111,8 @@ class TrainingArgsParser(argparse.ArgumentParser):
             "--pred",
             dest="pred",
             action="store_true",
-            help="Flag that specifies that model should run predictions on test data (" "default=True)",
+            help="Flag that specifies that model should run predictions on test data ("
+            "default=True)",
         )
         self.set_defaults(pred=False)
 

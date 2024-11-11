@@ -683,13 +683,16 @@ def predict_array(
         NOTE: to convert to classes use np.max(...,axis=1) after this call.
     """
     try:
+        # model should be an instance of nn.Module
         assert isinstance(
             model, nn.Module
         ), "predict() works with instances of nn.Module only!"
+        # and data should be a Numpy Array or a torch Tensor
         assert (isinstance(data, np.ndarray)) or (
             isinstance(data, torch.Tensor)
         ), "data must be an instance of Numpy ndarray or torch.tensor"
-        # train on GPU if you can
+
+        # run on GPU if you can
         model = model.to(device)
 
         # run prediction

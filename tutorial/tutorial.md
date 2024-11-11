@@ -21,9 +21,9 @@ by Keras & Pytorch Lightning, so if you have used either of these frameworks, be
 I am assuming that you have already installed the pre-requisites and have done the preliminary test as explained in
 the [Readme](Readme.md) file - if not, please do so now.
 
-| **A Point To Note**| 
-|:-------------------|
-| <font color='firebrick'>This is **NOT an ML tutorial** - I don't _teach_ you how to create the best model, training techniques, data loading & preparation techniques etc. This tutorial is _strictly aimed_ at showing you how the `Pytorch Toolkit` can be used to write much lesser code during the phase of training & evaluating model...and nothing more! I cover various scenarios below. So if the model performance is bad, please ignore it! </font> |
+| **A Point To Note**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | 
+|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| <font color='firebrick'>This is **NOT an ML tutorial** - I don't _teach_ you how to create the best model, training techniques, data loading & preparation techniques etc. In fact we won't even bother with the results we get (numbers could be bad, but that's ok) - because this tutorial is _strictly aimed_ at showing you how the `Pytorch Toolkit` can be used to write much lesser code during the phase of training & evaluating model...and nothing more! I cover various scenarios below. So if the model performance is bad, please ignore it! </font> |
 
 With that perspective, let's get started.
 
@@ -171,7 +171,7 @@ import pytorch_training_toolkit as t3
 trainer = t3.Trainer(
   loss_fn,          # any of the Pytorch provided loss functions
   device,           # the device to use for training (CPU, GPU, MPU)
-  metrics_map=None, # additional metrics you want to track
+  metrics_map=None, # additional metrics you want to track (default is None)
   epochs = 25,      # no of epochs you want to train for (default = 25)
   batch_size = 64,  # batch size you want to use (default = 64)
 )
@@ -180,6 +180,7 @@ trainer = t3.Trainer(
 For the breast cancer classification problem:
 * This is a binary classificaction problem, so we'll use the `nn.BCELoss()` function as the loss function (`loss_fn`)
 * This is the standard code used at the top of the file to determine the device to train the model on - this is pretty standard.
+* <font color="firebrick">**NOTE:** I have tested my code on Windows/Linux machines with either a Nvidia GPU or no GPU. I haven't tested this on a Mac or any other type of GPU (such as a Radeon GPU using ROCM on Linux) - please modify code below appropriately.</font>
   ```python
   DEVICE = (
       "cuda"
@@ -188,7 +189,7 @@ For the breast cancer classification problem:
   )
   ```
 * Let's train for 150 epochs with a batch size of 16
-* To begin with let's not track any additional metrics (let's forget the `metrics_map` parameter for just this once)
+* To begin with we won't be tracking any _additional_ metrics during training, so we'll ignore the `metrics_map` parameter
 
 So here is how we'll instantiate the `Trainer` class in our case.
 
@@ -205,16 +206,16 @@ DEVICE = (
 )
 
 trainer = t3.Trainer(
-  loss_fn = nn.BCELoss(),
-  device = DEVICE,
-  epochs = 150,      
-  batch_size = 16
+  loss_fn = nn.BCELoss(),  # our loss function (for binary classification)
+  device = DEVICE,         # the device (either CPU or an Nvidia GPU)  
+  epochs = 150,            # we want to train for 150 epochs
+  batch_size = 16          # and use a batch size of 16 
 )
 ```
 
 #### Step 2 - choose an optimizer & train the model
 
-We can choose any of the optimizers provided by Pytorch - in our case, let's use the `SGD` optimizer.
+We can choose any of the optimizers provided by Pytorch -  let's use the `SGD` optimizer.
 
 ```python
 optimizer = torch.optim.SGD(
@@ -226,7 +227,7 @@ optimizer = torch.optim.SGD(
 
 #### Step 3 - train the model!
 
-Here is the code to train the model - we'll need an instance of our model, of course, the dataset(s) to train on, an optimizer. Then we call the `fit()` method of our `Trainer` class we instantiated above and it will do all the good stuff under the hood for us - like calling the training & cross-validation steps, placing the model & data on correct device, measuring metrics(if any) and tracking metrics etc.
+Here is the code to train the model - we'll need an instance of our model, of course, the dataset(s) to train on, an optimizer. Then we call the `fit()` method of our `Trainer` class we instantiated above and it will do all the good stuff under the hood for us - like calling the training & cross-validation steps, placing the model & data on correct device, measuring metrics(if any) and tracking metrics across epochs etc.
 
 Here is the code:
 ```python
