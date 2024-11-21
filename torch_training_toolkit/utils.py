@@ -20,6 +20,7 @@ import seaborn as sns
 import logging
 import pathlib
 from datetime import datetime
+from typing import Dict, Tuple
 
 # Pytorch imports
 import torch
@@ -139,3 +140,125 @@ def plot_confusion_matrix(
         plt.title(title)
     plt.show()
     plt.close()
+
+
+def denormalize_and_permute_images(
+    images: torch.Tensor, mean: tuple, std: tuple
+) -> torch.Tensor:
+    """
+    denormalizes a batch of images (Tensors) using provided mean & std-deviation
+    and clamps the output between (0, 1).
+    Executes operation (images * std) + mean
+
+    @params:
+        images - batch of images as a torch.Tensor with shape (batch_size, channels, width, height)
+        mean - mean to be applied - tuple of floats or ints [e.g. (0.5, 0.5, 0.5)]
+        std - std deviation to be applied - tuple of floats or ints [e.g. (0.5, 0.5, 0.5)]
+    @returns:
+        images - denormalized batch of image tensors of same shape as input parameter
+    """
+    mu_t = torch.Tensor(mean)
+    std_t = torch.Tensor(std)
+    images_x = images * std_t[:, None, None] + mu_t[:, None, None]
+    images_x = images_x.clamp(0, 1)
+    images_x = images_x.permute(0, 2, 3, 1)
+    return images_x
+
+
+def display_images_grid(
+    sample_images: np.ndarray,  # de-normalized & transposed images!!
+    sample_labels: np.ndarray,
+    labels_dict: Dict[int, str] = None,
+    grid_shape: tuple = (10, 10),
+    plot_title: str = None,
+    fig_size: Tuple[int, int] = (14, 10),
+    sample_predictions: np.ndarray = None,
+):
+    """
+    displays grid of images with labels on top of each image (if provided) and plot tite (if provided)
+
+    @params:
+        sample_images : Numpy array of DENORMALIZED images [shape: (batch_size, c, w, h)]
+        sample_labels : Numpy array of ints
+    """
+    # just in case these are not imported!
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+
+    plt.style.use("seaborn-v0_8")
+
+    num_rows, num_cols = grid_shape
+    assert sample_images.shape[0] == num_rows * num_cols
+
+    with sns.axes_style("whitegrid"):
+        sns.set_context("notebook", font_scale=1.0)
+        sns.set_style(
+            {
+                "font.sans-serif": [
+                    "SF Pro Rounded",
+                    "Calibri",
+                    "Arial",
+                    "DejaVu Sans",
+                    "sans",
+                ]
+            }
+        )
+
+        f, ax = plt.subplots(
+            num_rows,
+            num_cols,
+            figsize=fig_size,
+            gridspec_kw={"wspace": 0.3, "hspace": 0.5},
+            squeeze=True,
+        )  # 0.03, 0.25
+        # fig = ax[0].get_figure()
+        f.tight_layout()
+        f.subplots_adjust(top=0.90)  # 0.93
+
+        for r in range(num_rows):
+            for c in range(num_cols):
+                image_index = r * num_cols + c
+                ax[r, c].axis("off")
+                image = sample_images[image_index]
+
+                # show selected image
+                ax[r, c].imshow(
+                    image,
+                    cmap="Greys",
+                    interpolation="nearest",
+                )
+
+                if sample_predictions is None:
+                    # show the text label as image title
+                    title = (
+                        ""
+                        if labels_dict is None
+                        else f"{labels_dict[sample_labels[image_index]]}"
+                    )
+                    title = ax[r, c].set_title(title)
+                else:
+                    pred_matches_actual = (
+                        sample_labels[image_index] == sample_predictions[image_index]
+                    )
+                    # show prediction from model as image title
+                    title = (
+                        ""
+                        if labels_dict is None
+                        else f"{labels_dict[sample_predictions[image_index]]}"
+                    )
+                    if pred_matches_actual:
+                        # if matches, title color is green
+                        title_color = "g"
+                    else:
+                        # else title color is red
+                        title_color = "r"
+
+                    # but show the prediction in the title
+                    title = ax[r, c].set_title(title, fontsize=8)
+                    # if prediction is incorrect title color is red, else green
+                    plt.setp(title, color=title_color)
+
+        if plot_title is not None:
+            plt.suptitle(plot_title)
+        plt.show()
+        plt.close()

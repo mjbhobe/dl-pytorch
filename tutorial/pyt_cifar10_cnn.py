@@ -54,7 +54,7 @@ DATA_PATH = pathlib.Path(__file__).parent.parent / "data"
 logger.info(f"Will train model on {DEVICE}")
 logger.info(f"DATA_PATH = {DATA_PATH}")
 
-MEANS, STDS = [0.5, 0.5, 0.5], [0.5, 0.5, 0.5]
+MEANS, STDS = (0.5, 0.5, 0.5), (0.5, 0.5, 0.5)
 
 
 def get_mean_and_std():
@@ -111,8 +111,8 @@ def load_data(args):
     #     ]
     # )
 
-    print("Calculating means & stds across all dimensions.")
-    MEANS, STDS = get_mean_and_std()
+    # print("Calculating means & stds across all dimensions.")
+    # MEANS, STDS = get_mean_and_std()
 
     transformations = transforms.Compose(
         [
@@ -145,6 +145,28 @@ def load_data(args):
     return train_dataset, val_dataset, test_dataset
 
 
+def denormalize(tensor: torch.Tensor, mean: tuple, std: tuple) -> torch.Tensor:
+    """
+    denormalizes (reverses torchvision.transforms.Normalize()) a batch of torch tensors
+    with mean & std (i.e. performs (tensor * std) / mean)
+
+    Args:
+        tensor (torch.Tensor): a batch of tensors
+        mean (tuple): mean used for normalizaton (e.g. (0.5, 0.5, 0.5))
+        std (tuple): standard deviation for normalizaton (e.g. (0.5, 0.5, 0.5))
+
+    Returns:
+        denormalized torch.Tensor with same shape as parameter passed
+    """
+
+    # create mean & std in the same shape as tensor passed in
+    mean_t = torch.Tensor(mean, device=tensor.device).view(1, -1, 1, 1)
+    std_t = torch.Tensor(std, device=tensor.device).view(1, -1, 1, 1)
+
+    # denormalize
+    return tensor.mul(std_t).add(mean_t).clamp(0, 1)
+
+
 def display_sample(
     sample_images,
     sample_labels,
@@ -152,6 +174,9 @@ def display_sample(
     plot_title=None,
     sample_predictions=None,
 ):
+    """
+    displays grid of images with labels on top of each image
+    """
     # just in case these are not imported!
     import matplotlib.pyplot as plt
     import seaborn as sns
@@ -204,9 +229,9 @@ def display_sample(
             for c in range(num_cols):
                 image_index = r * num_cols + c
                 ax[r, c].axis("off")
-                # de-normalize image
+                # # de-normalize image
                 image = sample_images[image_index].transpose((1, 2, 0))
-                image = (image * STDS) + MEANS
+                # image = (image * STDS) + MEANS
 
                 # show selected image
                 # @see: https://stackoverflow.com/questions/49643907/clipping-input-data-to-the-valid-range-for-imshow-with-rgb-data-0-1-for-floa
@@ -252,6 +277,19 @@ def display_sample(
 
 # some globals
 IMAGE_HEIGHT, IMAGE_WIDTH, NUM_CHANNELS, NUM_CLASSES = 32, 32, 3, 10
+# a dict to help encode/decode the labels
+CIFAR10_LABELS = {
+    0: "Airplane",
+    1: "Auto",
+    2: "Bird",
+    3: "Cat",
+    4: "Deer",
+    5: "Dog",
+    6: "Frog",
+    7: "Horse",
+    8: "Ship",
+    9: "Truck",
+}
 
 
 # define our network using Conv2d and Linear layers
@@ -306,6 +344,13 @@ def main():
     # setup command line parser
     # args = parse_command_line()
     parser = TrainingArgsParser()
+    parser.add_argument(
+        "--use_cnn",
+        dest="use_cnn",
+        action="store_true",
+        help="Flag to choose CNN model over ANN",
+    )
+    parser.set_defaults(use_cnn=False)  # don't use CNN by default
     args = parser.parse_args()
 
     MODEL_SAVE_NAME = "pyt_cifar10_cnn.pyt"
@@ -341,12 +386,22 @@ def main():
         )
         data_iter = iter(testloader)
         images, labels = next(data_iter)  # fetch first batch of 64 images & labels
-        display_sample(
+        # de-normalize batch of images
+        images = t3.denormalize_and_permute_images(images, MEANS, STDS)
+        t3.display_images_grid(
             images.cpu().numpy(),
             labels.cpu().numpy(),
             grid_shape=(8, 8),
             plot_title="Sample Images",
+            labels_dict=CIFAR10_LABELS,
         )
+        # images = denormalize(images, MEANS, STDS)
+        # display_sample(
+        #     images.cpu().numpy(),
+        #     labels.cpu().numpy(),
+        #     grid_shape=(8, 8),
+        #     plot_title="Sample Images",
+        # )
 
     if args.train:
         model = Cifar10Net()

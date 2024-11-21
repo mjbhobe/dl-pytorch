@@ -38,7 +38,13 @@ __FAV_SEED = 41
 import torch
 
 # bring in our functions & classes
-from .utils import get_logger, seed_all, plot_confusion_matrix
+from .utils import (
+    get_logger,
+    seed_all,
+    plot_confusion_matrix,
+    denormalize_and_permute_images,
+    display_images_grid,
+)
 from .layers import Linear, Conv2d
 from .dataset_utils import split_dataset
 from .training import Trainer, load_model, save_model
