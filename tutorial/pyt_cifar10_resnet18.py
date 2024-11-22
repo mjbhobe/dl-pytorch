@@ -59,6 +59,19 @@ logger.info(f"DATA_PATH = {DATA_PATH}")
 # some globals
 IMAGE_HEIGHT, IMAGE_WIDTH, NUM_CHANNELS, NUM_CLASSES = 32, 32, 3, 10
 MEANS, STDS = (0.5, 0.5, 0.5), (0.5, 0.5, 0.5)
+# a dict to help encode/decode the labels
+CIFAR10_LABELS = {
+    0: "Plane",
+    1: "Auto",
+    2: "Bird",
+    3: "Cat",
+    4: "Deer",
+    5: "Dog",
+    6: "Frog",
+    7: "Horse",
+    8: "Sheep",
+    9: "Truck",
+}
 
 
 def load_data(args):
@@ -276,11 +289,12 @@ def main():
         )
         data_iter = iter(testloader)
         images, labels = next(data_iter)  # fetch first batch of 64 images & labels
-        images = denormalize_and_permute_images(images)
+        images = t3.denormalize_and_permute_images(images, MEANS, STDS)
         # images = images.permute(0, 2, 3, 1)
-        display_sample(
+        t3.display_images_grid(
             images.cpu().numpy(),
             labels.cpu().numpy(),
+            labels_dict=CIFAR10_LABELS,
             grid_shape=(8, 8),
             plot_title="Sample Images",
         )
@@ -294,6 +308,11 @@ def main():
         optimizer = torch.optim.Adam(
             model.parameters(), lr=args.lr, weight_decay=args.l2_reg
         )
+        # add a learning rate scheduler
+        scheduler = torch.optim.lr_scheduler.StepLR(
+            optimizer, step_size=args.epochs // 2, gamma=0.1
+        )
+
         # # add L1 regularization & a learning scheduler
         # from torch.optim.lr_scheduler import StepLR
         #
@@ -311,7 +330,7 @@ def main():
             optimizer,
             train_dataset,
             validation_dataset=val_dataset,
-            # lr_scheduler=scheduler,
+            lr_scheduler=scheduler,
             # early_stopping=early_stopping,
             logger=logger,
         )
