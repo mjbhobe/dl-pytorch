@@ -64,6 +64,23 @@ def seed_all(seed=None, logger: logging.Logger = None):
 
 
 def get_logger(file_path: pathlib.Path, level: int = logging.INFO) -> logging.Logger:
+    """
+    gets a standard logger with 2 handlers - a stream handler (console) and a file handler.
+    The stream handler respects the level passed in as a parameter, whereas the file-handler
+    always sets logging level to logging.DEBUG (to log all messages to file).
+    Both handlers use the same formatter, which logs with following format:
+        "[%(name)s] [%(levelname)s] [%(asctime)s] %(message)s"
+
+    @params:
+        file_path (required, pathlib.Path): usually full path of program from where this function is called
+            (file logging creates a log file in the logs subfolder of this path)
+        level (optional, int - default = logging.INFO) - the logging level of the stream (console) logger
+            (level of file logger is always set to logging.DEBUG)
+
+    @returns:
+        logging.Logger - the logger objects, which should be passed to the Trainer object to log progress
+    """
+
     assert (
         file_path.is_file()
     ), f"FATAL ERROR: get_logger() -> file_path parameter must be a valid path to existing file!"
@@ -80,10 +97,7 @@ def get_logger(file_path: pathlib.Path, level: int = logging.INFO) -> logging.Lo
     logger = logging.getLogger(name)
     logger.setLevel(logging.DEBUG)
 
-    # stream_formatter = logging.Formatter("%(name)s - %(levelname)s - %(message)s")
-    # file_formatter = logging.Formatter(
-    #     "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    # )
+    # common formatter
     formatter = logging.Formatter(
         "[%(name)s] [%(levelname)s] [%(asctime)s] %(message)s",
         datefmt="%Y-%b-%d %H:%M:%S",
