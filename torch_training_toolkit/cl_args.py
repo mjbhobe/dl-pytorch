@@ -183,6 +183,23 @@ class TrainingArgsParser(argparse.ArgumentParser):
         # self.show_default_args()
         return self.args
 
+    def get_training_params(self) -> str:
+        params = f"""
+        Using following hyper-parameters:
+            - args.train {self.args.train}
+            - args.eval {self.args.eval}
+            - args.pred {self.args.pred}
+            - args.show_sample {self.args.show_sample}
+            - args.epochs {self.args.epochs}
+            - args.batch_size {self.args.batch_size}
+            - args.lr {self.args.lr:,.6f}
+            - args.l2_reg {self.args.l2_reg:,.6f}
+            - args.val_split {self.args.val_split:,.6f}
+            - args.test_split {self.args.test_split:,.6f}
+            - args.verbose {self.args.verbose}
+        """
+        return params.strip()
+
     def show_default_args(self, print_args=False):
         # display information
         if print_args:

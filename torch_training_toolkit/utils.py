@@ -63,7 +63,7 @@ def seed_all(seed=None, logger: logging.Logger = None):
     return seed
 
 
-def get_logger(file_path: pathlib.Path, level: int = logging.WARNING) -> logging.Logger:
+def get_logger(file_path: pathlib.Path, level: int = logging.INFO) -> logging.Logger:
     assert (
         file_path.is_file()
     ), f"FATAL ERROR: get_logger() -> file_path parameter must be a valid path to existing file!"
@@ -78,24 +78,80 @@ def get_logger(file_path: pathlib.Path, level: int = logging.WARNING) -> logging
     log_path = f"{log_dir}/{name}_{now_str}.log"
 
     logger = logging.getLogger(name)
+    logger.setLevel(logging.DEBUG)
+
+    # stream_formatter = logging.Formatter("%(name)s - %(levelname)s - %(message)s")
+    # file_formatter = logging.Formatter(
+    #     "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    # )
+    formatter = logging.Formatter(
+        "[%(name)s] [%(levelname)s] [%(asctime)s] %(message)s",
+        datefmt="%Y-%b-%d %H:%M:%S",
+    )
+
     # create handlers
     stream_handler = logging.StreamHandler()
-    # log_path = f"{os.getcwd()}/{name}.log"
-    file_handler = logging.FileHandler(log_path)
-
     stream_handler.setLevel(level)
-    file_handler.setLevel(logging.DEBUG)
+    stream_handler.setFormatter(formatter)
 
-    stream_formatter = logging.Formatter("%(name)s - %(levelname)s - %(message)s")
-    file_formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    )
-    stream_handler.setFormatter(stream_formatter)
-    file_handler.setFormatter(file_formatter)
+    file_handler = logging.FileHandler(log_path)
+    file_handler.setLevel(logging.DEBUG)
+    file_handler.setFormatter(formatter)
 
     logger.addHandler(stream_handler)
     logger.addHandler(file_handler)
+
+    # Avoid duplicate logs by ensuring handlers are not added multiple times
+    logger.propagate = False
+
     return logger
+
+
+def diff_datetime(start: datetime, end: datetime) -> str:
+    """
+    Calculate the difference between two datetime objects and report it in days, hours, minutes, seconds, and milliseconds.
+
+    Parameters:
+        start (datetime): The starting datetime.
+        end (datetime): The ending datetime.
+
+    Returns:
+        str: A formatted string reporting the difference.
+    """
+    # Ensure `end` is after `start`
+    if end < start:
+        start, end = end, start
+
+    # Calculate the time delta
+    delta = end - start
+
+    # Extract days, seconds, and microseconds from timedelta
+    days = delta.days
+    seconds = delta.seconds
+    microseconds = delta.microseconds
+
+    # Calculate hours, minutes, seconds, and milliseconds
+    hours = seconds // 3600
+    seconds %= 3600
+    minutes = seconds // 60
+    seconds %= 60
+    milliseconds = microseconds // 1000
+
+    # Build the output string
+    parts = []
+    if days > 0:
+        parts.append(f"{days} day{'s' if days > 1 else ''}")
+    if hours > 0:
+        parts.append(f"{hours} hour{'s' if hours > 1 else ''}")
+    if minutes > 0:
+        parts.append(f"{minutes} minute{'s' if minutes > 1 else ''}")
+    if seconds > 0:
+        parts.append(f"{seconds} second{'s' if seconds > 1 else ''}")
+    if milliseconds > 0:
+        parts.append(f"{milliseconds} millisecond{'s' if milliseconds > 1 else ''}")
+
+    # Join the parts with commas
+    return ", ".join(parts) if parts else "0 milliseconds"
 
 
 def plot_confusion_matrix(

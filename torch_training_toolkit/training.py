@@ -6,6 +6,7 @@ warnings.filterwarnings("ignore")
 
 import sys
 import os
+from datetime import datetime
 
 if sys.version_info < (2,):
     raise Exception(
@@ -17,6 +18,7 @@ from .metrics_history import *
 from .dataset_utils import *
 from .layers import *
 from .early_stopping import *
+from .utils import diff_datetime
 
 # custom data types
 from typing import Union, Dict, Tuple
@@ -126,6 +128,7 @@ def cross_train_module(
 
     reporting_interval = 1 if reporting_interval < 1 else reporting_interval
     reporting_interval = 1 if reporting_interval >= epochs else reporting_interval
+    logger.info(f"Will report training progress after {reporting_interval} epochs")
 
     train_dataset, val_dataset = dataset, validation_dataset
 
@@ -271,6 +274,9 @@ def cross_train_module(
                 else val_dataset
             )
 
+        start_time = datetime.now()
+        logger.debug(f"Training started at {start_time.strftime('%Y-%b-%d-%H:%M:%S')}")
+
         for epoch in range(epochs):
             model.train()
             # reset metrics
@@ -367,7 +373,7 @@ def cross_train_module(
                         )
                         print(prog_str, flush=True)
                         if logger is not None:
-                            logger.debug(prog_str)
+                            logger.debug(prog_str.strip())
                         # training ends here as there is no cross-validation dataset
                 else:
                     # we have a validation dataset
@@ -452,7 +458,7 @@ def cross_train_module(
                                 )
                                 print(prog_str, flush=True)
                                 if logger is not None:
-                                    logger.debug(prog_str)
+                                    logger.debug(prog_str.strip())
 
             if (early_stopping is not None) and (val_dataset is not None):
                 # early stooping test only if validation dataset is used
@@ -487,6 +493,9 @@ def cross_train_module(
                 else:
                     lr_scheduler.step()
 
+        end_time = datetime.now()
+        logger.debug(f"Training ended at {end_time.strftime('%Y-%b-%d-%H:%M:%S')}")
+        logger.debug(f"Time for training: {diff_datetime(start_time, end_time)}")
         return history
     finally:
         model = model.to("cpu")
@@ -583,6 +592,8 @@ def evaluate_module(
                     ),
                 )
                 print(prog_str, flush=True)
+                if logger is not None:
+                    logger.debug(prog_str.strip())
         return history.get_metric_vals(history.tracked_metrics())
     finally:
         model = model.to("cpu")

@@ -21,7 +21,7 @@ import logging
 import logging.config
 
 warnings.filterwarnings("ignore")
-logging.config.fileConfig(fname="logging.config")
+# logging.config.fileConfig(fname="logging.config")
 
 import sys
 import os
@@ -29,6 +29,7 @@ import pathlib
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+from datetime import datetime
 
 # tweaks for libraries
 np.set_printoptions(precision=4, linewidth=1024, suppress=True)
@@ -250,8 +251,7 @@ class FMNISTConvNet(nn.Module):
 
 
 def main():
-    # setup command line parser
-    # args = parse_command_line()
+    logger.info("Starting program")
     parser = t3.TrainingArgsParser()
     parser.add_argument(
         "--use_cnn",
@@ -261,11 +261,14 @@ def main():
     )
     parser.set_defaults(use_cnn=False)  # don't use CNN by default
     args = parser.parse_args()
+    logger.debug(f"{parser.get_training_params()}")
 
     MODEL_SAVE_NAME = "pyt_mnist_cnn.pyt" if args.use_cnn else "pyt_mnist_dnn.pyt"
     MODEL_SAVE_PATH = os.path.join("..", "model_states", MODEL_SAVE_NAME)
+    logger.debug(f"Model state will be saved to: {MODEL_SAVE_PATH}")
 
     print("Loading datasets...")
+    logger.debug("Loading datasets...")
     train_dataset, val_dataset, test_dataset = load_data(args)
 
     # declare loss functions
@@ -295,6 +298,7 @@ def main():
 
     if args.train:
         print(f'Using {"CNN" if args.use_cnn else "ANN"} model...')
+        logger.debug(f'Using {"CNN" if args.use_cnn else "ANN"} model...')
         model = FMNISTConvNet() if args.use_cnn else FMNISTNet()
         # use Pytorch 2 compile() call to speed up model - does not work on Windows :(
         # if (int(torch.__version__.split(".")[0]) >= 2) and (sys.platform != "win32"):

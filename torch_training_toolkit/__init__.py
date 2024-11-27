@@ -44,6 +44,7 @@ from .utils import (
     plot_confusion_matrix,
     denormalize_and_permute_images,
     display_images_grid,
+    diff_datetime,
 )
 from .layers import Linear, Conv2d
 from .dataset_utils import split_dataset
