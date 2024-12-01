@@ -322,7 +322,7 @@ def main():
         early_stopping = t3.EarlyStopping(
             model,
             metrics_map,
-            using_val_dataset=True,
+            # using_val_dataset=True,
             monitor="val_loss",
             patience=5,
         )
