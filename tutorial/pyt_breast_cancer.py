@@ -205,7 +205,7 @@ def main():
     )
 
     if args.train:
-        model = WBCNet(NUM_FEATURES, NUM_CLASSES)
+        model = WBCNet(NUM_FEATURES, NUM_CLASSES).to(DEVICE)
         optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, weight_decay=DECAY)
         print(model)
 
@@ -226,7 +226,7 @@ def main():
     if args.eval:
         # evaluate model performance on train/eval & test datasets
         model = WBCNet(NUM_FEATURES, NUM_CLASSES)
-        model = t3.load_model(model, MODEL_SAVE_PATH)
+        model = t3.load_model(model, MODEL_SAVE_PATH).to(DEVICE)
         print(model)
 
         print("Evaluating model performance...")
@@ -241,7 +241,7 @@ def main():
     if args.pred:
         print("\nRunning predictions...")
         model = WBCNet(NUM_FEATURES, NUM_CLASSES)
-        model = t3.load_model(model, MODEL_SAVE_PATH)
+        model = t3.load_model(model, MODEL_SAVE_PATH).to(DEVICE)
         print(model)
 
         # preds, actuals = t3.predict_module(model, test_dataset, device = DEVICE)

@@ -348,7 +348,7 @@ def main():
 
         # load model state from .pt file
         model = FMNISTConvNet() if args.use_cnn else FMNISTNet()
-        model = t3.load_model(model, MODEL_SAVE_PATH)
+        model = t3.load_model(model, MODEL_SAVE_PATH).to(DEVICE)
         print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
 
         metrics = trainer.evaluate(model, train_dataset)
@@ -377,7 +377,7 @@ def main():
     if args.pred:
         # load model state from .pt file
         model = FMNISTConvNet() if args.use_cnn else FMNISTNet()
-        model = t3.load_model(model, MODEL_SAVE_PATH)
+        model = t3.load_model(model, MODEL_SAVE_PATH).to(DEVICE)
         print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
 
         y_pred, y_true = trainer.predict(model, test_dataset)

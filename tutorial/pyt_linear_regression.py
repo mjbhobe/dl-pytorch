@@ -150,8 +150,7 @@ def main():
     if args.eval:
         # evaluate model performance
         model = RegressionModel(INPUT_DIM, HIDDEN_DIM, OUTPUT_DIM)
-        model = t3.load_model(model, MODEL_SAVE_PATH)
-        model = model.to(DEVICE)
+        model = t3.load_model(model, MODEL_SAVE_PATH).to(DEVICE)
 
         metrics = trainer.evaluate(model, (X_train, y_train))  # train_dataset)
         print(f"  Training dataset  -> loss: {metrics['loss']:.4f}")
@@ -163,8 +162,7 @@ def main():
 
     if args.pred:
         model = RegressionModel(INPUT_DIM, HIDDEN_DIM, OUTPUT_DIM)
-        model = t3.load_model(model, MODEL_SAVE_PATH)
-        model = model.to(DEVICE)
+        model = t3.load_model(model, MODEL_SAVE_PATH).to(DEVICE)
         y_pred, y_true = trainer.predict(model, (X_test, y_test))
         print(f"Sample labels(50): {y_true.ravel()[:50]}")
         print(f"Sample predictions(50): {y_pred.ravel()[:50]}")

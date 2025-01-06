@@ -328,7 +328,7 @@ def main():
 
         # load from saved state
         model = FMNISTConvNet() if args.use_cnn else FMNISTNet()
-        model = t3.load_model(model, MODEL_SAVE_PATH)
+        model = t3.load_model(model, MODEL_SAVE_PATH).to(DEVICE)
         print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
 
         metrics = trainer.evaluate(model, train_dataset)
@@ -346,7 +346,7 @@ def main():
     if args.pred:
         # load model state from .pt file
         model = FMNISTConvNet() if args.use_cnn else FMNISTNet()
-        model = t3.load_model(model, MODEL_SAVE_PATH)
+        model = t3.load_model(model, MODEL_SAVE_PATH).to(DEVICE)
         if (int(torch.__version__.split(".")[0]) >= 2) and (sys.platform != "win32"):
             torch.compile(model)
         print(torchsummary.summary(model, (NUM_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)))
