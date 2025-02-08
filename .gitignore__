@@ -1,0 +1,52 @@
+# ignore data folder (saves Pytorch datasets, which can always be re-downloaded)
+data
+
+# ignore .vscode folder (Visual Studio code settings)
+.vscode
+
+# ignore my kaggle.json file
+kaggle.json
+
+# ignore Pycharm files
+.idea
+
+# ignore IPython Notebook checkpoints
+.ipynb_checkpoints
+
+# ignore configuration files
+*.ini
+
+# ignore model_states folder (saves model states)
+model_states/
+checkpoints/
+
+# ignore __pycache__
+__pycache__
+
+# ignore pyc files
+*.pyc
+
+# ignore pt (checkpoint) files & model state files
+*.pt
+*.pth
+*.ckpt
+*.pyt
+*.pkl
+*.csv
+
+
+# for lightning logs
+*.yaml
+lightning_logs/
+
+# ignore tutorial folder (for now)
+# tutorial
+
+# any tar & zip files
+*.zip
+*.tgz
+*.tar
+*.tar.gz
+
+# ignore log files
+*.log

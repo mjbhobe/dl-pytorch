@@ -940,7 +940,7 @@ class Trainer:
         ] = None,
         validation_split: float = 0.0,
         l1_reg: float = None,
-        # lr_scheduler: Union[LRSchedulerType, ReduceLROnPlateauType] = None,
+        lr_scheduler: Union[LRSchedulerType, ReduceLROnPlateauType] = None,
         early_stopping: EarlyStopping = None,
         reporting_interval: int = 1,
         verbose: bool = True,

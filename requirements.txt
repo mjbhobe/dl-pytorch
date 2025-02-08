@@ -1,0 +1,115 @@
+# requirements.txt file for setting up new Python environment
+# run this as
+# pip install -r requirements --find-links https://download.pytorch.org/whl/torch_stable.html
+# for Pytorch error (see: https://stackoverflow.com/questions/60912744/install-pytorch-from-requirements-txt)
+
+# first step - create the environment
+# $> conda create --name <name> python==<version> -y
+# $> conda create --prefix (or -p) /path/to/directory python==<version> -y   (create local env)
+
+# activate the new environment
+# $> conda activate <name>
+# $> conda activate /path/to/directory (activate local env)
+
+# next from this folder run
+# pip install -r requirements.txt [--upgrade]
+
+# ------------------------------------------
+# Some other commands
+# $> conda env list 	# list all envs
+# $> conda remove --name <<name>> --all
+# ------------------------------------------
+
+# will install the following libraries 
+
+# core data science libraries
+numpy
+scipy
+scikit-learn
+pandas
+beautifulsoup4
+kaggle
+statsmodels
+sympy
+imblearn
+xgboost
+qtconsole
+cloudpickle
+# gdown3
+watermark
+python-dotenv
+ucimlrepo
+pyyaml
+tabulate
+overrides
+
+
+# Python code formatting libraries
+autopep8
+black
+pyflakes
+pylint
+jedi
+
+# SQL library for PostgreSQL
+psycopg2
+sqlalchemy
+
+# plotting libraries
+matplotlib
+seaborn
+plotly
+bokeh
+finplot
+
+# finance libraries
+yfinance 
+mplfinance
+cufflinks 
+Quandl
+
+# CV & GUI libraries
+opencv-python
+
+# deep learning libraries
+# tensorflow
+# tensorflow-datasets
+# keras
+#@see: https://stackoverflow.com/questions/60912744/install-pytorch-from-requirements-txt
+# -f https://download.pytorch.org/whl/torch_stable.html
+# torch>2.1.0
+# -f https://download.pytorch.org/whl/torch_stable.html
+# torchvision>0.16.0
+# -f https://download.pytorch.org/whl/torch_stable.html
+# torchaudio>2.1
+
+# torchtext
+torchmetrics
+torchsummary
+pytorch-lightning
+opendatasets
+imgaug
+streamlit
+tabulate
+rich[jupyter]
+
+# NLP libraries
+# nltk
+# gensim
+# corenlp
+# #spacy
+# textblob
+# Pattern
+# PyNLP
+# polyglot
+
+# huggingface 
+# transformers
+# datasets
+# huggingface_hub
+# diffusers
+# bitsandbytes
+
+# -------------------------------------------
+# NOTE: pip stores wheels ~/.cache/pip/wheels
+# --------------------------------------------

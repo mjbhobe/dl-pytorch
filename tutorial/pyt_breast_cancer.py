@@ -13,6 +13,7 @@ import logging.config
 
 warnings.filterwarnings("ignore")
 
+from rich import print
 import sys
 import os
 import pathlib
@@ -39,6 +40,7 @@ from torchmetrics.classification import BinaryAccuracy
 
 # import pytorch_toolkit - training Nirvana :)
 import torch_training_toolkit as t3
+
 
 # to ensure that you get consistent results across runs & machines
 # @see: https://discuss.pytorch.org/t/reproducibility-over-different-machines/63047

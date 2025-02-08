@@ -19,6 +19,7 @@ Use at your own risk!! I am not responsible if your CPU or GPU gets fried :D
 import warnings
 import logging
 import logging.config
+from rich import print
 
 warnings.filterwarnings("ignore")
 # logging.config.fileConfig(fname="logging.config")
@@ -40,6 +41,9 @@ sns.set(style="darkgrid", context="notebook", font_scale=1.20)
 import torch
 
 print("Using Pytorch version: ", torch.__version__)
+print(f"CUDA available? {'Yes 😎' if torch.cuda.is_available() else 'No 😪'}")
+
+
 import torch.nn as nn
 import torchsummary
 from torchvision import datasets, transforms
