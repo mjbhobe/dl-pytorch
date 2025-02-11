@@ -39,6 +39,7 @@ With that perspective, let's get started.
 * torch (Pytorch, of course!)
 * torchsummary
 * torchmetrics
+* rich
 
 ## A note on setting up the library
 

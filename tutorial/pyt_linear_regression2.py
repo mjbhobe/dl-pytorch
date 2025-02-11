@@ -44,11 +44,16 @@ MODEL_SAVE_PATH = (
 )
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-print(f"Using Pytorch: {torch.__version__}. Model will train on {DEVICE}")
+print(f"Using Pytorch: {torch.__version__}.")
+print(f"CUDA available? {'Yes 😎' if torch.cuda.is_available() else 'No 😪'}")
 
 # %% get data
 data_url = "https://gist.githubusercontent.com/noamross/e5d3e859aa0c794be10b/raw/b999fb4425b54c63cab088c0ce2c0d6ce961a563/cars.csv"
-data_local_path = pathlib.Path(__file__).parent / "data" / "cars.csv"
+data_local_path = pathlib.Path(__file__).parent / "data"
+if not data_local_path.exists():
+    data_local_path.mkdir(exist_ok=True)
+
+data_local_path = data_local_path / "cars.csv"
 
 if not data_local_path.exists():
     df = pd.read_csv(data_url)
@@ -57,7 +62,7 @@ else:
     df = pd.read_csv(str(data_local_path))
 print(df.head())
 
-sys.exit(-1)
+# sys.exit(-1)
 
 # %% other code
 

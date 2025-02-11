@@ -24,6 +24,7 @@ from sklearn.metrics import (
     mean_squared_error,
     r2_score,
 )
+from rich import print
 import torch
 import torch.nn as nn
 from torch.utils.data import Dataset
@@ -38,7 +39,8 @@ MODEL_SAVE_PATH = (
 )
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-print(f"Using Pytorch: {torch.__version__}. Model will train on {DEVICE}")
+print(f"Using Pytorch: {torch.__version__}.")
+print(f"CUDA available? {'Yes 😎' if torch.cuda.is_available() else 'No 😪'}")
 
 
 def get_data(
@@ -84,10 +86,10 @@ class RegressionModel(nn.Module):
         self.net = nn.Sequential(
             nn.Linear(input_dim, hidden_dim),
             nn.ReLU(),
-            # nn.Linear(hidden_dim, hidden_dim),
-            # nn.ReLU(),
-            # nn.Linear(hidden_dim, hidden_dim),
-            # nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
             nn.Linear(hidden_dim, output_dim),
         )
 

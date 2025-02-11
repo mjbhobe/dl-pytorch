@@ -128,7 +128,8 @@ def cross_train_module(
 
     reporting_interval = 1 if reporting_interval < 1 else reporting_interval
     reporting_interval = 1 if reporting_interval >= epochs else reporting_interval
-    logger.info(f"Will report training progress after {reporting_interval} epochs")
+    if logger is not None:
+        logger.info(f"Will report training progress after {reporting_interval} epochs")
 
     train_dataset, val_dataset = dataset, validation_dataset
 
@@ -275,7 +276,10 @@ def cross_train_module(
             )
 
         start_time = datetime.now()
-        logger.debug(f"Training started at {start_time.strftime('%Y-%b-%d-%H:%M:%S')}")
+        if logger is not None:
+            logger.debug(
+                f"Training started at {start_time.strftime('%Y-%b-%d-%H:%M:%S')}"
+            )
 
         for epoch in range(epochs):
             model.train()
@@ -494,8 +498,9 @@ def cross_train_module(
                     lr_scheduler.step()
 
         end_time = datetime.now()
-        logger.debug(f"Training ended at {end_time.strftime('%Y-%b-%d-%H:%M:%S')}")
-        logger.debug(f"Time for training: {diff_datetime(start_time, end_time)}")
+        if logger is not None:
+            logger.debug(f"Training ended at {end_time.strftime('%Y-%b-%d-%H:%M:%S')}")
+            logger.debug(f"Time for training: {diff_datetime(start_time, end_time)}")
         return history
     finally:
         model = model.to("cpu")

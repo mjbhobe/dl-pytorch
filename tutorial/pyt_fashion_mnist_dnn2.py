@@ -40,6 +40,8 @@ sns.set(style="darkgrid", context="notebook", font_scale=1.20)
 import torch
 
 print("Using Pytorch version: ", torch.__version__)
+print(f"CUDA available? {'Yes 😎' if torch.cuda.is_available() else 'No 😪'}")
+
 import torch.nn as nn
 import torchmetrics
 import torchsummary
