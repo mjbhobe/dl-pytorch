@@ -24,6 +24,7 @@ import pathlib
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+from rich import print
 
 # tweaks for libraries
 np.set_printoptions(precision=4, linewidth=1024, suppress=True)
@@ -58,32 +59,6 @@ MEANS, STDS = (0.5, 0.5, 0.5), (0.5, 0.5, 0.5)
 
 
 def get_mean_and_std():
-    # train_dataset = datasets.CIFAR10(
-    #     root=DATA_PATH,
-    #     train=True,
-    #     download=True,
-    #     transform=transforms.Compose([transforms.ToTensor()]),
-    # )
-
-    # # don't need shuffling for calculating mean & std
-    # train_loader = torch.utils.data.DataLoader(
-    #     train_dataset, batch_size=128, shuffle=False
-    # )
-
-    # imgs = None
-    # for batch in train_loader:
-    #     image_batch = batch[0]
-    #     if imgs is None:
-    #         # very first batch
-    #         imgs = image_batch.cpu()
-    #     else:
-    #         imgs = torch.cat([imgs, image_batch.cpu()], dim=0)
-
-    # imgs = imgs.numpy()
-    # means = np.mean(imgs, axis=(0, 1, 2, 3))
-    # stds = np.std(imgs, axis=(0, 1, 2, 3))
-    # return means, stds
-
     # download as Numpy arrays
     train_dataset = datasets.CIFAR10(
         root=DATA_PATH,
@@ -102,17 +77,6 @@ def load_data(args):
     load the data using datasets API. We also split the test_dataset into
     cross-val/test datasets using 80:20 ratio
     """
-
-    # mean, std = 0.5, 0.5
-    # transformations = transforms.Compose(
-    #     [
-    #         transforms.ToTensor(),
-    #         transforms.Normalize(mean, std),
-    #     ]
-    # )
-
-    # print("Calculating means & stds across all dimensions.")
-    # MEANS, STDS = get_mean_and_std()
 
     transformations = transforms.Compose(
         [
@@ -259,9 +223,6 @@ def display_sample(
                         # if matches, title color is green
                         title_color = "g"
                     else:
-                        # else title color is red
-                        # title = '%s/%s' % (FASHION_LABELS[sample_labels[image_index]],
-                        #                    FASHION_LABELS[sample_predictions[image_index]])
                         title_color = "r"
 
                     # but show the prediction in the title
@@ -395,13 +356,6 @@ def main():
             plot_title="Sample Images",
             labels_dict=CIFAR10_LABELS,
         )
-        # images = denormalize(images, MEANS, STDS)
-        # display_sample(
-        #     images.cpu().numpy(),
-        #     labels.cpu().numpy(),
-        #     grid_shape=(8, 8),
-        #     plot_title="Sample Images",
-        # )
 
     if args.train:
         model = Cifar10Net()
@@ -429,7 +383,7 @@ def main():
             optimizer,
             train_dataset,
             validation_dataset=val_dataset,
-            # lr_scheduler=scheduler,
+            lr_scheduler=scheduler,
             # early_stopping=early_stopping,
             logger=logger,
         )
